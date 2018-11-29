@@ -109,28 +109,43 @@ if __name__ == '__main__':
     #data_2 = _load_test_holo_below()
 
     reza1, reza2, reza3 = _load_reza_PS()
-    # try:
-    #     reza1.noise_sd +=1
-    # except:
-    #     pass
 
-    # try:
-    #     reza2.noise_sd +=1
-    # except:
-    #     pass
+    guesses1 = {'x': 9.713038139387498,
+                'y': 10.456691922232963,
+                'z': 4.618498169589564 * .9,
+                'n': 1.5734090037527397 * .9,
+                'r': 0.5405409574507445* .9,
+                'lens_angle': 0.5570046628134516,
+                'image_norm': 0.9955129503439557,
+                'illum_wavelength': 0.66}
 
-    # try:
-    #     reza3.noise_sd +=1
-    # except:
-    #     pass
 
-    fit1_ml = mlf._fit_with_mielens_scipy(reza1)
-    fit2_ml = mlf._fit_with_mielens_scipy(reza2)
-    fit3_ml = mlf._fit_with_mielens_scipy(reza3)
+    guesses2 = {'x': 9.723597975477213,
+                'y': 10.572893476526572,
+                'z': 10.592281131261418 * .9,
+                'n': 1.563604754489514 * .9,
+                'r': 0.5672417122947906 * .9,
+                'lens_angle': 0.5295070067298675,
+                'image_norm': 1.0214227644944853,
+                'illum_wavelength': 0.66}
 
-    fit1_mo = mlf._fit_with_mieonly_nmp(reza1)
-    fit2_mo = mlf._fit_with_mieonly_nmp(reza2)
-    fit3_mo = mlf._fit_with_mieonly_nmp(reza3)
+
+    guesses3 = {'x': 9.778775888957426,
+                'y': 10.69820362679027,
+                'z': 16.73559163136148 * .9,
+                'n': 1.555005032286686 * .9,
+                'r': 0.5737841199543253 * .9,
+                'lens_angle': 0.531536983740261,
+                'image_norm': 1.0101610472232756,
+                'illum_wavelength': 0.66}
+
+    fit1_ml = mlf._fit_with_mielens_scipy(reza1, guesses1)
+    fit2_ml = mlf._fit_with_mielens_scipy(reza2, guesses2)
+    fit3_ml = mlf._fit_with_mielens_scipy(reza3, guesses3)
+
+    fit1_mo = mlf._fit_with_mieonly_nmp(reza1, guesses1)
+    fit2_mo = mlf._fit_with_mieonly_nmp(reza2, guesses2)
+    fit3_mo = mlf._fit_with_mieonly_nmp(reza3, guesses3)
     
     holo_dt1 = reza1.values.squeeze()
     holo_dt2 = reza2.values.squeeze()
