@@ -28,7 +28,6 @@ class TestFit(unittest.TestCase):
         isok = chisqB < 1
         self.assertTrue(isok)
 
-    @unittest.skip("Bug in result.py")
     def test_mielens_inference(self):
         data, guess_parameters = _import_example_data()
         inference_result = mcmc_inference_mielens(data, guess_parameters)
