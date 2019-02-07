@@ -17,8 +17,31 @@ from holopy.inference import prior, AlphaModel, NmpfitStrategy, TemperedStrategy
 from holopy.inference.scipyfit import LeastSquaresScipyStrategy
 from holopy.inference.model import PerfectLensModel
 
+import pymc3 as pm
+
 RGB_CHANNEL = 1
 HOLOGRAM_SIZE = 100
+
+def pymc3_mielens(hologram, guess_parameters, **kwargs):
+    def cost(model_parameters):
+        x, y, z, radius, index, lens_angle = model_parameters
+        scatterer = Sphere(center=(x, y, z), r=radius, n=index)
+        return calc_err_sq(hologram, scatterer, lens_angle=lens_angle)
+
+    intial_guess = _make_minimize_initial_guess(hologram, guess_parameters)
+
+    with pm.Model() as mlmodel:
+        x = pm.Normal('x', intial_guess[0], .1)
+        y = pm.Normal('y', intial_guess[1], .1)
+        z = pm.Normal('z', intial_guess[2], .1)
+        radius = pm.Normal('r', mu=intial_guess[3], sd=.1)
+        index = pm.Normal('n', mu=intial_guess[4], sd=.1)
+        lens_angle = pm.Uniform('lens_angle', 0.1, 1.1)
+
+        obs = pm.Normal('obs', mu=cost([x, y, z, radius, index, lens_angle]), sd=1, observed=0)
+        trace = pm.sample(100, tune=50, njobs=1)
+    
+    return trace
 
 def minimize_mielens_de(hologram, guess_parameters, **kwargs):
     def cost(model_parameters):
@@ -68,7 +91,7 @@ def fit_mielens(hologram, guess_parameters, strategy='nmp'):
 
 def fit_mieonly(hologram, guess_parameters):
     priors, _ = _make_priors(hologram, guess_parameters)
-    priors.center[2].lower_bound = 0
+    #priors.center[2].lower_bound = 0
     model = AlphaModel(priors, noise_sd=hologram.noise_sd, alpha=prior.Uniform(0, 1.0, guess=0.6))
     result = NmpfitStrategy().optimize(model, hologram)
     return result
@@ -159,6 +182,13 @@ def get_bkg_paths(path, bg_prefix):
     subdir = os.path.dirname(path)
     bkg_paths = [subdir + '/' + pth for pth in os.listdir(subdir) if bg_prefix in pth]
     return bkg_paths
+
+def load_bgdivide_crop_v2(path, metadata, particle_position, bkg, dark, channel=RGB_CHANNEL, size=HOLOGRAM_SIZE):
+    data = hp.load_image(path, channel=channel, **metadata)
+    data = bg_correct(data, bkg, dark)
+    data = subimage(data, particle_position[::-1], size)
+    data = normalize(data)
+    return data
 
 def rgb2gray(rgb):
     return np.dot(rgb[...,:3], [0.299, 0.587, 0.114])
