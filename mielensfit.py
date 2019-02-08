@@ -12,7 +12,7 @@ from holopy.scattering import calc_holo, Sphere
 from holopy.scattering.theory import MieLens
 from holopy.core.io import load_average
 from holopy.core.metadata import get_extents, get_spacing
-from holopy.core.process import bg_correct, subimage, normalize, center_find
+from holopy.core.process import subimage, normalize, center_find  # , bg_correct
 from holopy.inference import prior, AlphaModel, NmpfitStrategy, TemperedStrategy
 from holopy.inference.scipyfit import LeastSquaresScipyStrategy
 from holopy.inference.model import PerfectLensModel
@@ -21,6 +21,18 @@ from holopy.inference.model import PerfectLensModel
 
 RGB_CHANNEL = 1
 HOLOGRAM_SIZE = 100
+
+
+def bg_correct(raw, bg, df=None):
+    if df is None:
+        df = raw.copy()
+        df[:] = 0
+    denominator = bg - df
+    denominator.values = np.clip(denominator.values, 1e-7, np.inf)
+    holo = (raw - df) / (bg - df)
+    holo = hp.core.copy_metadata(raw, holo)
+    return holo
+
 
 def pymc3_mielens(hologram, guess_parameters, **kwargs):
     def cost(model_parameters):
@@ -164,7 +176,7 @@ def calc_err_sq(data, scatterer, theory='mielens', **kwargs):
 def load_bgdivide_crop(path, metadata, particle_position, bg_prefix="bg", df_prefix=None, channel=RGB_CHANNEL, size=HOLOGRAM_SIZE):
     data = hp.load_image(path, channel=channel, **metadata)
     bkg = load_bkg(path, bg_prefix, refimg=data)
-    dark = load_dark(path, df_prefix, refimg=data)
+    dark = None  # load_dark(path, df_prefix, refimg=data)
     data = bg_correct(data, bkg, dark)
     data = subimage(data, particle_position[::-1], size)
     data = normalize(data)
