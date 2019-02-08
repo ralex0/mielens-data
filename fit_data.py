@@ -17,14 +17,14 @@ def load_few_Si_data():
                     'medium_index' : 1.34,
                     'illum_wavelen' : .532,
                     'illum_polarization' : (1, 0)}
-    position = [839, 382] 
+    position = [839, 382]
 
     holonums = [28, 38, 48, 78]
     zpos = np.array([15, 10, 5, -10])#np.load('data/Silica-100xOil-120418/zpos.npy')[[holonums]]
     paths = ["data/Silica-100xOil-120418/raw/im_" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                particle_position=position, bg_prefix="bg_bottom") 
+             for num in holonums]
+    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                particle_position=position, bg_prefix="bg_bottom")
              for path in paths]
     return holos, zpos
 
@@ -34,14 +34,14 @@ def load_few_PS_data():
                     'medium_index' : 1.34,
                     'illum_wavelen' : .532,
                     'illum_polarization' : (1, 0)}
-    position = [921, 697] 
+    position = [921, 697]
 
     holonums = [40, 50, 80]
     zpos = np.array([10, 5, -10])#np.load('data/Polystyrene-100xOil-120418/zpos.npy')[[holonums]]
     paths = ["data/Polystyrene-100xOil-120418/greyscale/im" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                particle_position=position, bg_prefix="bg_btm") 
+             for num in holonums]
+    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                particle_position=position, bg_prefix="bg_btm")
              for path in paths]
     return holos, zpos
 
@@ -51,14 +51,14 @@ def load_few_PS_data_old():
                     'medium_index' : 1.34,
                     'illum_wavelen' : .532,
                     'illum_polarization' : (1, 0)}
-    positions = ([515, 497], [520, 497], [523, 497]) 
+    positions = ([515, 497], [520, 497], [523, 497])
 
     holonums = [60, 80, 100]
     zpos = np.array([15, 10, 5])#np.load('data/Polystyrene-60xWater-111918/zpos.npy')[[holonums]]
     paths = ["data/Polystyrene-60xWater-111918/raw/im" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                particle_position=position, bg_prefix="bg") 
+             for num in holonums]
+    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                particle_position=position, bg_prefix="bg")
              for path, position in zip(paths, positions)]
     return holos, zpos
 
@@ -70,11 +70,11 @@ def load_few_PS_data_reza():
                 'illum_polarization' : (1, 0)}
     PS_location = [255, 255]
 
-    data1 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0050.tif", metadata=metadata, 
+    data1 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0050.tif", metadata=metadata,
                                    particle_position=PS_location, bg_prefix="bg")
-    data2 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0060.tif", metadata=metadata, 
+    data2 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0060.tif", metadata=metadata,
                                    particle_position=PS_location, bg_prefix="bg")
-    data3 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0070.tif", metadata=metadata, 
+    data3 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0070.tif", metadata=metadata,
                                    particle_position=PS_location, bg_prefix="bg")
 
     zpos = np.array([4.618498169589564, 10.592281131261418, 16.73559163136148])
@@ -82,7 +82,7 @@ def load_few_PS_data_reza():
 
 def load_example_data():
     imagepath = hp.core.io.get_example_data_path('image01.jpg')
-    raw_holo = hp.load_image(imagepath, spacing = 0.0851, medium_index = 1.33, 
+    raw_holo = hp.load_image(imagepath, spacing = 0.0851, medium_index = 1.33,
                              illum_wavelen = 0.66, illum_polarization = (1,0))
     bgpath = hp.core.io.get_example_data_path(['bg01.jpg', 'bg02.jpg', 'bg03.jpg'])
     bg = hp.core.io.load_average(bgpath, refimg = raw_holo)
@@ -98,14 +98,14 @@ def load_PS60xWater_data():
                     'medium_index' : 1.348,
                     'illum_wavelen' : .532,
                     'illum_polarization' : (1, 0)}
-    position = [430, 472] 
+    position = [430, 472]
 
     holonums = range(7)
     zpos = np.array([15, 10, 5, 0, -5, -10, -15])
     paths = ["data/Polystyrene-60xWater-121218/raw/im_" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                particle_position=position, bg_prefix="bg") 
+             for num in holonums]
+    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                particle_position=position, bg_prefix="bg")
              for path in paths]
     return holos, zpos
 
@@ -116,14 +116,14 @@ def load_Silica60xWater_data():
                     'medium_index' : 1.348,
                     'illum_wavelen' : .532,
                     'illum_polarization' : (1, 0)}
-    position = [518, 553] 
+    position = [518, 553]
 
     holonums = range(7)
     zpos = np.array([15, 10, 5, 0, -5, -10, -15])
     paths = ["data/Silica-60xWater-121218/raw/im_" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                particle_position=position, bg_prefix="bg") 
+             for num in holonums]
+    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                particle_position=position, bg_prefix="bg")
              for path in paths]
     return holos, zpos
 
@@ -139,9 +139,9 @@ def load_few_PS_data_Jan4():
     holonums = range(4)
     zpos = np.array([14, 5.5, -12, -20])
     paths = ["data/Polystyrene-60xWater-010419/raw0_greyscale/im" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                particle_position=position, bg_prefix="bg", df_prefix="dark") 
+             for num in holonums]
+    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                particle_position=position, bg_prefix="bg", df_prefix="dark")
              for path in paths]
     return holos, zpos
 
@@ -157,9 +157,9 @@ def load_few_PS_data_Jan8():
     holonums = range(21)
     zpos = np.linspace(-20, 20, 21)
     paths = ["data/Polystyrene-60xWater-010819/raw_greyscale/im_" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                particle_position=position, bg_prefix="bkg", df_prefix="dark") 
+             for num in holonums]
+    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                particle_position=position, bg_prefix="bkg", df_prefix="dark")
              for path in paths]
     return holos, zpos
 
@@ -174,13 +174,13 @@ def load_few_PS_data_Jan10():
     holonums = range(51)
     zpos = np.linspace(25, -25, 51) - 2.5
     paths = ["data/Mixed-60xWater-011019/greyscale-PS/im_" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
+             for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                        particle_position=position, 
-                                        bg_prefix="bkg", 
-                                        df_prefix="dark") 
+        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                        particle_position=position,
+                                        bg_prefix="bkg",
+                                        df_prefix="dark")
                  for path in paths]
     return holos, zpos
 
@@ -195,9 +195,9 @@ def load_few_BigPS_data_Jan10():
     holonums = range(51)
     zpos = np.linspace(-25, 25, 51)
     paths = ["data/Mixed-60xWater-011019/greyscale-PS-big/im_" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                particle_position=position, bg_prefix="bkg", df_prefix="dark") 
+             for num in holonums]
+    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                particle_position=position, bg_prefix="bkg", df_prefix="dark")
              for path in paths]
     return holos, zpos
 
@@ -212,12 +212,12 @@ def load_few_Si_data_Jan10():
     holonums = range(51)
     zpos = np.linspace(25, -25, 51) - 0.5
     paths = ["data/Mixed-60xWater-011019/greyscale-silica/im_" +  f"{num}".zfill(3) + ".png"
-             for num in holonums] 
+             for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                        particle_position=position, 
-                                        bg_prefix="bkg", df_prefix="dark") 
+        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                        particle_position=position,
+                                        bg_prefix="bkg", df_prefix="dark")
              for path in paths]
     return holos, zpos
 
@@ -239,9 +239,9 @@ def load_PS_data_Feb6():
         refimg = hp.load_image(paths[0], **metadata)
         bkg = mlf.load_bkg(paths[0], bg_prefix='bg', refimg=refimg)
         dark = mlf.load_dark(paths[0], df_prefix='dark', refimg=refimg)
-        holos = [mlf.load_bgdivide_crop_v2(path=path, metadata=metadata, 
-                                        particle_position=position, 
-                                        bkg=bkg, dark=dark) 
+        holos = [mlf.load_bgdivide_crop_v2(path=path, metadata=metadata,
+                                        particle_position=position,
+                                        bkg=bkg, dark=dark)
                  for path in paths]
     return holos, zpos
 
@@ -262,9 +262,9 @@ def load_PS_data_Feb6_alt():
         refimg = hp.load_image(paths[0], **metadata)
         bkg = mlf.load_bkg(paths[0], bg_prefix='bg', refimg=refimg)
         dark = mlf.load_dark(paths[0], df_prefix='dark', refimg=refimg)
-        holos = [mlf.load_bgdivide_crop_v2(path=path, metadata=metadata, 
-                                        particle_position=position, 
-                                        bkg=bkg, dark=dark) 
+        holos = [mlf.load_bgdivide_crop_v2(path=path, metadata=metadata,
+                                        particle_position=position,
+                                        bkg=bkg, dark=dark)
                  for path in paths]
     return holos, zpos
 
@@ -279,12 +279,12 @@ def load_PS_data_Feb6_alt():
 #     holonums = [19, 20]
 #     zpos = np.linspace(25, -25, 51) - 0.5
 #     paths = ["data/Polystyrene2-4um-60xWater-012419/raw/image" +  f"{num}".zfill(4) + ".png"
-#              for num in holonums] 
+#              for num in holonums]
 #     with warnings.catch_warnings():
 #         warnings.simplefilter("ignore")
-#         holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-#                                         particle_position=position, 
-#                                         bg_prefix="bkg", df_prefix="dark") 
+#         holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+#                                         particle_position=position,
+#                                         bg_prefix="bkg", df_prefix="dark")
 #              for path in paths]
 #     return holos, zpos
 
@@ -299,12 +299,12 @@ def load_PS_data_reza():
     holonums = range(80)
     zpos = np.linspace(20, -20, 80)
     paths = ["data/Polystyrene-Reza/image" +  f"{num}".zfill(4) + ".tif"
-             for num in holonums] 
+             for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata, 
-                                        particle_position=position, 
-                                        bg_prefix="bg") 
+        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
+                                        particle_position=position,
+                                        bg_prefix="bg")
              for path in paths]
     return holos, zpos
 
@@ -362,14 +362,14 @@ def fit_data():
     PS_errsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, PS_fit)]
     Si_errsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(Si_data, Si_fit)]
 
-    Si_fit_holo = [hologram2array(calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle']))) 
+    Si_fit_holo = [hologram2array(calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])))
                    for data, fit in zip(Si_data, Si_fit)]
-    PS_fit_holo = [hologram2array(calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle']))) 
+    PS_fit_holo = [hologram2array(calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])))
                    for data, fit in zip(PS_data, PS_fit)]
 
 def compare_guess_holo(data, guesses):
     guess_scatterer, guess_lens_angle = mlf.get_guess_scatterer(data, guesses)
-    guess_holo = hologram2array(calc_holo(data, guess_scatterer, 
+    guess_holo = hologram2array(calc_holo(data, guess_scatterer,
                                 theory=MieLens(lens_angle=lens_angle)))
     data_holo = hologram2array(data)
     compare_imgs(data_holo, guess_holo, ['data', 'guess'])
@@ -381,9 +381,9 @@ def compare_fit_Jan4_data():
     mofit = [mlf.fit_mieonly(data, guess) for data, guess in zip(PS_data, PS_guess)]
     mlfit = [mlf.fit_mielens(data, guess) for data, guess in zip(PS_data, PS_guess)]
 
-    moholo = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit)]   
+    moholo = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit)]
     mlholo = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(PS_data, mlfit)]
-    
+
     moerrsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(PS_data, mofit)]
     mlerrsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, mlfit)]
 
@@ -395,7 +395,7 @@ def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
         scatterer.r = r if r is not None else scatterer.r
         scatterer.center[2] = z_pos if z_positions is not None else scatterer.center[2]
 
-    model_holos = [calc_holo(dt, scatterer, theory=MieLens(lens_angle=1.0)) 
+    model_holos = [calc_holo(dt, scatterer, theory=MieLens(lens_angle=1.0))
                    for dt, scatterer in zip(data, scatterers)]
 
     data_stack_xz = np.vstack([dt.values.squeeze()[50,:] for dt in data])
@@ -403,7 +403,7 @@ def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
 
     model_stack_xz = np.vstack([holo.values.squeeze()[50,:] for holo in model_holos])
     model_stack_yz = np.vstack([holo.values.squeeze()[:,50] for holo in model_holos])
-    
+
     return data_stack_xz, data_stack_yz, model_stack_xz, model_stack_yz
 
 
@@ -415,9 +415,9 @@ if __name__ == '__main__':
     # Load fits I've already done
     mofit_PS = [hp.load(f"fits/PSJan10/mofit{num}.h5") for num in [f"{num}".zfill(3) for num in range(len(PS_data))]]
     mlfit_PS = [hp.load(f"fits/PSJan10/mlfit{num}.h5") for num in [f"{num}".zfill(3) for num in range(len(PS_data))]]
-    moholo_PS = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit_PS)]   
+    moholo_PS = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit_PS)]
     mlholo_PS = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(PS_data, mlfit_PS)]
-    
+
     moerrsq_PS = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(PS_data, mofit_PS)]
     mlerrsq_PS = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, mlfit_PS)]
 
@@ -431,8 +431,8 @@ if __name__ == '__main__':
     # This is for Fitting the Silica data
     #mofit_Si = [mlf.fit_mieonly(data, guess) for data, guess in zip(Si_data, Si_guess)]
     #mlfit_Si = [mlf.fit_mielens(data, guess) for data, guess in zip(Si_data, Si_guess)]
-    #moholo_Si = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(Si_data, mofit_Si)]   
+    #moholo_Si = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(Si_data, mofit_Si)]
     #mlholo_Si = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(Si_data, mlfit_Si)]
-    
+
     #moerrsq_Si = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(Si_data, mofit_Si)]
     #mlerrsq_Si = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(Si_data, mlfit_Si)]
