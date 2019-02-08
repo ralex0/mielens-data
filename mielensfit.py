@@ -96,9 +96,13 @@ def fit_mielens(hologram, guess_parameters, strategy='nmp'):
     sphere_priors, lens_prior = _make_priors(hologram, guess_parameters)
     model = PerfectLensModel(sphere_priors, noise_sd=hologram.noise_sd, lens_angle=lens_prior)
     if strategy == 'nmp':
-        result = NmpfitStrategy().optimize(model, hologram)
+        optimizer = NmpfitStrategy()
     elif strategy == 'leastsquares':
-        result = LeastSquaresScipyStrategy().optimize(model, hologram)
+        optimizer = LeastSquaresScipyStrategy()
+    try:
+        result = optimizer.optimize(model, hologram)
+    except AttributeError:
+        result = optimizer.minimize(model, hologram)
     return result
 
 def fit_mieonly(hologram, guess_parameters):
