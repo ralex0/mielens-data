@@ -21,7 +21,8 @@ def load_few_Si_data():
 
     holonums = [28, 38, 48, 78]
     zpos = np.array([15, 10, 5, -10])#np.load('data/Silica-100xOil-120418/zpos.npy')[[holonums]]
-    paths = ["data/Silica-100xOil-120418/raw/im_" +  f"{num}".zfill(3) + ".png"
+    # paths = ["data/Silica-100xOil-120418/raw/im_" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Silica-100xOil-120418/raw/im_" +  "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
                                 particle_position=position, bg_prefix="bg_bottom")
@@ -38,7 +39,7 @@ def load_few_PS_data():
 
     holonums = [40, 50, 80]
     zpos = np.array([10, 5, -10])#np.load('data/Polystyrene-100xOil-120418/zpos.npy')[[holonums]]
-    paths = ["data/Polystyrene-100xOil-120418/greyscale/im" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Polystyrene-100xOil-120418/greyscale/im" +"{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
                                 particle_position=position, bg_prefix="bg_btm")
@@ -55,7 +56,7 @@ def load_few_PS_data_old():
 
     holonums = [60, 80, 100]
     zpos = np.array([15, 10, 5])#np.load('data/Polystyrene-60xWater-111918/zpos.npy')[[holonums]]
-    paths = ["data/Polystyrene-60xWater-111918/raw/im" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Polystyrene-60xWater-111918/raw/im" + "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
                                 particle_position=position, bg_prefix="bg")
@@ -102,7 +103,7 @@ def load_PS60xWater_data():
 
     holonums = range(7)
     zpos = np.array([15, 10, 5, 0, -5, -10, -15])
-    paths = ["data/Polystyrene-60xWater-121218/raw/im_" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Polystyrene-60xWater-121218/raw/im_" +  "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
                                 particle_position=position, bg_prefix="bg")
@@ -120,7 +121,7 @@ def load_Silica60xWater_data():
 
     holonums = range(7)
     zpos = np.array([15, 10, 5, 0, -5, -10, -15])
-    paths = ["data/Silica-60xWater-121218/raw/im_" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Silica-60xWater-121218/raw/im_" +  "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
                                 particle_position=position, bg_prefix="bg")
@@ -138,7 +139,7 @@ def load_few_PS_data_Jan4():
 
     holonums = range(4)
     zpos = np.array([14, 5.5, -12, -20])
-    paths = ["data/Polystyrene-60xWater-010419/raw0_greyscale/im" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Polystyrene-60xWater-010419/raw0_greyscale/im" + "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
                                 particle_position=position, bg_prefix="bg", df_prefix="dark")
@@ -156,7 +157,7 @@ def load_few_PS_data_Jan8():
 
     holonums = range(21)
     zpos = np.linspace(-20, 20, 21)
-    paths = ["data/Polystyrene-60xWater-010819/raw_greyscale/im_" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Polystyrene-60xWater-010819/raw_greyscale/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
                                 particle_position=position, bg_prefix="bkg", df_prefix="dark")
@@ -173,7 +174,7 @@ def load_few_PS_data_Jan10():
 
     holonums = range(51)
     zpos = np.linspace(25, -25, 51) - 2.5
-    paths = ["data/Mixed-60xWater-011019/greyscale-PS/im_" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Mixed-60xWater-011019/greyscale-PS/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -194,7 +195,7 @@ def load_few_BigPS_data_Jan10():
 
     holonums = range(51)
     zpos = np.linspace(-25, 25, 51)
-    paths = ["data/Mixed-60xWater-011019/greyscale-PS-big/im_" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Mixed-60xWater-011019/greyscale-PS-big/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
                                 particle_position=position, bg_prefix="bkg", df_prefix="dark")
@@ -211,7 +212,7 @@ def load_few_Si_data_Jan10():
 
     holonums = range(51)
     zpos = np.linspace(25, -25, 51) - 0.5
-    paths = ["data/Mixed-60xWater-011019/greyscale-silica/im_" +  f"{num}".zfill(3) + ".png"
+    paths = ["data/Mixed-60xWater-011019/greyscale-silica/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -232,7 +233,7 @@ def load_PS_data_Feb6():
 
     holonums = np.arange(14, 137)
     zpos = np.linspace(13.5, -17, len(holonums))
-    paths = ["data/Polystyrene-60xWater-020619/im" +  f"{num}".zfill(4) + ".tif"
+    paths = ["data/Polystyrene-60xWater-020619/im" + "{}".format(str(num).rjust(4, '0')) + ".tif"
              for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -255,7 +256,7 @@ def load_PS_data_Feb6_alt():
 
     holonums = range(134)
     zpos = np.linspace(17, -17, len(holonums))
-    paths = ["data/Polystyrene-60xWater-020619/raw0/im" +  f"{num}".zfill(4) + ".tif"
+    paths = ["data/Polystyrene-60xWater-020619/raw0/im" + "{}".format(str(num).rjust(4, '0')) + ".tif"
              for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -298,7 +299,7 @@ def load_PS_data_reza():
 
     holonums = range(80)
     zpos = np.linspace(20, -20, 80)
-    paths = ["data/Polystyrene-Reza/image" +  f"{num}".zfill(4) + ".tif"
+    paths = ["data/Polystyrene-Reza/image" + "{}".format(str(num).rjust(4, '0')) + ".tif"
              for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -413,9 +414,18 @@ if __name__ == '__main__':
     PS_guess = make_guess_parameters(PS_zpos, n=1.58, r=0.5)
 
     # Load fits I've already done
-    mofit_PS = [hp.load(f"fits/PSJan10/mofit{num}.h5") for num in [f"{num}".zfill(3) for num in range(len(PS_data))]]
-    mlfit_PS = [hp.load(f"fits/PSJan10/mlfit{num}.h5") for num in [f"{num}".zfill(3) for num in range(len(PS_data))]]
-    moholo_PS = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit_PS)]
+    mofit_PS = [
+        hp.load("fits/PSJan10/mofit{num}.h5")
+        for num in [
+            "{}".format(str(num).rjust(3, '0'))
+            for num in range(len(PS_data))]]
+    mlfit_PS = [
+        hp.load("fits/PSJan10/mlfit{num}.h5")
+        for num in [
+            "{}".format(str(num).rjust(3, '0'))
+            for num in range(len(PS_data))]]
+    moholo_PS = [
+        calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit_PS)]
     mlholo_PS = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(PS_data, mlfit_PS)]
 
     moerrsq_PS = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(PS_data, mofit_PS)]
