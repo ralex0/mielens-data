@@ -13,11 +13,11 @@ from holopy.scattering.theory import MieLens
 from holopy.core.io import load_average
 from holopy.core.metadata import get_extents, get_spacing
 from holopy.core.process import bg_correct, subimage, normalize, center_find
-from holopy.inference import prior, AlphaModel, NmpfitStrategy, TemperedStrategy, GradientFreeStrategy
+from holopy.inference import prior, AlphaModel, NmpfitStrategy, TemperedStrategy
 from holopy.inference.scipyfit import LeastSquaresScipyStrategy
 from holopy.inference.model import PerfectLensModel
 
-import pymc3 as pm
+# import pymc3 as pm
 
 RGB_CHANNEL = 1
 HOLOGRAM_SIZE = 100
