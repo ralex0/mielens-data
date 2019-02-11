@@ -52,9 +52,8 @@ class Fitter(object):
         self.guess = guess
 
     def fit(self):
-        sphere_priors, lens_priors = self._make_priors()
-        # for prior_function in [_make_priors, _make_position_only_priors]:
-        sphere_priors, lens_prior = self._make_priors()
+        sphere_priors = self.make_guessed_scatterer()
+        lens_prior = self.guess_lens_angle()
         model = PerfectLensModel(
             sphere_priors, noise_sd=self.data.noise_sd, lens_angle=lens_prior)
         optimizer = NmpfitStrategy()
@@ -62,14 +61,18 @@ class Fitter(object):
         # result = hp.fitting.fit(model, self.data, minimizer=optimizer)
         return result
 
-    def _make_priors(self):
+    def make_guessed_scatterer(self):
         center = self._make_center_priors()
         scatterer = Sphere(n=prior.Uniform(1.33, 2.3, guess=self.guess['n']),
                            r=prior.Uniform(0.05, 5, guess=self.guess['r']),
                            center=center)
-        lens_guess = self._guess_lens_angle()
-        lens_prior = prior.Uniform(0, 1.2, guess=lens_guess)
-        return scatterer, lens_prior
+        return scatterer
+
+    def guess_lens_angle(self):
+        lens_angle = (self.guess['lens_angle'] if 'lens_angle' in self.guess
+                      else self._default_lens_angle)
+        lens_prior = prior.Uniform(0, 1.2, guess=lens_angle)
+        return lens_prior
 
     def _make_center_priors(self):
         image_x_values = self.data.x.values
@@ -94,11 +97,6 @@ class Fitter(object):
             -extent * zextent, extent * zextent, guess=self.guess['z'])
         return xpar, ypar, zpar
 
-    def _guess_lens_angle(self):
-        lens_angle = (self.guess['lens_angle'] if 'lens_angle' in self.guess
-                      else self._default_lens_angle)
-        return lens_angle
-
 
 def fit_mielens(hologram, guess_parameters):
     fitter = Fitter(hologram, guess_parameters)
@@ -115,7 +113,6 @@ def fit_mieonly(hologram, guess_parameters):
 # ~~~ priors
 
 
-
 def _make_position_only_priors(hologram, guess_parameters):
     center = _make_center_priors(hologram, guess_parameters)
     s = Sphere(n=guess_parameters['n'],
@@ -130,6 +127,7 @@ def get_guess_scatterer(data, guesses):
 
 def get_guess_angle(guesses):
     return guesses['lens_angle'] if 'lens_angle' in guesses else 0.8
+
 
 def calc_residual(data, scatterer, theory='mielens', **kwargs):
     dt = data.values.squeeze()

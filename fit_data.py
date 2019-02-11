@@ -371,9 +371,11 @@ def fit_data():
                    for data, fit in zip(PS_data, PS_fit)]
 
 def compare_guess_holo(data, guesses):
-    guess_scatterer, guess_lens_angle = mlf.get_guess_scatterer(data, guesses)
+    fitter = mlf.Fitter(data, guesses)
+    guess_scatterer = fitter.make_guessed_scatterer()
+    lens_angle = fitter.guess_lens_angle()
     guess_holo = hologram2array(calc_holo(data, guess_scatterer,
-                                theory=MieLens(lens_angle=lens_angle)))
+                                theory=MieLens(lens_angle=lens_angle.guess)))
     data_holo = hologram2array(data)
     compare_imgs(data_holo, guess_holo, ['data', 'guess'])
 
