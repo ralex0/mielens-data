@@ -47,7 +47,15 @@ class Fitter(object):
     _default_lens_angle = 0.8
 
     def __init__(self, data, guess):
-        """for now, this is for the lens model only"""
+        """for now, this is for the lens model only
+
+        Parameters
+        ----------
+        data : hologram
+        guess : dict
+            Must have keys `'n'`, `'r'`, `'z'`. An additional key of
+            `'lens_angle'` is optional.
+        """
         self.data = data
         self.guess = guess
 
