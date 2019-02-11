@@ -148,38 +148,4 @@ if __name__ == '__main__':
         for data, fit in zip(PS_data, mlfit_PS)]
     residuals = [data - model for data, model in zip(PS_data, mlholo_PS)]
     chisqs = [(r.values**2).sum() for r in residuals]
-    """
-    # Load fits I've already done
-    mofit_PS = [
-        hp.load("fits/PSJan10/mofit{}.h5".format(num))
-        for num in [
-            "{}".format(str(num).rjust(3, '0'))
-            for num in range(len(PS_data))]]
-    mlfit_PS = [
-        hp.load("fits/PSJan10/mlfit{}.h5".format(num))
-        for num in [
-            "{}".format(str(num).rjust(3, '0'))
-            for num in range(len(PS_data))]]
-    moholo_PS = [
-        calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit_PS)]
-    mlholo_PS = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(PS_data, mlfit_PS)]
 
-    moerrsq_PS = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(PS_data, mofit_PS)]
-    mlerrsq_PS = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, mlfit_PS)]
-
-
-    # Make figure 3 with this function
-    data_stack_xz, data_stack_yz, model_stack_xz, model_stack_yz = make_stack_figures(PS_data, mlfit_PS, n=1.41, r=0.5, z_positions=np.linspace(26.5, -23.5, 51))
-
-    compare_imgs(data_stack_xz, model_stack_xz)
-    compare_imgs(data_stack_yz, model_stack_yz)
-
-    # This is for Fitting the Silica data
-    #mofit_Si = [mlf.fit_mieonly(data, guess) for data, guess in zip(Si_data, Si_guess)]
-    #mlfit_Si = [mlf.fit_mielens(data, guess) for data, guess in zip(Si_data, Si_guess)]
-    #moholo_Si = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(Si_data, mofit_Si)]
-    #mlholo_Si = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(Si_data, mlfit_Si)]
-
-    #moerrsq_Si = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(Si_data, mofit_Si)]
-    #mlerrsq_Si = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(Si_data, mlfit_Si)]
-    """
