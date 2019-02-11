@@ -90,8 +90,8 @@ def compare_holos(*holos, titles=None, cmap="Greys"):
     plt.show()
 
 
-def compare_guess_holo(data, guesses):
-    fitter = mlf.Fitter(data, guesses)
+def compare_guess_holo(data, guess):
+    fitter = mlf.Fitter(data, guess)
     guess_scatterer = fitter.make_guessed_scatterer()
     guess_lens_angle = fitter.guess_lens_angle()
     compare_fit_holo(data, guess_scatterer, guess_lens_angle.guess)
@@ -125,27 +125,119 @@ def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
     return data_stack_xz, data_stack_yz, model_stack_xz, model_stack_yz
 
 
+def fit_with_previous_as_guess(data, first_guess):
+    # 1. Fit the first point.
+    first_fit = mlf.fit_mielens(data[0], first_guess)
+    current_guess = {k: v for k, v in first_guess.items()}
+    if 'lens_angle' not in current_guess:
+        current_guess.update({'lens_angle': mlf.Fitter._default_lens_angle})
+
+    def update_guess(fit):
+        current_guess['n'] = fit.parameters['n']
+        current_guess['r'] = fit.parameters['r']
+        current_guess['z'] = fit.parameters['center.2']
+        current_guess['lens_angle'] = fit.parameters['lens_angle']
+
+    update_guess(first_fit)
+    all_fits = [first_fit]
+    for datum in data[1:]:
+        try:
+            this_fit = mlf.fit_mielens(datum, current_guess)
+            update_guess(this_fit)
+        except:
+            this_fit = None
+        all_fits.append(this_fit)
+    return all_fits
+
+
+def fit_from_scratch(data, guess):
+    fits = []
+    for num, (data, guess) in enumerate(zip(data, guesses)):
+        try:
+            result = mlf.fit_mielens(data, guess)
+        except:
+            result = None
+        fits.append(result)
+    return fits
+
+
+def calculate_models(data, fits):
+    fitholos = [
+        calc_holo(
+            datum, fit.scatterer,
+            theory=MieLens(lens_angle=fit.parameters['lens_angle']))
+        if fit is not None else 0 * datum + 1
+        for datum, fit in zip(data, fits)]
+    return fitholos
+
+
 if __name__ == '__main__':
     # Load PS data
-    print("loading data...")
-    PS_data, PS_zpos = load_few_PS_data_Jan10()
-    print("guessing parameters...")
-    PS_guess = make_guess_parameters(PS_zpos, n=1.58, r=0.5)
+    data, zpos = load_few_PS_data_Jan10()
+    guesses = make_guess_parameters(zpos, n=1.58, r=0.5)
 
-    # Fit the data:
-    # ~~~ For speed we only fit the worst one, ``33`` with a chisq of 99.1
-    PS_data = PS_data[33:34]
-    PS_zpos = PS_zpos[33:34]
-    PS_guess = PS_guess[33:34]
-    # ~~~
-    print("fitting data...")
-    mlfit_PS = [mlf.fit_mielens(data, guess)
-                for data, guess in zip(PS_data, PS_guess)]
-    mlholo_PS = [
-        calc_holo(
-            data, fit.scatterer,
-            theory=MieLens(lens_angle=fit.parameters['lens_angle']))
-        for data, fit in zip(PS_data, mlfit_PS)]
-    residuals = [data - model for data, model in zip(PS_data, mlholo_PS)]
-    chisqs = [(r.values**2).sum() for r in residuals]
+    fits_fromscratch = fit_from_scratch(data, guesses)
+    fits_fromprevious = fit_with_previous_as_guess(data, guesses[0])
+
+    # fit_fromscratch[-1] looks ok. fit_previous looks _awful_
+    # So we do this:
+    last_guess = {
+        'n': fits_fromscratch[-1].parameters['n'],
+        'z': fits_fromscratch[-1].parameters['center.2'],
+        'r': fits_fromscratch[-1].parameters['r'],
+        }
+    fits_fromnext = fit_with_previous_as_guess(data[::-1], last_guess)[::-1]
+
+    fitholos_fromscratch = calculate_models(data, fits_fromscratch)
+    fitholos_fromprevious = calculate_models(data, fits_fromprevious)
+    fitholos_fromnext = calculate_models(data, fits_fromnext)
+
+    residuals_fromscratch = [
+        data - model for data, model in zip(data, fitholos_fromscratch)]
+    chisqs_fromscratch = np.array(
+        [(r.values**2).sum() for r in residuals_fromscratch])
+
+    residuals_fromprevious = [
+        data - model for data, model in zip(data, fitholos_fromprevious)]
+    chisqs_fromprevious = np.array(
+        [(r.values**2).sum() for r in residuals_fromprevious])
+
+    residuals_fromnext = [
+        data - model for data, model in zip(data, fitholos_fromnext)]
+    chisqs_fromnext = np.array(
+        [(r.values**2).sum() for r in residuals_fromnext])
+
+    # Now we just pick the best one:
+    all_chisqs = {
+        'next': chisqs_fromnext,
+        'previous': chisqs_fromprevious,
+        'scratch': chisqs_fromscratch,
+        }
+    all_fits = {
+        'next': fits_fromnext,
+        'previous': fits_fromprevious,
+        'scratch': fits_fromscratch,
+        }
+    fits_best = []
+    for i in range(len(chisqs_fromnext)):
+        these_chisqs = {k: v[i] for k, v in all_chisqs.items()}
+        best_error = np.inf
+        best_key = ''
+        for key, error in these_chisqs.items():
+            if error < best_error:
+                best_key = key
+                best_error = error
+
+        fits_best.append(all_fits[best_key][i])
+
+    fitholos_best = calculate_models(data, fits_best)
+    residuals_best = [data - model for data, model in zip(data, fitholos_best)]
+    chisqs_best = np.array([(r.values**2).sum() for r in residuals_best])
+    # OH GOD SAVE THESE AS FAST AS POSSIBLE!!!
+    from collections import OrderedDict
+    import json
+    parameters = OrderedDict()
+    for i, f in enumerate(fits_best):
+        parameters.update({str(i): f.parameters})
+    json.dump(parameters, open('./best-fit-parameters.json', 'w'), indent=4)
 
