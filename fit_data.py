@@ -317,21 +317,36 @@ def make_guess_parameters(zpos, n, r):
 def hologram2array(hologram):
     return hologram.values.squeeze()
 
+
 def compare_imgs(im1, im2, titles=['im1', 'im2']):
     vmax = np.max((im1, im2))
     vmin = np.min((im1, im2))
 
     plt.figure(figsize=(10,5))
     plt.gray()
-    plt.subplot(121)
+    ax1 = plt.subplot(1, 3, 1)
     plt.imshow(im1, interpolation="nearest", vmin=vmin, vmax=vmax)
-    plt.colorbar()
+    # plt.colorbar()
     plt.title(titles[0])
-    plt.subplot(122)
+    ax2 = plt.subplot(1, 3, 2)
     plt.imshow(im2, interpolation="nearest", vmin=vmin, vmax=vmax)
-    plt.colorbar()
+    # plt.colorbar()
     plt.title(titles[1])
+
+    difference = im1 - im2
+    vmax = np.abs(difference).max()
+    ax3 = plt.subplot(1, 3, 3)
+    plt.imshow(difference, vmin=-vmax, vmax=vmax, interpolation='nearest',
+               cmap='RdBu')
+    chisq = np.sum(difference**2)
+    plt.title("Difference, $\chi^2$={:0.2f}".format(chisq))
+
+    for ax in [ax1, ax2, ax3]:
+        ax.set_xticks([])
+        ax.set_yticks([])
+
     plt.show()
+    plt.tight_layout()
 
 
 def compare_holos(*holos, titles=None, cmap="Greys"):
@@ -412,7 +427,7 @@ def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
     return data_stack_xz, data_stack_yz, model_stack_xz, model_stack_yz
 
 
-if __name__ == '__main__':
+if __name__ == '__main__1':
     # Load PS data
     print("loading data...")
     PS_data, PS_zpos = load_few_PS_data_Jan10()
