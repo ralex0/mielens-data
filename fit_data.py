@@ -89,26 +89,6 @@ def compare_holos(*holos, titles=None, cmap="Greys"):
             plt.title(titles[index])
     plt.show()
 
-def fit_data():
-    PS_data, PS_zpos = load_PS60xWater_data()
-    Si_data, Si_zpos = load_Silica60xWater_data()
-
-    PS_guess = make_guess_parameters(PS_zpos, n=1.58, r=0.8)
-    Si_guess = make_guess_parameters(Si_zpos, n=1.46, r=0.5)
-
-    PS_fit = [mlf.fit_mielens(data, guess) for data, guess in zip(PS_data, PS_guess)]
-    Si_fit = [mlf.fit_mielens(data, guess) for data, guess in zip(Si_data, Si_guess)]
-
-    PS_holo = [hologram2array(data) for data in PS_data]
-    Si_holo = [hologram2array(data) for data in Si_data]
-
-    PS_errsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, PS_fit)]
-    Si_errsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(Si_data, Si_fit)]
-
-    Si_fit_holo = [hologram2array(calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])))
-                   for data, fit in zip(Si_data, Si_fit)]
-    PS_fit_holo = [hologram2array(calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])))
-                   for data, fit in zip(PS_data, PS_fit)]
 
 def compare_guess_holo(data, guesses):
     fitter = mlf.Fitter(data, guesses)
@@ -119,18 +99,6 @@ def compare_guess_holo(data, guesses):
     data_holo = hologram2array(data)
     compare_imgs(data_holo, guess_holo, ['data', 'guess'])
 
-def compare_fit_Jan4_data():
-    PS_data, PS_zpos = load_few_PS_data_Jan4()
-    PS_guess = make_guess_parameters(PS_zpos, n=1.58, r=0.5)
-
-    mofit = [mlf.fit_mieonly(data, guess) for data, guess in zip(PS_data, PS_guess)]
-    mlfit = [mlf.fit_mielens(data, guess) for data, guess in zip(PS_data, PS_guess)]
-
-    moholo = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit)]
-    mlholo = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(PS_data, mlfit)]
-
-    moerrsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(PS_data, mofit)]
-    mlerrsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, mlfit)]
 
 def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
     scatterers = [fit.scatterer for fit in fits]
