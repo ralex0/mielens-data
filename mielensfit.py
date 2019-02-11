@@ -52,7 +52,7 @@ def pymc3_mielens(hologram, guess_parameters, **kwargs):
 
         obs = pm.Normal('obs', mu=cost([x, y, z, radius, index, lens_angle]), sd=1, observed=0)
         trace = pm.sample(100, tune=50, njobs=1)
-    
+
     return trace
 
 def minimize_mielens_de(hologram, guess_parameters, **kwargs):
@@ -92,18 +92,27 @@ def _make_minimize_initial_guess(data, guess_parameters):
     guess = np.hstack((guess_sphere.center, guess_sphere.r, guess_sphere.n, lens_guess))
     return guess
 
+
 def fit_mielens(hologram, guess_parameters, strategy='nmp'):
-    sphere_priors, lens_prior = _make_priors(hologram, guess_parameters)
-    model = PerfectLensModel(sphere_priors, noise_sd=hologram.noise_sd, lens_angle=lens_prior)
-    if strategy == 'nmp':
-        optimizer = NmpfitStrategy()
-    elif strategy == 'leastsquares':
-        optimizer = LeastSquaresScipyStrategy()
-    try:
-        result = optimizer.optimize(model, hologram)
-    except AttributeError:
-        result = optimizer.minimize(model, hologram)
+    current_guess_parameters = {k: v for k, v in guess_parameters.items()}
+    for prior_function in [_make_priors, _make_position_only_priors]:
+        sphere_priors, lens_prior = _make_priors(
+            hologram, current_guess_parameters)
+        model = PerfectLensModel(
+            sphere_priors, noise_sd=hologram.noise_sd, lens_angle=lens_prior)
+        print(prior_function.__name__)
+        print(sphere_priors)
+        if strategy == 'nmp':
+            optimizer = NmpfitStrategy()
+        elif strategy == 'leastsquares':
+            optimizer = LeastSquaresScipyStrategy()
+        try:
+            result = optimizer.optimize(model, hologram)
+        except AttributeError:
+            result = optimizer.minimize(model, hologram)
+        current_guess_parameters['z'] = result.parameters['center.2']
     return result
+
 
 def fit_mieonly(hologram, guess_parameters):
     priors, _ = _make_priors(hologram, guess_parameters)
@@ -131,21 +140,36 @@ def globalop_mielens(hologram, guess_parameters):
     result = GradientFreeStrategy().optimize(model, hologram)
     return result
 
+
 def _make_priors(hologram, guess_parameters):
     center = _make_center_priors(hologram, guess_parameters)
-    s = Sphere(n=prior.Uniform(1.33, 2.3, guess=guess_parameters['n']), 
+    s = Sphere(n=prior.Uniform(1.33, 2.3, guess=guess_parameters['n']),
                r=prior.Uniform(0.05, 5, guess=guess_parameters['r']),
                center=center)
     lens_guess = get_guess_angle(guess_parameters)
     lens_prior = prior.Uniform(0, 1.2, guess=lens_guess)
     return s, lens_prior
 
+
+def _make_position_only_priors(hologram, guess_parameters):
+    center = _make_center_priors(hologram, guess_parameters)
+    s = Sphere(n=guess_parameters['n'],
+               r=guess_parameters['r'],
+               center=center)
+    lens_guess = get_guess_angle(guess_parameters)
+    return s, lens_guess
+
+
 def _make_center_priors(im, guess_parameters, zextent=5):
     extents = get_extents(im)
     extent = max(extents['x'], extents['y'])
-    
+
     spacing = get_spacing(im)
     center = center_find(im) * spacing + [im.x[0], im.y[0]]
+    if 'x' in guess_parameters:
+        pass  # update center... for now the xy is not the problem.
+    if 'y' in guess_parameters:
+        pass
 
     xpar = prior.Uniform(im.x.values.min(), im.x.values.max(), guess=center[0])
     ypar = prior.Uniform(im.y.values.min(), im.y.values.max(), guess=center[1])
