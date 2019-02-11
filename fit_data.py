@@ -93,11 +93,16 @@ def compare_holos(*holos, titles=None, cmap="Greys"):
 def compare_guess_holo(data, guesses):
     fitter = mlf.Fitter(data, guesses)
     guess_scatterer = fitter.make_guessed_scatterer()
-    lens_angle = fitter.guess_lens_angle()
-    guess_holo = hologram2array(calc_holo(data, guess_scatterer,
-                                theory=MieLens(lens_angle=lens_angle.guess)))
+    guess_lens_angle = fitter.guess_lens_angle()
+    compare_fit_holo(data, guess_scatterer, guess_lens_angle.guess)
+
+
+def compare_fit_holo(data, fit_scatterer, fit_lens_angle):
+    guess_holo = hologram2array(
+        calc_holo(data, fit_scatterer,
+                  theory=MieLens(lens_angle=fit_lens_angle)))
     data_holo = hologram2array(data)
-    compare_imgs(data_holo, guess_holo, ['data', 'guess'])
+    compare_imgs(data_holo, guess_holo, ['Data', 'Model'])
 
 
 def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
@@ -120,7 +125,7 @@ def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
     return data_stack_xz, data_stack_yz, model_stack_xz, model_stack_yz
 
 
-if __name__ == '__main__1':
+if __name__ == '__main__':
     # Load PS data
     print("loading data...")
     PS_data, PS_zpos = load_few_PS_data_Jan10()
