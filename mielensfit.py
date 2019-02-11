@@ -149,6 +149,53 @@ def calc_err_sq(data, scatterer, theory='mielens', **kwargs):
 
 # ~~~ loading data
 
+class NormalizedDataLoader(object):
+    def __init__(self, data_filenames, metadata, particle_position,
+                 background_prefix="bg", darkfield_prefix=None):
+        self.data_filenames = list(data_filenames)
+        self.metadata = metadata
+        self.particle_position = particle_position
+        self.background_prefix = background_prefix
+        self.darkfield_prefix = darkfield_prefix
+
+        self.root_folder = os.path.dirname(self.data_filenames[0])
+        self._reference_image = hp.load_image(
+            self.data_filenames[0], channel=RGB_CHANNEL, **self.metadata)
+        self._background = self._load_background()
+        self._darkfield = self._load_darkfield()
+
+    def load_all_data(self):
+        return [self._load_data(nm) for nm in self.data_filenames]
+
+    def _load_data(self, name):  # need metadata, particle_position!
+        data = hp.load_image(name, channel=RGB_CHANNEL, **self.metadata)
+        data = bg_correct(data, self._background, self._darkfield)
+        data = subimage(data, self.particle_position[::-1], HOLOGRAM_SIZE)
+        data = normalize(data)
+        return data
+
+    def _load_background(self):
+        names = self._get_filenames_which_contain(self.background_prefix)
+        background = load_average(
+            names, refimg=self._reference_image, channel=RGB_CHANNEL)
+        return background
+
+    def _load_darkfield(self):
+        if self.darkfield_prefix is not None:
+            names = self._get_filenames_which_contain(self.darkfield_prefix)
+            darkfield = load_average(
+                names, refimg=self._reference_image, channel=RGB_CHANNEL)
+        else:
+            darkfield = None
+        return darkfield
+
+    def _get_filenames_which_contain(self, prefix):
+        paths = [os.path.join(self.root_folder, name)
+                 for name in os.listdir(self.root_folder)
+                 if prefix in name]
+        return paths
+
+
 def load_bgdivide_crop(
         path, metadata, particle_position, bg_prefix="bg", df_prefix=None,
         channel=RGB_CHANNEL, size=HOLOGRAM_SIZE):
@@ -159,6 +206,12 @@ def load_bgdivide_crop(
     data = subimage(data, particle_position[::-1], size)
     data = normalize(data)
     return data
+
+
+def load_bgdivide_crop_all_images(paths, metadata, particle_position, **kwargs):
+    loader = NormalizedDataLoader(paths, metadata, particle_position, **kwargs)
+    return loader.load_all_data()
+
 
 def load_bkg(path, bg_prefix, refimg):
     bkg_paths = get_bkg_paths(path, bg_prefix)

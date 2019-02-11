@@ -167,9 +167,9 @@ def load_few_PS_data_Jan8():
 def load_few_PS_data_Jan10():
     camera_resolution = 5.9633 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
+                'medium_index' : 1.348,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
     position = [640, 306]
 
     holonums = range(51)
@@ -178,11 +178,13 @@ def load_few_PS_data_Jan10():
              for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                        particle_position=position,
-                                        bg_prefix="bkg",
-                                        df_prefix="dark")
-                 for path in paths]
+        holos = mlf.load_bgdivide_crop_all_images(
+            paths, metadata, position, darkfield_prefix="dark",
+            background_prefix="bkg")
+        # holos = [mlf.load_bgdivide_crop(
+            # path=path, metadata=metadata, particle_position=position,
+            # bg_prefix="bkg", df_prefix="dark")
+            # for path in paths]
     return holos, zpos
 
 def load_few_BigPS_data_Jan10():
@@ -410,17 +412,36 @@ def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
 
 if __name__ == '__main__':
     # Load PS data
+    print("loading data...")
     PS_data, PS_zpos = load_few_PS_data_Jan10()
+    print("guessing parameters...")
     PS_guess = make_guess_parameters(PS_zpos, n=1.58, r=0.5)
 
+    # Fit the data:
+    # ~~~ For speed we only fit the worst one, ``33`` with a chisq of 99.1
+    PS_data = PS_data[33:34]
+    PS_zpos = PS_zpos[33:34]
+    PS_guess = PS_guess[33:34]
+    # ~~~
+    print("fitting data...")
+    mlfit_PS = [mlf.fit_mielens(data, guess)
+                for data, guess in zip(PS_data, PS_guess)]
+    mlholo_PS = [
+        calc_holo(
+            data, fit.scatterer,
+            theory=MieLens(lens_angle=fit.parameters['lens_angle']))
+        for data, fit in zip(PS_data, mlfit_PS)]
+    residuals = [data - model for data, model in zip(PS_data, mlholo_PS)]
+    chisqs = [(r.values**2).sum() for r in residuals]
+    """
     # Load fits I've already done
     mofit_PS = [
-        hp.load("fits/PSJan10/mofit{num}.h5")
+        hp.load("fits/PSJan10/mofit{}.h5".format(num))
         for num in [
             "{}".format(str(num).rjust(3, '0'))
             for num in range(len(PS_data))]]
     mlfit_PS = [
-        hp.load("fits/PSJan10/mlfit{num}.h5")
+        hp.load("fits/PSJan10/mlfit{}.h5".format(num))
         for num in [
             "{}".format(str(num).rjust(3, '0'))
             for num in range(len(PS_data))]]
@@ -446,3 +467,4 @@ if __name__ == '__main__':
 
     #moerrsq_Si = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(Si_data, mofit_Si)]
     #mlerrsq_Si = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(Si_data, mlfit_Si)]
+    """
