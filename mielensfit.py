@@ -91,9 +91,12 @@ class Fitter(object):
         image_min_y = image_y_values.min()
         image_max_y = image_y_values.max()
 
-        pixel_spacing = get_spacing(self.data)
-        image_lower_left = np.array([image_min_x, image_min_y])
-        center = center_find(self.data) * pixel_spacing + image_lower_left
+        if ('x' not in self.guess) or ('y' not in self.guess):
+            pixel_spacing = get_spacing(self.data)
+            image_lower_left = np.array([image_min_x, image_min_y])
+            center = center_find(self.data) * pixel_spacing + image_lower_left
+        else:
+            center = [self.guess['x'], self.guess['y']]
 
         xpar = prior.Uniform(image_min_x, image_max_x, guess=center[0])
         ypar = prior.Uniform(image_min_y, image_max_y, guess=center[1])
@@ -104,7 +107,6 @@ class Fitter(object):
         zpar = prior.Uniform(
             -extent * zextent, extent * zextent, guess=self.guess['z'])
         return xpar, ypar, zpar
-
 
 def fit_mielens(hologram, guess_parameters):
     fitter = Fitter(hologram, guess_parameters)
