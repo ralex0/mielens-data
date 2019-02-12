@@ -116,4 +116,8 @@ if __name__ == '__main__':
     for i, data in enumerate(all_data):
         this_best = randomly_refit(data, parse_result(GOOD_FITS[str(i)]))
         best_fits.append(this_best)
+    fits_dict = OrderedDict()
+    for key, value in enumerate(best_fits):
+        fits_dict.update({str(key): value})
+    json.dump(fits_dict, open("./polished-fits.json", "w"), indent=4)
 
