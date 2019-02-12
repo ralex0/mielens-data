@@ -108,6 +108,7 @@ class Fitter(object):
             -extent * zextent, extent * zextent, guess=self.guess['z'])
         return xpar, ypar, zpar
 
+
 def fit_mielens(hologram, guess_parameters):
     fitter = Fitter(hologram, guess_parameters)
     return fitter.fit()
