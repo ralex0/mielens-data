@@ -239,5 +239,5 @@ if __name__ == '__main__':
     parameters = OrderedDict()
     for i, f in enumerate(fits_best):
         parameters.update({str(i): f.parameters})
-    json.dump(parameters, open('./best-fit-parameters.json', 'w'), indent=4)
+    json.dump(parameters, open('./good-fit-parameters.json', 'w'), indent=4)
 
