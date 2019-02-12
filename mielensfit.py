@@ -45,6 +45,10 @@ def _get_bounds(hologram, guess_parameters):
 
 class Fitter(object):
     _default_lens_angle = 0.8
+    _min_index = 1.33
+    _max_index = 2.3
+    _min_radius = 0.05
+    _max_radius = 5.0
 
     def __init__(self, data, guess):
         """for now, this is for the lens model only
@@ -66,14 +70,17 @@ class Fitter(object):
             sphere_priors, noise_sd=self.data.noise_sd, lens_angle=lens_prior)
         optimizer = NmpfitStrategy()
         result = optimizer.fit(model, self.data)
+        # FIXME this result sometimes leaves the allowed ranges. To get
         # result = hp.fitting.fit(model, self.data, minimizer=optimizer)
         return result
 
     def make_guessed_scatterer(self):
         center = self._make_center_priors()
-        scatterer = Sphere(n=prior.Uniform(1.33, 2.3, guess=self.guess['n']),
-                           r=prior.Uniform(0.05, 5, guess=self.guess['r']),
-                           center=center)
+        index = prior.Uniform(
+            self._min_index, self._max_index, guess=self.guess['n'])
+        radius = prior.Uniform(
+            self._min_radius, self._max_radius, guess=self.guess['r'])
+        scatterer = Sphere(n=index, r=radius, center=center)
         return scatterer
 
     def guess_lens_angle(self):

@@ -33,7 +33,13 @@ def parse_result(parameters):
     holopy_keys = [
         'n', 'r', 'lens_angle', 'center.0', 'center.1', 'center.2']
     my_keys = ['n', 'r', 'lens_angle', 'x', 'y', 'z']
-    return {mk: parameters[hk] for hk, mk in zip(holopy_keys, my_keys)}
+    parsed = {mk: parameters[hk] for hk, mk in zip(holopy_keys, my_keys)}
+    # Then we need to clip values, since the fucking fitter doesn't
+    parsed['n'] = np.clip(
+        parsed['n'], mlf.Fitter._min_index, mlf.Fitter._max_index)
+    parsed['r'] = np.clip(
+        parsed['r'], mlf.Fitter._min_radius, mlf.Fitter._max_radius)
+    return parsed
 
 
 class RandomRefitter(object):
