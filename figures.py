@@ -10,6 +10,10 @@ from fit_data import load_few_PS_data_Jan10, compare_imgs
 
 
 # FIXME this does not do interpolation yet!
+# Ron did it by doing
+# z_positions=np.linspace(26.5, -23.5, 51))
+# I think it needs to be interpolated though b/c the z positions need to
+# be ~10x finer than this.
 class XZFigure(object):
     def __init__(self, fit_parameters):
         self.fit_parameters = fit_parameters
