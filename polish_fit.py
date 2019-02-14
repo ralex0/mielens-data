@@ -66,17 +66,9 @@ class RandomRefitter(object):
         best_index = np.argmin(all_chisqs)
         return all_params[best_index]
 
-    def evaluate_residuals(self, params):
-        """params is a dict-like"""
-        fitter = mlf.Fitter(self.data, params)
-        scatterer = fitter.make_guessed_scatterer()
-        theory = MieLens(lens_angle=params['lens_angle'])
-        model = calc_holo(self.data, scatterer, theory=theory)
-        return self.data.values.squeeze() - model.values.squeeze()
-
     def evaluate_chisq(self, params):
-        residuals = self.evaluate_residuals(params)
-        return np.sum(residuals**2)
+        fitter = mlf.Fitter(self.data, params)
+        return fitter.evaluate_chisq(params)
 
     def _refit_once(self):
         random_initial_guess = self._randomize_parameters()

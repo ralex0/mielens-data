@@ -74,6 +74,22 @@ class Fitter(object):
         # result = hp.fitting.fit(model, self.data, minimizer=optimizer)
         return result
 
+    def evaluate_model(self, params):
+        fitter = Fitter(self.data, params)  # FIXME a bit weird
+        scatterer = fitter.make_guessed_scatterer()
+        theory = MieLens(lens_angle=params['lens_angle'])
+        model = calc_holo(self.data, scatterer, theory=theory)
+        return model
+
+    def evaluate_residuals(self, params):
+        """params is a dict-like"""
+        model = self.evaluate_model(params)
+        return self.data.values.squeeze() - model.values.squeeze()
+
+    def evalaute_chisq(self, params):
+        residuals = self.evaluate_residuals(params)
+        return np.sum(residuals**2)
+
     def make_guessed_scatterer(self):
         center = self._make_center_priors()
         index = prior.Uniform(
