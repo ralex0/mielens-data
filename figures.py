@@ -8,6 +8,14 @@ General comments about this:
     another option is to fix (n, r, lens_angle), and do a continuously
     varying z, to show a similar plot. I think that might be the
     clearest.
+
+    What I've settled on here is using the mean radius, index, lens angle
+    from all the fits. This gives a big bright spot in the center.
+
+    I don't see a big difference in the way it looks from that and
+    using an attempt at fitting all the frames at once. Since fitting
+    all the frames gives slightly weirder values (to avoid the bright
+    spot in the middle...), I am just using mean from the fits.
 """
 import json
 from collections import OrderedDict
@@ -49,7 +57,10 @@ class XZFigure(object):
     def make_plot(self):
         data = self.grab_xz_slice(self.resampled_data)
         model = self.grab_xz_slice(self.resampled_model)
-        vmax = max(data.max(), model.max())
+        # vmax = max(data.max(), model.max())
+        # -- the model is much brighter than the data at the focus.
+        # Some of this is that the data is saturated near the focus
+        vmax = data.max()
         vmin = 0
         fig = plt.figure(figsize=self.figsize)
 
@@ -74,7 +85,7 @@ class XZFigure(object):
         return interpolator(self._resampled_zs_px)
 
 
-if __name__ == '__main__':
+def find_best_global_index_radius_lensangle():
     fits = json.load(open('./finalized-fits.json'),
                      object_pairs_hook=OrderedDict)
     fits_list = [v for v in fits.values()]
@@ -85,6 +96,50 @@ if __name__ == '__main__':
     shifts = np.linspace(0, 1, len(fits_list))
     for shift, fit in zip(shifts, fits_list):
         fit['z'] = (1 - shift) * firstz + shift * lastz
+
+    fig = XZFigure(fits_list)
+    data = fig._raw_data
+
+    def get_residuals(index_radius_angle):
+        index, radius, angle = index_radius_angle
+        for f in fits_list:
+            f['n'] = index
+            f['r'] = radius
+            f['lens_angle'] = angle
+        fig.fit_parameters = fits_list
+        model = fig._create_model_images()
+        return np.ravel(model - data)
+
+    indices = np.array([f['n'] for f in fits_list])
+    radii = np.array([f['r'] for f in fits_list])
+    angles = np.array([f['lens_angle'] for f in fits_list])
+    p0 = np.array([indices.mean(), radii.mean(), angles.mean()])
+    res = leastsq(get_residuals, p0, maxfev=75)
+    return res  # 1.52, 0.504, 0.496
+
+
+
+if __name__ == '__main__':
+    fits = json.load(open('./finalized-fits.json'),
+                     object_pairs_hook=OrderedDict)
+    fits_list = [v for v in fits.values()]
+    indices = np.array([f['n'] for f in fits_list])
+    radii = np.array([f['r'] for f in fits_list])
+    angles = np.array([f['lens_angle'] for f in fits_list])
+    best_radius = radii.mean()  # 0.4869
+    best_index = indices.mean()  # 1.566
+    best_angle = angles.mean()  # 0.613
+    # Then we re-sample the zs to be evenly spaced, to avoid artifacts
+    # near the focus:
+    firstz = fits_list[0]['z']
+    lastz = fits_list[-1]['z']
+    shifts = np.linspace(0, 1, len(fits_list))
+    for shift, fit in zip(shifts, fits_list):
+        fit['z'] = (1 - shift) * firstz + shift * lastz
+        # Then let's also update index, angle to reasonable values:
+        fit['n'] = best_index
+        fit['r'] = best_radius
+        fit['lens_angle'] = best_angle
 
     fig = XZFigure(fits_list)
     fig.make_plot()
