@@ -1,5 +1,5 @@
 """
-General comments about this:
+    General comments about this:
     Using the best-fits obviously gives a nice result, but the best fits
     are tricky to interpolate since the z fluctuates.
     But using a linear z interpolation for the model doesn't give a
@@ -26,15 +26,20 @@ import matplotlib.pyplot as plt
 
 import mielensfit as mlf
 from fit_data import load_few_PS_data_Jan10, compare_imgs
+import monkeyrc as mrc
 
 
 
 class XZFigure(object):
     figsize = [4, 4]
+    cmap = 'GraySaturated'
 
-    def __init__(self, fit_parameters):
+    def __init__(self, fit_parameters, holos=None):
         self.fit_parameters = fit_parameters
-        self._holos, _ = load_few_PS_data_Jan10()
+        if holos is None:
+            self._holos, _ = load_few_PS_data_Jan10()
+        else:
+            self._holos = holos
         self._raw_data = np.array([h.values.squeeze() for h in self._holos])
         self._raw_model = self._create_model_images()
 
@@ -67,11 +72,11 @@ class XZFigure(object):
         ax1 = fig.add_subplot(1, 2, 1)
         ax2 = fig.add_subplot(1, 2, 2)
         for ax, im, title in zip([ax1, ax2], [data, model], ['Data', 'Model']):
-            ax.imshow(im, interpolation='nearest', cmap='gray', vmin=vmin,
+            ax.imshow(im, interpolation='nearest', cmap=self.cmap, vmin=vmin,
                       vmax=vmax)
             ax.set_xticks([])
             ax.set_yticks([])
-            ax.set_title(title)
+            # ax.set_title(title)
         return fig, [ax1, ax2]
 
     def _setup_z_values(self):
@@ -118,8 +123,7 @@ def find_best_global_index_radius_lensangle():
     return res  # 1.52, 0.504, 0.496
 
 
-
-if __name__ == '__main__':
+def get_fits():
     fits = json.load(open('./finalized-fits.json'),
                      object_pairs_hook=OrderedDict)
     fits_list = [v for v in fits.values()]
@@ -140,7 +144,12 @@ if __name__ == '__main__':
         fit['n'] = best_index
         fit['r'] = best_radius
         fit['lens_angle'] = best_angle
+    return fits_list
 
-    fig = XZFigure(fits_list)
+
+if __name__ == '__main__':
+    fits = get_fits()
+    holos = load_few_PS_data_Jan10()[0]
+    fig = XZFigure(fits, holos=holos)
     fig.make_plot()
     plt.show()

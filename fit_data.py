@@ -22,7 +22,8 @@ def load_few_PS_data_Jan10():
 
     holonums = range(51)
     zpos = np.linspace(25, -25, 51) - 2.5
-    paths = ["data/Mixed-60xWater-011019/greyscale-PS/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
+    paths = ["data/Mixed-60xWater-011019/greyscale-PS/im_" +
+             "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
