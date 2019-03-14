@@ -250,14 +250,14 @@ class TrackingSedimentationFigure(object):
         return fig
 
     def _make_axes(self, fig):
-        ax_topholo = fig.add_axes([0.0, 0.7, 1 / 5.25, 1 / 5.25], label="topholo")
-        ax_midholo = fig.add_axes([0.0, 0.4, 1 / 5.25, 1 / 5.25], label="midholo")
-        ax_btmholo = fig.add_axes([0.0, 0.1, 1 / 5.25, 1 / 5.25], label="midholo")
-        ax_sedplt = fig.add_axes([1.125/5.25, 0.125/5.25, 2/5.25, 5.0/5.25], 
+        ax_topholo = fig.add_axes([0.0, 0.7, 1 / 5.25, .2], label="topholo")
+        ax_midholo = fig.add_axes([0.0, 0.4, 1 / 5.25, .2], label="midholo")
+        ax_btmholo = fig.add_axes([0.0, 0.1, 1 / 5.25, .2], label="midholo")
+        ax_sedplt = fig.add_axes([1.125/5.25, 0.025, 2/5.25, 1.0], 
                                  projection='3d', label="sedplot")
-        ax_n = fig.add_axes([3.5/5.25, 0.0, 1.75/5.25, 1.5/5.25], label="nplot")
-        ax_r = fig.add_axes([3.5/5.25, 0.35, 1.75/5.25, 1.5/5.25], label="rplot")
-        ax_z = fig.add_axes([3.5/5.25, 0.7, 1.75/5.25, 1.5/5.25], label="zplot")
+        ax_n = fig.add_axes([3.5/5.25, 0.0, 1.75/5.25, .3], label="nplot")
+        ax_r = fig.add_axes([3.5/5.25, 0.35, 1.75/5.25, .3], label="rplot")
+        ax_z = fig.add_axes([3.5/5.25, 0.7, 1.75/5.25, .3], label="zplot")
         return [ax_topholo, ax_midholo, ax_btmholo], ax_sedplt, [ax_n, ax_r, ax_z]
 
     def _plot_holograms(self, axes, indices):
