@@ -1,3 +1,10 @@
+"""
+For reference, the xy projections are at:
+    below = 69 / 276 =  0.25 of the way from the bottom
+    focus = 148 / 276 = 0.536 of the way from the bottom
+    above = 207 / 276 = 0.75 of the way from the bottom
+
+"""
 import os
 import sys
 import json
@@ -199,6 +206,7 @@ def get_mielens_fits():
         fit['r'] = best_radius
         fit['lens_angle'] = best_angle
     return fits_list
+
 
 def get_resampled_data_and_models():
     mielens_fit_parameters = get_mielens_fits()
