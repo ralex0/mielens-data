@@ -126,7 +126,7 @@ def find_best_global_index_radius_lensangle():
     return res  # 1.52, 0.504, 0.496
 
 
-def get_fits():
+def get_mielens_fits():
     fits = json.load(open(os.path.join(HERE, 'finalized-fits.json')),
                      object_pairs_hook=OrderedDict)
     fits_list = [v for v in fits.values()]
@@ -151,7 +151,7 @@ def get_fits():
 
 
 if __name__ == '__main__':
-    fits = get_fits()
+    fits = get_mielens_fits()
     holos = load_few_PS_data_Jan10()[0]
     fig = XZFigure(fits, holos=holos)
     fig.make_plot()
