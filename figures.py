@@ -17,6 +17,7 @@
     all the frames gives slightly weirder values (to avoid the bright
     spot in the middle...), I am just using mean from the fits.
 """
+import os
 import json
 from collections import OrderedDict
 
@@ -28,6 +29,8 @@ import mielensfit as mlf
 from fit_data import load_few_PS_data_Jan10, compare_imgs
 import monkeyrc as mrc
 
+
+HERE = os.path.dirname(__file__)
 
 
 class XZFigure(object):
@@ -41,7 +44,7 @@ class XZFigure(object):
         else:
             self._holos = holos
         self._raw_data = np.array([h.values.squeeze() for h in self._holos])
-        self._raw_model = self._create_model_images()
+        self._raw_model = self.create_model_images()
 
         self._xy_px_size = np.diff(self._holos[0].x.values).mean()
 
@@ -49,7 +52,7 @@ class XZFigure(object):
         self.resampled_data = self.resample(self._raw_data, kind='nearest')
         self.resampled_model = self.resample(self._raw_model, kind='linear')
 
-    def _create_model_images(self):
+    def create_model_images(self):
         models = []
         for holo, params in zip(self._holos, self.fit_parameters):
             fitter = mlf.Fitter(holo, params)
@@ -91,7 +94,7 @@ class XZFigure(object):
 
 
 def find_best_global_index_radius_lensangle():
-    fits = json.load(open('./finalized-fits.json'),
+    fits = json.load(open(os.path.join(HERE, 'finalized-fits.json')),
                      object_pairs_hook=OrderedDict)
     fits_list = [v for v in fits.values()]
     # Then we re-sample the zs to be evenly spaced, to avoid artifacts
@@ -112,7 +115,7 @@ def find_best_global_index_radius_lensangle():
             f['r'] = radius
             f['lens_angle'] = angle
         fig.fit_parameters = fits_list
-        model = fig._create_model_images()
+        model = fig.create_model_images()
         return np.ravel(model - data)
 
     indices = np.array([f['n'] for f in fits_list])
@@ -124,7 +127,7 @@ def find_best_global_index_radius_lensangle():
 
 
 def get_fits():
-    fits = json.load(open('./finalized-fits.json'),
+    fits = json.load(open(os.path.join(HERE, 'finalized-fits.json')),
                      object_pairs_hook=OrderedDict)
     fits_list = [v for v in fits.values()]
     indices = np.array([f['n'] for f in fits_list])

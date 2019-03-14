@@ -1,3 +1,4 @@
+import os
 import time
 import warnings
 
@@ -12,6 +13,8 @@ from holopy.scattering.theory import MieLens
 import mielensfit as mlf
 
 
+HERE = os.path.dirname(__file__)
+
 def load_few_PS_data_Jan10():
     camera_resolution = 5.9633 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
@@ -22,7 +25,7 @@ def load_few_PS_data_Jan10():
 
     holonums = range(51)
     zpos = np.linspace(25, -25, 51) - 2.5
-    paths = ["data/Mixed-60xWater-011019/greyscale-PS/im_" +
+    paths = [HERE + "/data/Mixed-60xWater-011019/greyscale-PS/im_" +
              "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     with warnings.catch_warnings():
