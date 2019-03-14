@@ -1,6 +1,7 @@
 import os
 import time
 import warnings
+import json
 
 import numpy as np
 
@@ -268,9 +269,9 @@ class TrackingSedimentationFigure(object):
             ax.axis('off')
 
     def _plot_sedimentation(self, axes):
-        positions = {'x': [fit.parameters['center.0'] for fit in self.mielens_fits],
-                     'y': [fit.parameters['center.1'] for fit in self.mielens_fits],
-                     'z': [fit.parameters['center.2'] for fit in self.mielens_fits]}
+        positions = {'x': [fit['center.0'] for fit in self.mielens_fits.values()],
+                     'y': [fit['center.1'] for fit in self.mielens_fits.values()],
+                     'z': [fit['center.2'] for fit in self.mielens_fits.values()]}
 
         axes.plot3D(positions['x'], positions['y'], positions['z'], 'gray')
         axes.set_xlabel('x', {'size': 8})
@@ -285,27 +286,27 @@ class TrackingSedimentationFigure(object):
         ax_n, ax_r, ax_z = axes
         ax_n.set_xlabel('Elapsed time (s)', {'size': 8})
         ax_n.set_ylabel('index of refraction', {'size': 8})
-        ax_n.scatter(self.frame_times, [fit.scatterer.n for fit in self.mielens_fits], 
+        ax_n.scatter(self.frame_times, [fit['n'] for fit in self.mielens_fits.values()], 
                      color='green', s=4, marker='o', label="with lens")
-        ax_n.scatter(self.frame_times, [fit.scatterer.n for fit in self.mieonly_fits],
+        ax_n.scatter(self.frame_times, [fit['n'] for fit in self.mieonly_fits.values()],
                      color='red', s=4, marker='^', label="without lens")
         ax_n.legend(fontsize=6)
         ax_n.tick_params(labelsize=7)
 
         ax_r.set_xlabel('Elapsed time (s)', {'size': 8})
         ax_r.set_ylabel('index of refraction', {'size': 8})
-        ax_r.scatter(self.frame_times, [fit.scatterer.r for fit in self.mielens_fits],
+        ax_r.scatter(self.frame_times, [fit['r'] for fit in self.mielens_fits.values()],
                      color='green', s=4, marker='o', label="with lens")
-        ax_r.scatter(self.frame_times, [fit.scatterer.r for fit in self.mieonly_fits],
+        ax_r.scatter(self.frame_times, [fit['r'] for fit in self.mieonly_fits.values()],
                      color='red', s=4, marker='^', label="without lens")
         ax_r.legend(fontsize=6)
         ax_r.tick_params(labelsize=7)
 
         ax_z.set_xlabel('Elapsed time (s)', {'size': 8})
         ax_z.set_ylabel('z-position  ($\mu m$)', {'size': 8})
-        ax_z.scatter(self.frame_times, [fit.scatterer.center[2] for fit in self.mielens_fits], 
+        ax_z.scatter(self.frame_times, [fit['center.2'] for fit in self.mielens_fits.values()], 
                      color='green', s=4, marker='o', label="with lens")
-        ax_z.scatter(self.frame_times, [fit.scatterer.center[2] for fit in self.mieonly_fits],
+        ax_z.scatter(self.frame_times, [fit['center.2'] for fit in self.mieonly_fits.values()],
                      color='red', s=4, marker='^', label="without lens")
         ax_z.legend(fontsize=6)
         ax_z.tick_params(labelsize=7)
@@ -317,15 +318,12 @@ if __name__ == '__main__':
     PS_times = np.load("./fits/sedimentation/PS_frame_times.npy")
     Si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
 
-    mofit_Si = [hp.load(f"fits/sedimentation/Si_mieonly/{num}.h5") 
-                for num in [f"{num}".zfill(3) for num in range(len(Si_data))]]
-    mlfit_Si = [hp.load(f"fits/sedimentation/Si_mielens/{num}.h5") 
-                for num in [f"{num}".zfill(3) for num in range(len(Si_data))]]
+    
+    mofit_Si = json.load(open("fits/sedimentation/mieonly_sedimentation_fits_Si.json", 'r')) 
+    mlfit_Si = json.load(open("fits/sedimentation/mielens_sedimentation_fits_Si.json", 'r'))
 
-    mofit_PS = [hp.load(f"fits/sedimentation/PS_mieonly/{num}.h5") 
-                for num in [f"{num}".zfill(3) for num in range(len(PS_data))]]
-    mlfit_PS = [hp.load(f"fits/sedimentation/PS_mielens/{num}.h5") 
-                for num in [f"{num}".zfill(3) for num in range(len(PS_data))]]
+    mofit_PS = json.load(open("fits/sedimentation/mieonly_sedimentation_fits_PS.json", 'r'))
+    mlfit_PS = json.load(open("fits/sedimentation/mielens_sedimentation_fits_PS.json", 'r'))
 
     figure_PS = TrackingSedimentationFigure(PS_data, mlfit_PS, mofit_PS, PS_times)
     figure_Si = TrackingSedimentationFigure(Si_data, mlfit_Si, mofit_Si, Si_times)
