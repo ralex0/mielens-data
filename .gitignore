@@ -4,3 +4,4 @@
 *.swp
 data/
 __pycache__/
+fits/
