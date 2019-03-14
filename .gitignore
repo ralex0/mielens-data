@@ -1,5 +1,6 @@
 *.pyc
 *.png
+*.svg
 *.swp
 data/
 __pycache__/
