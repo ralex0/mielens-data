@@ -16,10 +16,12 @@ from holopy.scattering import calc_holo
 from holopy.scattering.theory import MieLens
 
 import mielensfit as mlf
+import figures
 
 
 class TrackingSedimentationFigure(object):
-    _figsize = (5.25, 4.0)
+    # _figsize = (5.25, 4.0)  -- true figsize needs to be 5.25, x
+    _figsize = (8, 6)
     def __init__(self, data, mielens_fits, mieonly_fits, frame_times=None):
         self.data = data
         self.mielens_fits = mielens_fits
@@ -47,40 +49,55 @@ class TrackingSedimentationFigure(object):
 
     def _make_axes(self, fig):
         # 1. Define the positions for all the axes:
-        xpad = 0.125 / self._figsize[0]
-        ypad = 0.125 / self._figsize[1]
+        xpad = 0.02
+        # make ypad the same as xpad in real units:
+        ypad = 0.02 * self._figsize[0] / self._figsize[1]
 
-        width_holo = 1. / self._figsize[0]
+        width_holo = 0.2
         height_holo = (1 - 4 * ypad) / 3.
-        width_plot = 1. / self._figsize[0]
-        height_plot = height_holo
+        width_plot = 0.2
+        height_plot = height_holo - ypad  # extra space for labels
         width_sedplt = (1 - 4 * xpad - width_plot - width_holo)
 
+        bottom_holo_top = 1 - (ypad + height_holo)
+        bottom_holo_mid = 1 - 2 * (ypad + height_holo)
+        bottom_holo_bot = 1 - 3 * (ypad + height_holo)
+        bottom_plot_top = bottom_holo_top + ypad
+        bottom_plot_mid = bottom_holo_mid + ypad
+        bottom_plot_bot = bottom_holo_bot + ypad
+
         left_sedplt = width_holo + xpad
-        left_plot = left_sedplt + width_sedplt + xpad
+        left_plot = 1 - xpad - width_plot
 
         # 2. Make the axes.
         # We make the 3D plot first so it is on the bottom; otherwise it
         # overlaps the other axes.
+        # ax_sedplt = fig.add_axes(
+        #     [left_sedplt, 0.025, width_sedplt, 1.0], projection='3d',
+        #     label="sedplot")
         ax_sedplt = fig.add_axes(
-            [left_sedplt, 0.025, width_sedplt, 1.0], projection='3d',
-            label="sedplot")
+            [left_sedplt, 0.025, width_sedplt, 1.0], label="sedplot")
 
         ax_topholo = fig.add_axes(
-            [xpad, 0.7, width_holo, height_holo], label="topholo")
+            [xpad, bottom_holo_top, width_holo, height_holo],
+            label="topholo")
         ax_midholo = fig.add_axes(
-            [xpad, 0.4, width_holo, height_holo], label="midholo")
+            [xpad, bottom_holo_mid, width_holo, height_holo],
+            label="midholo")
         ax_btmholo = fig.add_axes(
-            [xpad, 0.1, width_holo, height_holo], label="midholo")
+            [xpad, bottom_holo_bot, width_holo, height_holo],
+            label="bottomholo")
         hologram_axes = [ax_topholo, ax_midholo, ax_btmholo]
 
-
         ax_n = fig.add_axes(
-            [left_plot, ypad, width_plot, height_plot], label="nplot")
+            [left_plot, bottom_plot_top, width_plot, height_plot],
+            label="nplot")
         ax_r = fig.add_axes(
-            [left_plot, 0.35, width_plot, height_plot], label="rplot")
+            [left_plot, bottom_plot_mid, width_plot, height_plot],
+            label="rplot")
         ax_z = fig.add_axes(
-            [left_plot, 0.7, width_plot, height_plot], label="zplot")
+            [left_plot, bottom_plot_bot, width_plot, height_plot],
+            label="zplot")
         parameter_axes = [ax_n, ax_r, ax_z]
 
         return hologram_axes, ax_sedplt, parameter_axes
@@ -93,45 +110,59 @@ class TrackingSedimentationFigure(object):
             ax.axis('off')
 
     def _plot_sedimentation(self, axes):
-        positions = {'x': [fit['center.0'] for fit in self.mielens_fits.values()],
-                     'y': [fit['center.1'] for fit in self.mielens_fits.values()],
-                     'z': [fit['center.2'] for fit in self.mielens_fits.values()]}
+        positions = {
+            k1: np.array(
+                [fit['center.{}'.format(k2)]
+                 for fit in self.mielens_fits.values()])
+            for k1, k2 in zip(['x', 'y', 'z'], [0, 1, 2])}
 
-        axes.plot3D(positions['x'], positions['y'], positions['z'], 'gray')
-        axes.set_xlabel('x', {'size': 8})
+        plotter = figures.ThreeDPlot(
+            axes, azimuth_elevation=(0.75*np.pi, 0.1*np.pi))
+        plotter.plot(
+            positions['x'], positions['y'], positions['z'], color='#8080F0',
+            lw=2)
+        # axes.set_xlabel('x', {'size': 8})
         axes.set_xticklabels([])
-        axes.set_ylabel('y', {'size': 8})
+        # axes.set_ylabel('y', {'size': 8})
         axes.set_yticklabels([])
-        axes.set_zlabel('z', {'size': 8})
-        axes.set_title("Best Fit Position", {'size': 8})
-        axes.set_aspect('equal', 'box')
+        # axes.set_zlabel('z', {'size': 8})
+        # axes.set_title("Best Fit Position", {'size': 8})
+        axes.set_aspect('equal')  # , 'box')
 
     def _plot_parameters(self, axes):
         ax_n, ax_r, ax_z = axes
-        ax_n.set_xlabel('Elapsed time (s)', {'size': 8})
+        ax_n.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
         ax_n.set_ylabel('index of refraction', {'size': 8})
-        ax_n.scatter(self.frame_times, [fit['n'] for fit in self.mielens_fits.values()],
-                     color='green', s=4, marker='o', label="with lens")
-        ax_n.scatter(self.frame_times, [fit['n'] for fit in self.mieonly_fits.values()],
-                     color='red', s=4, marker='^', label="without lens")
+        ax_n.scatter(
+            self.frame_times, [fit['n'] for fit in self.mielens_fits.values()],
+            color='green', s=4, marker='o', label="with lens")
+        ax_n.scatter(
+            self.frame_times, [fit['n'] for fit in self.mieonly_fits.values()],
+            color='red', s=4, marker='^', label="without lens")
         ax_n.legend(fontsize=6)
         ax_n.tick_params(labelsize=7)
 
-        ax_r.set_xlabel('Elapsed time (s)', {'size': 8})
-        ax_r.set_ylabel('index of refraction', {'size': 8})
-        ax_r.scatter(self.frame_times, [fit['r'] for fit in self.mielens_fits.values()],
-                     color='green', s=4, marker='o', label="with lens")
-        ax_r.scatter(self.frame_times, [fit['r'] for fit in self.mieonly_fits.values()],
-                     color='red', s=4, marker='^', label="without lens")
+        ax_r.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
+        ax_r.set_ylabel('Radius', {'size': 8})
+        ax_r.scatter(
+            self.frame_times, [fit['r'] for fit in self.mielens_fits.values()],
+            color='green', s=4, marker='o', label="with lens")
+        ax_r.scatter(
+            self.frame_times, [fit['r'] for fit in self.mieonly_fits.values()],
+            color='red', s=4, marker='^', label="without lens")
         ax_r.legend(fontsize=6)
         ax_r.tick_params(labelsize=7)
 
-        ax_z.set_xlabel('Elapsed time (s)', {'size': 8})
+        ax_z.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
         ax_z.set_ylabel('z-position  ($\mu m$)', {'size': 8})
-        ax_z.scatter(self.frame_times, [fit['center.2'] for fit in self.mielens_fits.values()],
-                     color='green', s=4, marker='o', label="with lens")
-        ax_z.scatter(self.frame_times, [fit['center.2'] for fit in self.mieonly_fits.values()],
-                     color='red', s=4, marker='^', label="without lens")
+        ax_z.scatter(
+            self.frame_times,
+            [fit['center.2'] for fit in self.mielens_fits.values()],
+            color='green', s=4, marker='o', label="with lens")
+        ax_z.scatter(
+            self.frame_times,
+            [fit['center.2'] for fit in self.mieonly_fits.values()],
+            color='red', s=4, marker='^', label="without lens")
         ax_z.legend(fontsize=6)
         ax_z.tick_params(labelsize=7)
 
