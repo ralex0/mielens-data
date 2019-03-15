@@ -17,142 +17,177 @@
     all the frames gives slightly weirder values (to avoid the bright
     spot in the middle...), I am just using mean from the fits.
 """
-import os
-import json
-from collections import OrderedDict
-
 import numpy as np
 from scipy.interpolate import interp1d
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-import mielensfit as mlf
-from fit_data import load_few_PS_data_Jan10, compare_imgs
-import monkeyrc as mrc
 
+class ThreeDPlot(object):
+    _box_color = '#F0F0F0'
+    def __init__(self, axes, azimuth_elevation=(0, 0)):
+        self.axes = axes
+        self.azimuth_elevation = azimuth_elevation
 
-HERE = os.path.dirname(__file__)
+        self._axes_are_setup = False
+        self.matrix = self._setup_matrix()
+        self.axes_spines = None
+        self.box_walls = None  # meh
 
+        # We default to a (0, 1) xlim etc, and fix it later:
+        self.xmin = 0
+        self.xmax = 1
+        self.ymin = 0
+        self.ymax = 1
+        self.zmin = 0
+        self.zmax = 1
+        self._setup_axes()
 
-class XZFigure(object):
-    figsize = [4, 4]
-    cmap = 'GraySaturated'
+    def plot(self, x, y, z, *args, rescale=True, **kwargs):
+        if rescale:
+            self.set_xlim(min(x), max(x))
+            self.set_ylim(min(y), max(y))
+            self.set_zlim(min(z), max(z))
+        self._plot(x, y, z, *args, **kwargs)
+        self._clean_axes()
+        self._redraw()  # matplotlib is weird...
 
-    def __init__(self, fit_parameters, holos=None):
-        self.fit_parameters = fit_parameters
-        if holos is None:
-            self._holos, _ = load_few_PS_data_Jan10()
-        else:
-            self._holos = holos
-        self._raw_data = np.array([h.values.squeeze() for h in self._holos])
-        self._raw_model = self.create_model_images()
+    def set_xlim(self, xmin, xmax):
+        self.xmin = xmin
+        self.xmax = xmax
+        self._redraw('x')
+        return self.xmin, self.xmax
 
-        self._xy_px_size = np.diff(self._holos[0].x.values).mean()
+    def set_ylim(self, ymin, ymax):
+        self.ymin = ymin
+        self.ymax = ymax
+        self._redraw('y')
+        return self.ymin, self.ymax
 
-        self._setup_z_values()
-        self.resampled_data = self.resample(self._raw_data, kind='nearest')
-        self.resampled_model = self.resample(self._raw_model, kind='linear')
+    def set_zlim(self, zmin, zmax):
+        self.zmin = zmin
+        self.zmax = zmax
+        self._redraw('z')
+        return self.zmin, self.zmax
 
-    def create_model_images(self):
-        models = []
-        for holo, params in zip(self._holos, self.fit_parameters):
-            fitter = mlf.Fitter(holo, params)
-            models.append(fitter.evaluate_model(params).values.squeeze())
-        return np.array(models)
+    def _plot(self, x, y, z, *args, **kwargs):
+        xy_plot = self._transform_xyz_to_plotxy([x, y, z])
+        return self.axes.plot(xy_plot[0, :], xy_plot[1, :], *args, **kwargs)
 
-    def grab_xz_slice(self, array):
-        return array[:, 50]
+    def _setup_axes(self):
+        self._update_plot_corners()
+        self._make_axes_box()
+        self._make_axes_spines()
+        self._axes_are_setup = True
 
-    def make_plot(self):
-        data = self.grab_xz_slice(self.resampled_data)
-        model = self.grab_xz_slice(self.resampled_model)
-        # vmax = max(data.max(), model.max())
-        # -- the model is much brighter than the data at the focus.
-        # Some of this is that the data is saturated near the focus
-        vmax = data.max()
-        vmin = 0
-        fig = plt.figure(figsize=self.figsize)
+    def _update_plot_corners(self):
+        # 1. Create the 7 corners of the plot:
+        origin = [self.xmin, self.ymin, self.zmin]
+        xmax = [self.xmax, self.ymin, self.zmin]
+        ymax = [self.xmin, self.ymax, self.zmin]
+        zmax = [self.xmin, self.ymin, self.zmax]
+        xy_corner = [self.xmax, self.ymax, self.zmin]
+        xz_corner = [self.xmax, self.ymin, self.zmax]
+        yz_corner = [self.xmin, self.ymax, self.zmax]
 
-        ax1 = fig.add_subplot(1, 2, 1)
-        ax2 = fig.add_subplot(1, 2, 2)
-        for ax, im, title in zip([ax1, ax2], [data, model], ['Data', 'Model']):
-            ax.imshow(im, interpolation='nearest', cmap=self.cmap, vmin=vmin,
-                      vmax=vmax)
-            ax.set_xticks([])
-            ax.set_yticks([])
-            # ax.set_title(title)
-        return fig, [ax1, ax2]
+        # 2. Transform those points to plotxy coordinates:
+        self._origin_plot = self._transform_xyz_to_plotxy(origin)
+        self._xmax_plot = self._transform_xyz_to_plotxy(xmax)
+        self._ymax_plot = self._transform_xyz_to_plotxy(ymax)
+        self._zmax_plot = self._transform_xyz_to_plotxy(zmax)
+        self._xy_corner_plot = self._transform_xyz_to_plotxy(xy_corner)
+        self._xz_corner_plot = self._transform_xyz_to_plotxy(xz_corner)
+        self._yz_corner_plot = self._transform_xyz_to_plotxy(yz_corner)
 
-    def _setup_z_values(self):
-        sampled_zs_um = np.array([f['z'] for f in self.fit_parameters])
-        self._sampled_zs_px = sampled_zs_um / self._xy_px_size
-        self._resampled_zs_px = np.arange(
-            self._sampled_zs_px.min(), self._sampled_zs_px.max(), 1.0)
+    def _get_box_corners(self):
+        vertices_xy = np.array(
+            [self._origin_plot, self._xmax_plot,
+             self._xy_corner_plot, self._ymax_plot])
+        vertices_xz = np.array(
+            [self._origin_plot, self._xmax_plot,
+             self._xz_corner_plot, self._zmax_plot])
+        vertices_yz = np.array(
+            [self._origin_plot, self._ymax_plot,
+             self._yz_corner_plot, self._zmax_plot])
+        return vertices_xy, vertices_xz, vertices_yz
 
-    def resample(self, array, kind='nearest'):
-        interpolator = interp1d(self._sampled_zs_px, array, axis=0, kind=kind)
-        return interpolator(self._resampled_zs_px)
+    def _get_spine_points(self):
+        xspine = ([self._origin_plot[0], self._xmax_plot[0]],
+                  [self._origin_plot[1], self._xmax_plot[1]])
+        yspine = ([self._origin_plot[0], self._ymax_plot[0]],
+                  [self._origin_plot[1], self._ymax_plot[1]])
+        zspine = ([self._origin_plot[0], self._zmax_plot[0]],
+                  [self._origin_plot[1], self._zmax_plot[1]])
+        return xspine, yspine, zspine  # must be lists, not numpy arrays
 
+    def _redraw(self, which='x'):
+        self._update_plot_corners()
+        self._redraw_grids()
+        self._redraw_spines()
+        box_corners = np.vstack(self._get_box_corners())
+        min_x, min_y = box_corners.min(axis=0)
+        max_x, max_y = box_corners.max(axis=0)
+        self.axes.set_xlim(min_x, max_x)
+        self.axes.set_ylim(min_y, max_y)
 
-def find_best_global_index_radius_lensangle():
-    fits = json.load(open(os.path.join(HERE, 'finalized-fits.json')),
-                     object_pairs_hook=OrderedDict)
-    fits_list = [v for v in fits.values()]
-    # Then we re-sample the zs to be evenly spaced, to avoid artifacts
-    # near the focus:
-    firstz = fits_list[0]['z']
-    lastz = fits_list[-1]['z']
-    shifts = np.linspace(0, 1, len(fits_list))
-    for shift, fit in zip(shifts, fits_list):
-        fit['z'] = (1 - shift) * firstz + shift * lastz
+    def _redraw_grids(self):
+        vertices_xy, vertices_xz, vertices_yz = self._get_box_corners()
+        self._patch_xy.set_xy(vertices_xy)
+        self._patch_xz.set_xy(vertices_xz)
+        self._patch_yz.set_xy(vertices_yz)
 
-    fig = XZFigure(fits_list)
-    data = fig._raw_data
+    def _redraw_spines(self):
+        xspine, yspine, zspine = self._get_spine_points()
+        self._xspine.set_xdata(xspine[0])
+        self._xspine.set_ydata(xspine[1])
 
-    def get_residuals(index_radius_angle):
-        index, radius, angle = index_radius_angle
-        for f in fits_list:
-            f['n'] = index
-            f['r'] = radius
-            f['lens_angle'] = angle
-        fig.fit_parameters = fits_list
-        model = fig.create_model_images()
-        return np.ravel(model - data)
+        self._yspine.set_xdata(yspine[0])
+        self._yspine.set_ydata(yspine[1])
 
-    indices = np.array([f['n'] for f in fits_list])
-    radii = np.array([f['r'] for f in fits_list])
-    angles = np.array([f['lens_angle'] for f in fits_list])
-    p0 = np.array([indices.mean(), radii.mean(), angles.mean()])
-    res = leastsq(get_residuals, p0, maxfev=75)
-    return res  # 1.52, 0.504, 0.496
+        self._zspine.set_xdata(zspine[0])
+        self._zspine.set_ydata(zspine[1])
 
+    def _make_axes_box(self):
+        vertices_xy, vertices_xz, vertices_yz = self._get_box_corners()
 
-def get_mielens_fits():
-    fits = json.load(open(os.path.join(HERE, 'finalized-fits.json')),
-                     object_pairs_hook=OrderedDict)
-    fits_list = [v for v in fits.values()]
-    indices = np.array([f['n'] for f in fits_list])
-    radii = np.array([f['r'] for f in fits_list])
-    angles = np.array([f['lens_angle'] for f in fits_list])
-    best_radius = radii.mean()  # 0.4869
-    best_index = indices.mean()  # 1.566
-    best_angle = angles.mean()  # 0.613
-    # Then we re-sample the zs to be evenly spaced, to avoid artifacts
-    # near the focus:
-    firstz = fits_list[0]['z']
-    lastz = fits_list[-1]['z']
-    shifts = np.linspace(0, 1, len(fits_list))
-    for shift, fit in zip(shifts, fits_list):
-        fit['z'] = (1 - shift) * firstz + shift * lastz
-        # Then let's also update index, angle to reasonable values:
-        fit['n'] = best_index
-        fit['r'] = best_radius
-        fit['lens_angle'] = best_angle
-    return fits_list
+        self._patch_xy = mpl.patches.Polygon(vertices_xy, color=self._box_color)
+        self._patch_xz = mpl.patches.Polygon(vertices_xz, color=self._box_color)
+        self._patch_yz = mpl.patches.Polygon(vertices_yz, color=self._box_color)
+        for patch in [self._patch_xy, self._patch_xz, self._patch_yz]:
+            self.axes.add_patch(patch)
 
+    def _make_axes_spines(self):
+        xspine, yspine, zspine = self._get_spine_points()
+        self._xspine = self.axes.plot(*xspine, 'k-', lw=1)[0]
+        self._yspine = self.axes.plot(*yspine, 'k-', lw=1)[0]
+        self._zspine = self.axes.plot(*zspine, 'k-', lw=1)[0]
 
-if __name__ == '__main__':
-    fits = get_mielens_fits()
-    holos = load_few_PS_data_Jan10()[0]
-    fig = XZFigure(fits, holos=holos)
-    fig.make_plot()
-    plt.show()
+    def _transform_xyz_to_plotxy(self, xyz):
+        return self.matrix.dot(xyz)
+
+    def _setup_matrix(self):
+        az, el = self.azimuth_elevation
+        rotation_az = np.array([  # rotation about the y axis
+            [np.cos(az), 0., np.sin(az)],
+            [0., 1., 0.],
+            [-np.sin(az), 0., np.cos(az)]])
+        rotation_el = np.array([  # rotation about the x axis
+            [1.0, 0., 0.],
+            [0., np.cos(el), np.sin(el)],
+            [0., -np.sin(el), np.cos(el)]])
+        transform_z_into_y = np.array([
+            [1, 0, 0],
+            [0, 0, 1],
+            [0, 1, 0]]).astype('float')
+        # full_matrix = transform_z_into_y.dot(rotation_el.dot(rotation_az))
+        full_matrix = rotation_el.dot(rotation_az.dot(transform_z_into_y))
+        # Then we only want the portion that maps into x, y:
+        return full_matrix[:2].copy()
+
+    def _clean_axes(self):
+        self.axes.set_xticks([])
+        self.axes.set_yticks([])
+        self.axes.spines['right'].set_visible(False)
+        self.axes.spines['top'].set_visible(False)
+        self.axes.spines['bottom'].set_visible(False)
+        self.axes.spines['left'].set_visible(False)
