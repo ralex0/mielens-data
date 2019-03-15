@@ -21,8 +21,8 @@ import monkeyrc
 
 
 class TrackingSedimentationFigure(object):
-    # _figsize = (5.25, 4.0)  -- true figsize needs to be 5.25, x
-    _figsize = (8, 6)
+    _figsize = (5.25, 4.0) #  -- true figsize needs to be 5.25, x
+
     def __init__(self, data, mielens_fits, mieonly_fits, frame_times=None):
         self.data = data
         self.mielens_fits = mielens_fits
@@ -45,22 +45,23 @@ class TrackingSedimentationFigure(object):
 
     def _make_axes(self, fig):
         # 1. Define the positions for all the axes:
-        xpad = 0.02
+        xpad = 0.01
         # make ypad the same as xpad in real units:
-        ypad = 0.02 * self._figsize[0] / self._figsize[1]
+        ypad = xpad * self._figsize[0] / self._figsize[1]
 
-        width_holo = 0.2
+        width_holo = 0.22
         height_holo = (1 - 4 * ypad) / 3.
         width_plot = 0.2
-        height_plot = height_holo - ypad  # extra space for labels
+        height_plot = height_holo - 5 * ypad  # extra space for labels
         width_sedplt = (1 - 4 * xpad - width_plot - width_holo)
 
         bottom_holo_top = 1 - (ypad + height_holo)
         bottom_holo_mid = 1 - 2 * (ypad + height_holo)
         bottom_holo_bot = 1 - 3 * (ypad + height_holo)
-        bottom_plot_top = bottom_holo_top + ypad
-        bottom_plot_mid = bottom_holo_mid + ypad
-        bottom_plot_bot = bottom_holo_bot + ypad
+        # We set the _top_ of the plot axes to be equal to the hologram top:
+        bottom_plot_top = bottom_holo_top + (height_holo - height_plot)
+        bottom_plot_mid = bottom_holo_mid + (height_holo - height_plot)
+        bottom_plot_bot = bottom_holo_bot + (height_holo - height_plot)
 
         left_sedplt = width_holo + xpad
         left_plot = 1 - xpad - width_plot
@@ -144,8 +145,8 @@ class TrackingSedimentationFigure(object):
         mielens_times = [t for t, n in zip(self.frame_times, mielens_index)]
         mieonly_times = [t for t, n in zip(self.frame_times, mieonly_index)]
 
-        ax_n.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
-        ax_n.set_ylabel('index of refraction', {'size': 8})
+        # ax_n.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
+        ax_n.set_ylabel('Refractive Index', {'size': 8}, labelpad=0)
         ax_n.scatter(
             mielens_times, mielens_index, color='green', s=4, marker='o',
             label="with lens")
@@ -153,9 +154,12 @@ class TrackingSedimentationFigure(object):
             mieonly_times, mieonly_index, color='red', s=4, marker='^',
             label="without lens")
         ax_n.tick_params(labelsize=7)
+        ax_n.legend(fontsize=6, loc='upper right')
+        ax_n.set_yticks([1.3, 1.4, 1.5, 1.6])
+        ax_n.set_ylim([1.3, 1.6])
 
-        ax_r.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
-        ax_r.set_ylabel('Radius', {'size': 8})
+        # ax_r.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
+        ax_r.set_ylabel('Radius', {'size': 8}, labelpad=1)
         ax_r.scatter(
             mielens_times, mielens_rad, color='green', s=4, marker='o',
             label="with lens")
@@ -163,16 +167,17 @@ class TrackingSedimentationFigure(object):
             mieonly_times, mieonly_rad, color='red', s=4, marker='^',
             label="without lens")
         ax_r.tick_params(labelsize=7)
+        ax_r.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0, 1.2])
+        ax_r.set_ylim([0.2, 1.2])
 
         ax_z.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
-        ax_z.set_ylabel('z-position  ($\mu m$)', {'size': 8})
+        ax_z.set_ylabel('z-position  ($\mu m$)', {'size': 8}, labelpad=-4)
         ax_z.scatter(
             mielens_times, mielens_z, color='green', s=4, marker='o',
             label="with lens")
         ax_z.scatter(
             mieonly_times, mieonly_z, color='red', s=4, marker='^',
             label="without lens")
-        ax_z.legend(fontsize=6)
         ax_z.tick_params(labelsize=7)
         ax_z.set_yticks([-20, 0, 20, 40])
         ax_z.set_ylim(-20, 40)
@@ -248,6 +253,8 @@ if __name__ == '__main__1':
     figure_Si = TrackingSedimentationFigure(
         Si_data, mlfit_Si, mofit_Si, Si_times)
     fig = figure_Si.make_figure(holonums=[0, 45, 99])
+    # Then we have to rescale the 3d plot b/c fuck matplotlib:
+    fig.axes[0].set_ylim(-70, -4)
     plt.show()
 
     """
