@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt; plt.close('all')
 from matplotlib import rc
 
 from mpl_toolkits import mplot3d
@@ -19,6 +19,7 @@ import mielensfit as mlf
 
 
 class TrackingSedimentationFigure(object):
+    _figsize = (5.25, 4.0)
     def __init__(self, data, mielens_fits, mieonly_fits, frame_times=None):
         self.data = data
         self.mielens_fits = mielens_fits
@@ -37,7 +38,7 @@ class TrackingSedimentationFigure(object):
 
     def make_figure(self, holonums):
         assert len(holonums) == 3
-        fig = plt.figure(figsize = (5.25, 5.0))
+        fig = plt.figure(figsize=self._figsize)
         hologram_axes, sedimentation_axes, parameter_axes = self._make_axes(fig)
         self._plot_holograms(hologram_axes, holonums)
         self._plot_sedimentation(sedimentation_axes)
@@ -45,15 +46,44 @@ class TrackingSedimentationFigure(object):
         return fig
 
     def _make_axes(self, fig):
-        ax_topholo = fig.add_axes([0.0, 0.7, 1 / 5.25, .2], label="topholo")
-        ax_midholo = fig.add_axes([0.0, 0.4, 1 / 5.25, .2], label="midholo")
-        ax_btmholo = fig.add_axes([0.0, 0.1, 1 / 5.25, .2], label="midholo")
-        ax_sedplt = fig.add_axes([1.125/5.25, 0.025, 2/5.25, 1.0],
-                                 projection='3d', label="sedplot")
-        ax_n = fig.add_axes([3.5/5.25, 0.0, 1.75/5.25, .3], label="nplot")
-        ax_r = fig.add_axes([3.5/5.25, 0.35, 1.75/5.25, .3], label="rplot")
-        ax_z = fig.add_axes([3.5/5.25, 0.7, 1.75/5.25, .3], label="zplot")
-        return [ax_topholo, ax_midholo, ax_btmholo], ax_sedplt, [ax_n, ax_r, ax_z]
+        # 1. Define the positions for all the axes:
+        xpad = 0.125 / self._figsize[0]
+        ypad = 0.125 / self._figsize[1]
+
+        width_holo = 1. / self._figsize[0]
+        height_holo = (1 - 4 * ypad) / 3.
+        width_plot = 1. / self._figsize[0]
+        height_plot = height_holo
+        width_sedplt = (1 - 4 * xpad - width_plot - width_holo)
+
+        left_sedplt = width_holo + xpad
+        left_plot = left_sedplt + width_sedplt + xpad
+
+        # 2. Make the axes.
+        # We make the 3D plot first so it is on the bottom; otherwise it
+        # overlaps the other axes.
+        ax_sedplt = fig.add_axes(
+            [left_sedplt, 0.025, width_sedplt, 1.0], projection='3d',
+            label="sedplot")
+
+        ax_topholo = fig.add_axes(
+            [xpad, 0.7, width_holo, height_holo], label="topholo")
+        ax_midholo = fig.add_axes(
+            [xpad, 0.4, width_holo, height_holo], label="midholo")
+        ax_btmholo = fig.add_axes(
+            [xpad, 0.1, width_holo, height_holo], label="midholo")
+        hologram_axes = [ax_topholo, ax_midholo, ax_btmholo]
+
+
+        ax_n = fig.add_axes(
+            [left_plot, ypad, width_plot, height_plot], label="nplot")
+        ax_r = fig.add_axes(
+            [left_plot, 0.35, width_plot, height_plot], label="rplot")
+        ax_z = fig.add_axes(
+            [left_plot, 0.7, width_plot, height_plot], label="zplot")
+        parameter_axes = [ax_n, ax_r, ax_z]
+
+        return hologram_axes, ax_sedplt, parameter_axes
 
     def _plot_holograms(self, axes, indices):
         holos = [self.data[num].values.squeeze() for num in indices]
@@ -121,10 +151,12 @@ def load_Si_sedemintation_data_Feb15():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         refimg = hp.load_image(paths[0], **metadata)
-        bkg = mlf.load_bkg("data/Silica1um-60xWater-021519/raw/bg/",
-                           bg_prefix='bg', refimg=refimg)
-        dark = mlf.load_dark("data/Silica1um-60xWater-021519/raw/dark/",
-                             df_prefix='dark', refimg=refimg)
+        bkg = mlf.load_bkg(
+            "data/Silica1um-60xWater-021519/raw/bg/",
+            bg_prefix='bg', refimg=refimg)  # 10 s! all holopy
+        dark = mlf.load_dark(
+            "data/Silica1um-60xWater-021519/raw/dark/",
+            df_prefix='dark', refimg=refimg)  # 8.7 s! all holopy
         holos = [mlf.load_bgdivide_crop_v2(path=path, metadata=metadata,
                                         particle_position=position,
                                         bkg=bkg, dark=dark, size=140)
@@ -157,7 +189,7 @@ def zfill(n, nzeros=4):
     return str(n).rjust(nzeros, '0')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__1':
     Si_data = load_Si_sedemintation_data_Feb15()[0]
     Si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
     mofit_Si = json.load(
