@@ -23,24 +23,22 @@ mpl.rcParams['image.interpolation'] = 'nearest'
 mpl.rcParams['legend.frameon'] = True
 mpl.rcParams['legend.framealpha'] = 0.5
 
-mpl.rcParams['lines.markersize'] = 8.0
+mpl.rcParams['lines.markersize'] = 5.0
 mpl.rcParams['lines.linewidth'] = 2.0
 
-mpl.rcParams['axes.spines.left'] = False
-mpl.rcParams['axes.spines.bottom'] = False
+mpl.rcParams['axes.spines.left'] = True
+mpl.rcParams['axes.spines.bottom'] = True
 mpl.rcParams['axes.spines.top'] = False
 mpl.rcParams['axes.spines.right'] = False
-mpl.rcParams['axes.facecolor'] = COLORS['bkg']
 
+mpl.rcParams['xtick.bottom'] = True
 mpl.rcParams['xtick.top'] = False
-mpl.rcParams['xtick.bottom'] = False
+mpl.rcParams['xtick.labelbottom'] = True
 mpl.rcParams['xtick.labeltop'] = False
-mpl.rcParams['xtick.labelbottom'] = False
-mpl.rcParams['ytick.labelleft'] = False
-mpl.rcParams['ytick.labelright'] = False
-mpl.rcParams['ytick.left'] = False
+mpl.rcParams['ytick.left'] = True
 mpl.rcParams['ytick.right'] = False
-
+mpl.rcParams['ytick.labelleft'] = True
+mpl.rcParams['ytick.labelright'] = False
 
 
 cdict = {

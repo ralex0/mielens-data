@@ -17,6 +17,7 @@ from holopy.scattering.theory import MieLens
 
 import mielensfit as mlf
 import figures
+import monkeyrc
 
 
 class TrackingSedimentationFigure(object):
@@ -27,23 +28,18 @@ class TrackingSedimentationFigure(object):
         self.mielens_fits = mielens_fits
         self.mieonly_fits = mieonly_fits
         self.frame_times = self._setup_frame_times(frame_times)
-        self._setup_rcparams()
 
     def _setup_frame_times(self, frame_times):
         if frame_times is None:
             frame_times = range(len(self.mielens_fits))
         return frame_times
 
-    def _setup_rcparams(self):
-        rc('text', usetex=True)
-        rc('font',**{'family': 'Times New Roman'})
-
     def make_figure(self, holonums):
         assert len(holonums) == 3
         fig = plt.figure(figsize=self._figsize)
         hologram_axes, sedimentation_axes, parameter_axes = self._make_axes(fig)
         self._plot_holograms(hologram_axes, holonums)
-        self._plot_sedimentation(sedimentation_axes)
+        self._plot_sedimentation(sedimentation_axes, accent_these=holonums)
         self._plot_parameters(parameter_axes)
         return fig
 
@@ -109,7 +105,7 @@ class TrackingSedimentationFigure(object):
                         interpolation='nearest', cmap='gray')
             ax.axis('off')
 
-    def _plot_sedimentation(self, axes):
+    def _plot_sedimentation(self, axes, accent_these=None):
         positions = {
             k1: np.array(
                 [fit['center.{}'.format(k2)]
@@ -121,6 +117,13 @@ class TrackingSedimentationFigure(object):
         plotter.plot(
             positions['x'], positions['y'], positions['z'], color='#8080F0',
             lw=2)
+        if accent_these is not None:
+            accent_x = positions['x'][accent_these]
+            accent_y = positions['y'][accent_these]
+            accent_z = positions['z'][accent_these]
+            plotter.plot(
+                accent_x, accent_y, accent_z, color='#6060A0', marker='o',
+                linestyle='', rescale=False)
         # axes.set_xlabel('x', {'size': 8})
         axes.set_xticklabels([])
         # axes.set_ylabel('y', {'size': 8})
@@ -165,6 +168,12 @@ class TrackingSedimentationFigure(object):
             color='red', s=4, marker='^', label="without lens")
         ax_z.legend(fontsize=6)
         ax_z.tick_params(labelsize=7)
+        ax_z.set_yticks([-20, 0, 20, 40])
+        ax_z.set_ylim(-20, 40)
+
+        for ax in [ax_r, ax_n, ax_z]:
+            ax.set_xlim(0, 60)
+            ax.set_xticks([0, 30, 60])
 
 
 def load_Si_sedemintation_data_Feb15():
