@@ -2,6 +2,7 @@ import os
 import time
 import warnings
 import json
+from collections import OrderedDict
 
 import numpy as np
 
@@ -55,7 +56,7 @@ class TrackingSedimentationFigure(object):
         return [ax_topholo, ax_midholo, ax_btmholo], ax_sedplt, [ax_n, ax_r, ax_z]
 
     def _plot_holograms(self, axes, indices):
-        holos = [hologram2array(self.data[num]) for num in indices]
+        holos = [self.data[num].values.squeeze() for num in indices]
         for num, ax in enumerate(axes):
             ax.imshow(holos[num], vmin=np.min(holos), vmax=np.max(holos),
                         interpolation='nearest', cmap='gray')
@@ -155,22 +156,31 @@ def load_few_PS_sedemintation_data_Jan24():
 def zfill(n, nzeros=4):
     return str(n).rjust(nzeros, '0')
 
+
 if __name__ == '__main__':
     Si_data = load_Si_sedemintation_data_Feb15()[0]
-    PS_data = load_few_PS_sedemintation_data_Jan24()[0]
     Si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
-    PS_times = np.load("./fits/sedimentation/PS_frame_times.npy")
-
-
-    mofit_Si = json.load(open("fits/sedimentation/mieonly_sedimentation_fits_Si.json", 'r'))
-    mlfit_Si = json.load(open("fits/sedimentation/mielens_sedimentation_fits_Si.json", 'r'))
-
-    mofit_PS = json.load(open("fits/sedimentation/mieonly_sedimentation_fits_PS.json", 'r'))
-    mlfit_PS = json.load(open("fits/sedimentation/mielens_sedimentation_fits_PS.json", 'r'))
-
-    figure_PS = TrackingSedimentationFigure(PS_data, mlfit_PS, mofit_PS, PS_times)
-    figure_Si = TrackingSedimentationFigure(Si_data, mlfit_Si, mofit_Si, Si_times)
-
+    mofit_Si = json.load(
+        open("fits/sedimentation/mieonly_sedimentation_fits_Si.json", 'r'),
+        object_pairs_hook=OrderedDict)
+    mlfit_Si = json.load(
+        open("fits/sedimentation/mielens_sedimentation_fits_Si.json", 'r'),
+        object_pairs_hook=OrderedDict)
+    figure_Si = TrackingSedimentationFigure(
+        Si_data, mlfit_Si, mofit_Si, Si_times)
     fig = figure_Si.make_figure(holonums=[0, 50, 99])
     plt.show()
+
+    """
+    PS_data = load_few_PS_sedemintation_data_Jan24()[0]
+    PS_times = np.load("./fits/sedimentation/PS_frame_times.npy")
+    mofit_PS = json.load(
+        open("fits/sedimentation/mieonly_sedimentation_fits_PS.json", 'r'),
+        object_pairs_hook=OrderedDict)
+    mlfit_PS = json.load(
+        open("fits/sedimentation/mielens_sedimentation_fits_PS.json", 'r'),
+        object_pairs_hook=OrderedDict)
+    figure_PS = TrackingSedimentationFigure(
+        PS_data, mlfit_PS, mofit_PS, PS_times)
+    """
 
