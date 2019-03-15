@@ -41,13 +41,12 @@ class ThreeDPlot(object):
         self.ymax = 1
         self.zmin = 0
         self.zmax = 1
+        self._was_rescaled = False
         self._setup_axes()
 
     def plot(self, x, y, z, *args, rescale=True, **kwargs):
         if rescale:
-            self.set_xlim(min(x), max(x))
-            self.set_ylim(min(y), max(y))
-            self.set_zlim(min(z), max(z))
+            self._rescale_to(x, y, z)
         self._plot(x, y, z, *args, **kwargs)
         self._clean_axes()
         self._redraw()  # matplotlib is weird...
@@ -55,19 +54,19 @@ class ThreeDPlot(object):
     def set_xlim(self, xmin, xmax):
         self.xmin = xmin
         self.xmax = xmax
-        self._redraw('x')
+        self._redraw()
         return self.xmin, self.xmax
 
     def set_ylim(self, ymin, ymax):
         self.ymin = ymin
         self.ymax = ymax
-        self._redraw('y')
+        self._redraw()
         return self.ymin, self.ymax
 
     def set_zlim(self, zmin, zmax):
         self.zmin = zmin
         self.zmax = zmax
-        self._redraw('z')
+        self._redraw()
         return self.zmin, self.zmax
 
     def _plot(self, x, y, z, *args, **kwargs):
@@ -120,7 +119,29 @@ class ThreeDPlot(object):
                   [self._origin_plot[1], self._zmax_plot[1]])
         return xspine, yspine, zspine  # must be lists, not numpy arrays
 
-    def _redraw(self, which='x'):
+    def _rescale_to(self, x, y, z):
+        if self._was_rescaled:
+            minx = min(min(x), self.xmin)
+            maxx = max(max(x), self.xmax)
+            miny = min(min(y), self.ymin)
+            maxy = max(max(y), self.ymax)
+            minz = min(min(z), self.zmin)
+            maxz = max(max(z), self.zmax)
+        else:
+            minx = min(x)
+            maxx = max(x)
+            miny = min(y)
+            maxy = max(y)
+            minz = min(z)
+            maxz = max(z)
+        self.set_xlim(minx, maxx)
+        self.set_ylim(miny, maxy)
+
+        self.set_zlim(minz, maxz)
+
+        self._was_rescaled = True
+
+    def _redraw(self):
         self._update_plot_corners()
         self._redraw_grids()
         self._redraw_spines()
