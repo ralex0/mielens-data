@@ -152,7 +152,6 @@ class TrackingSedimentationFigure(object):
         ax_n.scatter(
             mieonly_times, mieonly_index, color='red', s=4, marker='^',
             label="without lens")
-        ax_n.legend(fontsize=6)
         ax_n.tick_params(labelsize=7)
 
         ax_r.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
@@ -163,7 +162,6 @@ class TrackingSedimentationFigure(object):
         ax_r.scatter(
             mieonly_times, mieonly_rad, color='red', s=4, marker='^',
             label="without lens")
-        ax_r.legend(fontsize=6)
         ax_r.tick_params(labelsize=7)
 
         ax_z.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
