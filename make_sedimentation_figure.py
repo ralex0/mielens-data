@@ -49,6 +49,7 @@ class TrackingSedimentationFigure(object):
         # make ypad the same as xpad in real units:
         ypad = xpad * self._figsize[0] / self._figsize[1]
 
+        left_holo = xpad + 0.015
         width_holo = 0.22
         height_holo = (1 - 4 * ypad) / 3.
         width_plot = 0.2
@@ -73,16 +74,16 @@ class TrackingSedimentationFigure(object):
         #     [left_sedplt, 0.025, width_sedplt, 1.0], projection='3d',
         #     label="sedplot")
         self.ax_sed = fig.add_axes(
-            [left_sedplt, 0.025, width_sedplt, 1.0], label="sedplot")
+            [left_sedplt-0.025, 0.025, width_sedplt, 1.0], label="sedplot")
 
         self.ax_topholo = fig.add_axes(
-            [xpad, bottom_holo_top, width_holo, height_holo],
+            [0.025, bottom_holo_top, width_holo, height_holo],
             label="topholo")
         self.ax_midholo = fig.add_axes(
-            [xpad, bottom_holo_mid, width_holo, height_holo],
+            [0.025, bottom_holo_mid, width_holo, height_holo],
             label="midholo")
         self.ax_btmholo = fig.add_axes(
-            [xpad, bottom_holo_bot, width_holo, height_holo],
+            [0.025, bottom_holo_bot, width_holo, height_holo],
             label="bottomholo")
 
         self.ax_n = fig.add_axes(
@@ -244,7 +245,7 @@ if __name__ == '__main__':
         Si_data, mlfit_Si, mofit_Si_clipped, Si_times)
     fig_si = figure_Si.make_figure(holonums=[0, 45, 99])
     # Then we have to rescale the 3d plot b/c fuck matplotlib:
-    figure_Si.ax_sed.set_ylim(-70, -4)
+    figure_Si.ax_sed.set_ylim(-69.0, -5.5)
 
     figure_Si.ax_n.legend(fontsize=6, loc='upper right')
     figure_Si.ax_n.set_yticks([1.3, 1.4, 1.5, 1.6])
@@ -270,7 +271,7 @@ if __name__ == '__main__':
     figure_PS = TrackingSedimentationFigure(
         PS_data, mlfit_PS, mofit_PS_clipped, PS_times)
     fig_ps = figure_PS.make_figure(holonums=[0, 20, 49])
-    figure_PS.ax_sed.set_ylim(-36, 6)
+    figure_PS.ax_sed.set_ylim(-35.4, 4.8)
 
     figure_PS.ax_z.legend(fontsize=6, loc='upper right')
     figure_PS.ax_n.set_yticks([1.5, 1.6, 1.7])
