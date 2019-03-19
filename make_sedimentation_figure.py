@@ -99,9 +99,12 @@ class TrackingSedimentationFigure(object):
     def _plot_holograms(self, indices):
         axes = [self.ax_topholo, self.ax_midholo, self.ax_btmholo]
         holos = [self.data[num].values.squeeze() for num in indices]
+        excursion = max([1 - np.min(holos), np.max(holos) - 1])
+        vmin = 1 - excursion
+        vmax = 1 + excursion
         for num, ax in enumerate(axes):
-            ax.imshow(holos[num], vmin=np.min(holos), vmax=np.max(holos),
-                        interpolation='nearest', cmap='gray')
+            ax.imshow(holos[num], vmin=vmin, vmax=vmax,
+                      interpolation='nearest', cmap='gray')
             ax.axis('off')
 
     def _plot_sedimentation(self, accent_these=None):
@@ -114,8 +117,8 @@ class TrackingSedimentationFigure(object):
         plotter = figures.ThreeDPlot(
             self.ax_sed, azimuth_elevation=(0.75*np.pi, 0.1*np.pi))
         plotter.plot(
-            positions['x'], positions['y'], positions['z'], color='#8080F0',
-            lw=2)
+            positions['x'], positions['y'], positions['z'],
+            color=monkeyrc.COLORS['blue'], lw=2)
         if accent_these is not None:
             accent_x = positions['x'][accent_these]
             accent_y = positions['y'][accent_these]
@@ -130,6 +133,7 @@ class TrackingSedimentationFigure(object):
         # axes.set_zlabel('z', {'size': 8})
         # axes.set_title("Best Fit Position", {'size': 8})
         self.ax_sed.set_aspect('equal')  # , 'box')
+        self.plotter_sed = plotter
 
     def _plot_parameters(self):
         mielens_index = [fit['n'] for fit in self.mielens_fits.values()]
@@ -141,32 +145,32 @@ class TrackingSedimentationFigure(object):
         mielens_times = [t for t, n in zip(self.frame_times, mielens_index)]
         mieonly_times = [t for t, n in zip(self.frame_times, mieonly_index)]
 
-        self.ax_n.set_ylabel('Refractive Index', {'size': 8}, labelpad=0)
+        self.ax_n.set_ylabel('Refractive Index', labelpad=0)
         self.ax_n.scatter(
-            mielens_times, mielens_index, color='green', s=4, marker='o',
-            label="with lens")
+            mielens_times, mielens_index, color=monkeyrc.COLORS['blue'], s=4,
+            marker='o', label="With Lens")
         self.ax_n.scatter(
-            mieonly_times, mieonly_index, color='red', s=4, marker='^',
-            label="without lens")
+            mieonly_times, mieonly_index, color=monkeyrc.COLORS['red'], s=4,
+            marker='^', label="Without Lens")
         self.ax_n.tick_params(labelsize=7)
 
-        self.ax_r.set_ylabel('Radius', {'size': 8}, labelpad=1)
+        self.ax_r.set_ylabel('Radius', labelpad=1)
         self.ax_r.scatter(
-            mielens_times, mielens_rad, color='green', s=4, marker='o',
-            label="with lens")
+            mielens_times, mielens_rad, color=monkeyrc.COLORS['blue'], s=4,
+            marker='o', label="With Lens")
         self.ax_r.scatter(
-            mieonly_times, mieonly_rad, color='red', s=4, marker='^',
-            label="without lens")
+            mieonly_times, mieonly_rad, color=monkeyrc.COLORS['red'], s=4,
+            marker='^', label="Without Lens")
         self.ax_r.tick_params(labelsize=7)
 
-        self.ax_z.set_xlabel('Elapsed time (s)', {'size': 8}, labelpad=2)
-        self.ax_z.set_ylabel('z-position  ($\mu m$)', {'size': 8}, labelpad=-4)
+        self.ax_z.set_xlabel('Elapsed time (s)', labelpad=2)
+        self.ax_z.set_ylabel('z-position  ($\mu m$)', labelpad=-4)
         self.ax_z.scatter(
-            mielens_times, mielens_z, color='green', s=4, marker='o',
-            label="with lens")
+            mielens_times, mielens_z, color=monkeyrc.COLORS['blue'], s=4,
+            marker='o', label="With Lens")
         self.ax_z.scatter(
-            mieonly_times, mieonly_z, color='red', s=4, marker='^',
-            label="without lens")
+            mieonly_times, mieonly_z, color=monkeyrc.COLORS['red'], s=4,
+            marker='^', label="Without Lens")
         self.ax_z.tick_params(labelsize=7)
 
 
@@ -231,59 +235,78 @@ def clip_data_to(fits, max_frame):
     return clipped_data
 
 
-if __name__ == '__main__':
-    Si_data = load_Si_sedemintation_data_Feb15()[0]
-    Si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
-    mofit_Si_full = json.load(
+def make_si_figure(si_data=None):
+    if si_data is None:
+        si_data = load_Si_sedemintation_data_Feb15()[0]
+    si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
+    mofit_si_full = json.load(
         open("fits/sedimentation/mieonly_sedimentation_fits_Si.json", 'r'),
         object_pairs_hook=OrderedDict)
-    mofit_Si_clipped = clip_data_to(mofit_Si_full, 45)
-    mlfit_Si = json.load(
+    mofit_si_clipped = clip_data_to(mofit_si_full, 45)
+    mlfit_si = json.load(
         open("fits/sedimentation/mielens_sedimentation_fits_Si.json", 'r'),
         object_pairs_hook=OrderedDict)
-    figure_Si = TrackingSedimentationFigure(
-        Si_data, mlfit_Si, mofit_Si_clipped, Si_times)
-    fig_si = figure_Si.make_figure(holonums=[0, 45, 99])
+    figure_si = TrackingSedimentationFigure(
+        si_data, mlfit_si, mofit_si_clipped, si_times)
+    fig_si = figure_si.make_figure(holonums=[0, 45, 99])
     # Then we have to rescale the 3d plot b/c fuck matplotlib:
-    figure_Si.ax_sed.set_ylim(-69.0, -5.5)
+    figure_si.ax_sed.set_ylim(-69.8, -4.2)
 
-    figure_Si.ax_n.legend(fontsize=6, loc='upper right')
-    figure_Si.ax_n.set_yticks([1.3, 1.4, 1.5, 1.6])
-    figure_Si.ax_n.set_ylim([1.3, 1.6])
-    figure_Si.ax_r.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0, 1.2])
-    figure_Si.ax_r.set_ylim([0.2, 1.2])
-    figure_Si.ax_z.set_yticks([-20, 0, 20, 40])
-    figure_Si.ax_z.set_ylim(-20, 40)
-    for ax in [figure_Si.ax_r, figure_Si.ax_n, figure_Si.ax_z]:
+    figure_si.ax_r.legend(fontsize=6, loc='upper left')
+    figure_si.ax_n.set_yticks([1.3, 1.4, 1.5])
+    figure_si.ax_n.set_ylim([1.3, 1.5])
+
+    figure_si.ax_r.set_yticks([0.6, 0.8, 1.0])
+    figure_si.ax_r.set_ylim([0.6, 1.0])
+
+    figure_si.ax_z.set_yticks([-20, 0, 20, 40])
+    figure_si.ax_z.set_ylim(-20, 40)
+
+    for ax in [figure_si.ax_r, figure_si.ax_n, figure_si.ax_z]:
         ax.set_xlim(0, 60)
         ax.set_xticks([0, 30, 60])
+    return figure_si, fig_si
 
 
-    PS_data = load_few_PS_sedemintation_data_Jan24()[0]
-    PS_times = np.load("./fits/sedimentation/PS_frame_times.npy")
-    mofit_PS_full = json.load(
+def make_ps_figure(ps_data=None):
+    if ps_data is None:
+        ps_data = load_few_PS_sedemintation_data_Jan24()[0]
+    ps_times = np.load("./fits/sedimentation/PS_frame_times.npy")
+    mofit_ps_full = json.load(
         open("fits/sedimentation/mieonly_sedimentation_fits_PS.json", 'r'),
         object_pairs_hook=OrderedDict)
-    mofit_PS_clipped = clip_data_to(mofit_PS_full, 19)
-    mlfit_PS = json.load(
+    mofit_ps_clipped = clip_data_to(mofit_ps_full, 19)
+    mlfit_ps = json.load(
         open("fits/sedimentation/mielens_sedimentation_fits_PS.json", 'r'),
         object_pairs_hook=OrderedDict)
-    figure_PS = TrackingSedimentationFigure(
-        PS_data, mlfit_PS, mofit_PS_clipped, PS_times)
-    fig_ps = figure_PS.make_figure(holonums=[0, 20, 49])
-    figure_PS.ax_sed.set_ylim(-35.4, 4.8)
+    figure_ps = TrackingSedimentationFigure(
+        ps_data, mlfit_ps, mofit_ps_clipped, ps_times)
+    fig_ps = figure_ps.make_figure(holonums=[0, 20, 49])
+    figure_ps.plotter_sed.set_xlim(36, 53)
+    figure_ps.plotter_sed.set_ylim(34, 51)
+    figure_ps.ax_sed.set_ylim(-37.5, 7.5)
 
-    figure_PS.ax_z.legend(fontsize=6, loc='upper right')
-    figure_PS.ax_n.set_yticks([1.5, 1.6, 1.7])
-    figure_PS.ax_n.set_ylim([1.5, 1.7])
-    figure_PS.ax_r.set_yticks([0.8, 1.0, 1.2])
-    figure_PS.ax_r.set_ylim([0.8, 1.2])
-    figure_PS.ax_z.set_yticks([-15, 0, 15, 30])
-    figure_PS.ax_z.set_ylim(-15, 30)
-    for ax in [figure_PS.ax_r, figure_PS.ax_n, figure_PS.ax_z]:
+    figure_ps.ax_z.legend(fontsize=6, loc='upper right')
+    figure_ps.ax_n.set_yticks([1.5, 1.6, 1.7])
+    figure_ps.ax_n.set_ylim([1.5, 1.7])
+    figure_ps.ax_r.set_yticks([0.8, 1.0, 1.2])
+    figure_ps.ax_r.set_ylim([0.8, 1.2])
+    figure_ps.ax_z.set_yticks([-15, 0, 15, 30])
+    figure_ps.ax_z.set_ylim(-15, 30)
+    for ax in [figure_ps.ax_r, figure_ps.ax_n, figure_ps.ax_z]:
         ax.set_xlim(0, 300)
         ax.set_xticks([0, 150, 300])
+    return figure_ps, fig_ps
+
+
+if __name__ == '__main__':
+    si_data = load_Si_sedemintation_data_Feb15()[0]
+    ps_data = load_few_PS_sedemintation_data_Jan24()[0]
+
+    figure_si, fig_si = make_si_figure(si_data)
+    figure_ps, fig_ps = make_ps_figure(ps_data)
 
     plt.show()
     fig_si.savefig('./silica-sedimentation.svg')
     fig_ps.savefig('./polystyrene-sedimentation.svg')
+
