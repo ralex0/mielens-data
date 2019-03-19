@@ -7,21 +7,24 @@ COLORS = {
     'white':    '#FFFFFF',
     'black':    "#000000",
     'bkg':      "#404040",
-    "red":      "#D07070",
-    "green":    "#70D070",
-    "blue":     "#5060FF",
+    "red":      "#FF6060",
+    "green":    "#50D050",
+    "blue":     "#8080FF",
     "cyan":     "#30A0A0",
     "magenta":  "#A030A0",
     "yellow":   "#A0A030",
     }
 
 mpl.rcParams['text.usetex'] = False
-mpl.rcParams['font.size'] = 14.0
+mpl.rcParams['font.size'] = 8.0
 mpl.rcParams['font.family'] = 'serif'
 mpl.rcParams['image.interpolation'] = 'nearest'
 
-mpl.rcParams['legend.frameon'] = True
-mpl.rcParams['legend.framealpha'] = 0.5
+mpl.rcParams['legend.frameon'] = False
+mpl.rcParams['legend.framealpha'] = 1.0
+mpl.rcParams['legend.handletextpad'] = -0.1
+mpl.rcParams['legend.fontsize'] = mpl.rcParams['font.size']
+
 
 mpl.rcParams['lines.markersize'] = 5.0
 mpl.rcParams['lines.linewidth'] = 2.0
