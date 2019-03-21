@@ -45,12 +45,13 @@ def _get_bounds(hologram, guess_parameters):
 
 class Fitter(object):
     _default_lens_angle = 0.8
+    _default_alpha = 1.0
     _min_index = 1.33
     _max_index = 2.3
     _min_radius = 0.05
     _max_radius = 5.0
 
-    def __init__(self, data, guess):
+    def __init__(self, data, guess, theory='mielens'):
         """for now, this is for the lens model only
 
         Parameters
@@ -62,14 +63,20 @@ class Fitter(object):
         """
         self.data = data
         self.guess = guess
+        self.theory = theory
 
     def fit(self):
         sphere_priors = self.make_guessed_scatterer()
-        lens_prior = self.guess_lens_angle()
-        model = PerfectLensModel(
-            sphere_priors, noise_sd=self.data.noise_sd, lens_angle=lens_prior)
+        if self.theory == 'mielens':
+            lens_prior = self.guess_lens_angle()
+            model = PerfectLensModel(sphere_priors, noise_sd=self.data.noise_sd,
+                                     lens_angle=lens_prior)
+        elif self.theory == 'mieonly':
+            alpha_prior = self.guess_alpha()
+            model = AlphaModel(sphere_priors, noise_sd=self.data.noise_sd,
+                               alpha=alpha_prior)
         optimizer = NmpfitStrategy()
-        result = optimizer.fit(model, self.data)
+        result = optimizer.optimize(model, self.data)
         # FIXME this result sometimes leaves the allowed ranges. To get
         # result = hp.fitting.fit(model, self.data, minimizer=optimizer)
         return result
@@ -105,6 +112,12 @@ class Fitter(object):
         lens_prior = prior.Uniform(0, 1.2, guess=lens_angle)
         return lens_prior
 
+    def guess_alpha(self):
+        alpha = (self.guess['alpha'] if 'lens_angle' in self.guess
+                      else self._default_alpha)
+        alpha_prior = prior.Uniform(0, 1.2, guess=alpha)
+        return alpha_prior
+
     def _make_center_priors(self):
         image_x_values = self.data.x.values
         image_min_x = image_x_values.min()
@@ -133,16 +146,13 @@ class Fitter(object):
 
 
 def fit_mielens(hologram, guess_parameters):
-    fitter = Fitter(hologram, guess_parameters)
+    fitter = Fitter(hologram, guess_parameters, theory='mielens')
     return fitter.fit()
 
 
 def fit_mieonly(hologram, guess_parameters):
-    priors, _ = _make_priors(hologram, guess_parameters)
-    #priors.center[2].lower_bound = 0
-    model = AlphaModel(priors, noise_sd=hologram.noise_sd, alpha=prior.Uniform(0, 1.0, guess=0.6))
-    result = NmpfitStrategy().optimize(model, hologram)
-    return result
+    fitter = Fitter(hologram, guess_parameters, theory='mieonly')
+    return fitter.fit()
 
 # ~~~ priors
 
