@@ -64,7 +64,7 @@ class TrackingSedimentationFigure(object):
         bottom_plot_mid = bottom_holo_mid + (height_holo - height_plot)
         bottom_plot_bot = bottom_holo_bot + (height_holo - height_plot)
 
-        left_sedplt = width_holo + xpad
+        left_sedplt = width_holo - left_holo + xpad
         left_plot = 1 - xpad - width_plot
 
         # 2. Make the axes.
@@ -74,16 +74,16 @@ class TrackingSedimentationFigure(object):
         #     [left_sedplt, 0.025, width_sedplt, 1.0], projection='3d',
         #     label="sedplot")
         self.ax_sed = fig.add_axes(
-            [left_sedplt-0.025, 0.025, width_sedplt, 1.0], label="sedplot")
+            [left_sedplt, 0.025, width_sedplt, 1.0], label="sedplot")
 
         self.ax_topholo = fig.add_axes(
-            [0.025, bottom_holo_top, width_holo, height_holo],
+            [left_holo, bottom_holo_top, width_holo, height_holo],
             label="topholo")
         self.ax_midholo = fig.add_axes(
-            [0.025, bottom_holo_mid, width_holo, height_holo],
+            [left_holo, bottom_holo_mid, width_holo, height_holo],
             label="midholo")
         self.ax_btmholo = fig.add_axes(
-            [0.025, bottom_holo_bot, width_holo, height_holo],
+            [left_holo, bottom_holo_bot, width_holo, height_holo],
             label="bottomholo")
 
         self.ax_n = fig.add_axes(
