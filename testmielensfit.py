@@ -1,5 +1,7 @@
 import unittest
 
+import numpy as np
+
 import holopy as hp
 
 import sys
@@ -14,47 +16,35 @@ class TestIO(unittest.TestCase):
 
 
 class TestFit(unittest.TestCase):
-    def test_mielens_fits_with_nmp(self):
+    def test_mielens_fit(self):
         data, guess_parameters = _import_example_data()
-        fitresult = fit_mielens(data, guess_parameters, strategy='nmp')
-        chisqB = calc_chisq_B(data, fitresult, theory='mielens')
-        isok = chisqB < 1
-        self.assertTrue(isok)
-
-    def test_mielens_fits_with_scipy(self):
-        data, guess_parameters = _import_example_data()
-        fitresult = fit_mielens(data, guess_parameters, strategy='leastsquares')
-        chisqB = calc_chisq_B(data, fitresult, theory='mielens')
-        isok = chisqB < 1
+        fitresult = fit_mielens(data, guess_parameters)
+        scatterer = fitresult.scatterer
+        lens_angle = fitresult.parameters['lens_angle']
+        residual = calc_residual(data, scatterer, theory='mielens', lens_angle=lens_angle)
+        chisq = np.std(residual) / np.std(data.values.squeeze())
+        isok = chisq < 1
         self.assertTrue(isok)
 
     unittest.skip("It's too slow")
     def test_mielens_inference(self):
         data, guess_parameters = _import_example_data()
         inference_result = mcmc_inference_mielens(data, guess_parameters)
-        chisqB = calc_chisq_B(data, inference_result, theory='mielens')
-        isok = chisqB < 1
+        scatterer = inference_result.scatterer
+        lens_angle = inference_result.parameters['lens_angle']
+        residual = calc_residual(data, inference_result, theory='mielens', lens_angle=lens_angle)
+        chisq = np.std(residual) / np.std(data.values.squeeze())
+        isok = chisq < 1
         self.assertTrue(isok)
 
     def test_mieonly_fit(self):
         data, guess_parameters = _import_example_data()
         fitresult = fit_mieonly(data, guess_parameters)
-        chisqB = calc_chisq_B(data, fitresult, theory='mieonly')
-        isok = chisqB < 1
-        self.assertTrue(isok)
-
-    def test_mielens_globalop(self):
-        data, guess_parameters = _import_example_data()
-        fitresult = globalop_mielens(data, guess_parameters)
-        chisqB = calc_chisq_B(data, fitresult, theory='mielens')
-        isok = chisqB < 1
-        self.assertTrue(isok)
-
-    def test_mieonly_globalop(self):
-        data, guess_parameters = _import_example_data()
-        fitresult = globalop_mieonly(data, guess_parameters)
-        chisqB = calc_chisq_B(data, fitresult, theory='mieonly')
-        isok = chisqB < 1
+        scatterer = fitresult.scatterer
+        alpha = fitresult.parameters['alpha']
+        residual = calc_residual(data, scatterer, theory='mieonly', alpha=alpha)
+        chisq = np.std(residual) / np.std(data.values.squeeze())
+        isok = chisq < 1
         self.assertTrue(isok)
 
 
