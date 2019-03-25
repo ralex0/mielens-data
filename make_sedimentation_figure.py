@@ -2,7 +2,7 @@ import os
 import time
 import warnings
 import json
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 import numpy as np
 
@@ -86,13 +86,13 @@ class TrackingSedimentationFigure(object):
             [left_holo, bottom_holo_bot, width_holo, height_holo],
             label="bottomholo")
 
-        self.ax_n = fig.add_axes(
+        self.ax_z = fig.add_axes(
             [left_plot, bottom_plot_top, width_plot, height_plot],
             label="nplot")
         self.ax_r = fig.add_axes(
             [left_plot, bottom_plot_mid, width_plot, height_plot],
             label="rplot")
-        self.ax_z = fig.add_axes(
+        self.ax_n = fig.add_axes(
             [left_plot, bottom_plot_bot, width_plot, height_plot],
             label="zplot")
 
@@ -138,39 +138,60 @@ class TrackingSedimentationFigure(object):
     def _plot_parameters(self):
         mielens_index = [fit['n'] for fit in self.mielens_fits.values()]
         mieonly_index = [fit['n'] for fit in self.mieonly_fits.values()]
-        mielens_rad = [fit['r'] for fit in self.mielens_fits.values()]
-        mieonly_rad = [fit['r'] for fit in self.mieonly_fits.values()]
-        mielens_z = [fit['center.2'] for fit in self.mielens_fits.values()]
-        mieonly_z = [fit['center.2'] for fit in self.mieonly_fits.values()]
-        mielens_times = [t for t, n in zip(self.frame_times, mielens_index)]
-        mieonly_times = [t for t, n in zip(self.frame_times, mieonly_index)]
+        times = {
+            'mielens': [t for t, n in zip(self.frame_times, mielens_index)],
+            'mieonly': [t for t, n in zip(self.frame_times, mieonly_index)],
+            }
+
+        self._plot_z(times)
+        self._plot_radius(times)
+        self._plot_index(times)
+        # Adding an x-label to the bottom:
+        self.ax_n.set_xlabel('Elapsed time (s)', labelpad=2)
+
+    def _plot_index(self, times):
+        mieonly_times = times['mieonly']
+        mielens_times = times['mielens']
+        mielens_index = [fit['n'] for fit in self.mielens_fits.values()]
+        mieonly_index = [fit['n'] for fit in self.mieonly_fits.values()]
 
         self.ax_n.set_ylabel('Refractive Index', labelpad=0)
         self.ax_n.scatter(
             mielens_times, mielens_index, color=monkeyrc.COLORS['blue'], s=4,
-            marker='o', label="With Lens")
+            marker='o', label="With Lens", zorder=3)
         self.ax_n.scatter(
             mieonly_times, mieonly_index, color=monkeyrc.COLORS['red'], s=4,
-            marker='^', label="Without Lens")
+            marker='^', label="Without Lens", zorder=3)
         self.ax_n.tick_params(labelsize=7)
+
+    def _plot_radius(self, times):
+        mieonly_times = times['mieonly']
+        mielens_times = times['mielens']
+        mielens_rad = [fit['r'] for fit in self.mielens_fits.values()]
+        mieonly_rad = [fit['r'] for fit in self.mieonly_fits.values()]
 
         self.ax_r.set_ylabel('Radius', labelpad=1)
         self.ax_r.scatter(
             mielens_times, mielens_rad, color=monkeyrc.COLORS['blue'], s=4,
-            marker='o', label="With Lens")
+            marker='o', label="With Lens", zorder=3)
         self.ax_r.scatter(
             mieonly_times, mieonly_rad, color=monkeyrc.COLORS['red'], s=4,
-            marker='^', label="Without Lens")
+            marker='^', label="Without Lens", zorder=3)
         self.ax_r.tick_params(labelsize=7)
 
-        self.ax_z.set_xlabel('Elapsed time (s)', labelpad=2)
+    def _plot_z(self, times):
+        mieonly_times = times['mieonly']
+        mielens_times = times['mielens']
+        mielens_z = [fit['center.2'] for fit in self.mielens_fits.values()]
+        mieonly_z = [fit['center.2'] for fit in self.mieonly_fits.values()]
+
         self.ax_z.set_ylabel('z-position  ($\mu m$)', labelpad=-4)
         self.ax_z.scatter(
             mielens_times, mielens_z, color=monkeyrc.COLORS['blue'], s=4,
-            marker='o', label="With Lens")
+            marker='o', label="With Lens", zorder=3)
         self.ax_z.scatter(
             mieonly_times, mieonly_z, color=monkeyrc.COLORS['red'], s=4,
-            marker='^', label="Without Lens")
+            marker='^', label="Without Lens", zorder=3)
         self.ax_z.tick_params(labelsize=7)
 
 
@@ -235,6 +256,35 @@ def clip_data_to(fits, max_frame):
     return clipped_data
 
 
+Particle = namedtuple("Particle", ["radius", "density"])
+# We take the radii as the median radii from mielens. We use the
+# median and not the mean to avoid the bad-fit outliers.
+SILICA_PARTICLE = Particle(radius=0.7826, density=2.0)
+# ..except the radii aren't correct for ml PS, so we use median(mo)
+# for the PS
+POLYSTYRENE_PARTICLE = Particle(radius=1.168, density=1.05)
+VISCOSITY_WATER = 8.9e-4  # in mks units = Pa*s
+
+
+def update_z_vs_t_plot_with_expected_sedimentation(
+        axes, times, particle, initial_z_position):
+    # 1. Calculate the velocity, using meter-kilogram-second units:
+    radius = particle.radius * 1e-6
+    density = (particle.density - 1) * 1e3  # 1 g / cc = 1e3 kg / m^3
+    volume = 4 * np.pi / 3. * radius**3
+    mass = density * volume
+    gravity = 9.8  # mks
+    force = mass * gravity
+    drag = 6 * np.pi * VISCOSITY_WATER * radius
+    velocity_meters_per_second = force / drag
+    velocity_microns_per_second = 1e6 * velocity_meters_per_second
+
+    # 2. Calculate the trajectory:
+    trajectory = initial_z_position - times * velocity_microns_per_second
+    line = axes.plot(times, trajectory, '--', color='#404040', zorder=1)
+    return line
+
+
 def make_si_figure(si_data=None):
     if si_data is None:
         si_data = load_Si_sedemintation_data_Feb15()[0]
@@ -265,6 +315,11 @@ def make_si_figure(si_data=None):
     for ax in [figure_si.ax_r, figure_si.ax_n, figure_si.ax_z]:
         ax.set_xlim(0, 60)
         ax.set_xticks([0, 30, 60])
+
+    initial_z = mlfit_si['0']['center.2']
+    _ = update_z_vs_t_plot_with_expected_sedimentation(
+        figure_si.ax_z, si_times, SILICA_PARTICLE, initial_z)
+
     return figure_si, fig_si
 
 
@@ -296,17 +351,22 @@ def make_ps_figure(ps_data=None):
     for ax in [figure_ps.ax_r, figure_ps.ax_n, figure_ps.ax_z]:
         ax.set_xlim(0, 300)
         ax.set_xticks([0, 150, 300])
+
+    initial_z = mlfit_ps['0']['center.2']
+    _ = update_z_vs_t_plot_with_expected_sedimentation(
+        figure_ps.ax_z, ps_times, POLYSTYRENE_PARTICLE, initial_z)
+
     return figure_ps, fig_ps
 
 
-if __name__ == '__main__':
-    si_data = load_Si_sedemintation_data_Feb15()[0]
+if __name__ == '__ma1in__':
+    # si_data = load_Si_sedemintation_data_Feb15()[0]
     ps_data = load_few_PS_sedemintation_data_Jan24()[0]
 
-    figure_si, fig_si = make_si_figure(si_data)
+    # figure_si, fig_si = make_si_figure(si_data)
     figure_ps, fig_ps = make_ps_figure(ps_data)
 
     plt.show()
-    fig_si.savefig('./silica-sedimentation.svg')
-    fig_ps.savefig('./polystyrene-sedimentation.svg')
+    # fig_si.savefig('./silica-sedimentation.svg')
+    # fig_ps.savefig('./polystyrene-sedimentation.svg')
 
