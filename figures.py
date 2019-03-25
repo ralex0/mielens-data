@@ -24,7 +24,8 @@ import matplotlib.pyplot as plt
 
 
 class ThreeDPlot(object):
-    _box_color = '#F0F0F0'
+    _box_color = '#E4E4E4'
+
     def __init__(self, axes, azimuth_elevation=(0, 0)):
         self.axes = axes
         self.azimuth_elevation = azimuth_elevation
