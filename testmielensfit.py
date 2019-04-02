@@ -17,35 +17,14 @@ class TestIO(unittest.TestCase):
 
 class TestFit(unittest.TestCase):
     def test_mielens_fit(self):
-        data, guess_parameters = _import_example_data()
-        fitresult = fit_mielens(data, guess_parameters)
-        scatterer = fitresult.scatterer
-        lens_angle = fitresult.parameters['lens_angle']
-        residual = calc_residual(data, scatterer, theory='mielens', lens_angle=lens_angle)
-        chisq = np.std(residual) / np.std(data.values.squeeze())
-        isok = chisq < 1
-        self.assertTrue(isok)
+        raise NotImplementedError("test is now outdated")
 
     unittest.skip("It's too slow")
     def test_mielens_inference(self):
-        data, guess_parameters = _import_example_data()
-        inference_result = mcmc_inference_mielens(data, guess_parameters)
-        scatterer = inference_result.scatterer
-        lens_angle = inference_result.parameters['lens_angle']
-        residual = calc_residual(data, inference_result, theory='mielens', lens_angle=lens_angle)
-        chisq = np.std(residual) / np.std(data.values.squeeze())
-        isok = chisq < 1
-        self.assertTrue(isok)
+        raise NotImplementedError("test is now outdated")
 
     def test_mieonly_fit(self):
-        data, guess_parameters = _import_example_data()
-        fitresult = fit_mieonly(data, guess_parameters)
-        scatterer = fitresult.scatterer
-        alpha = fitresult.parameters['alpha']
-        residual = calc_residual(data, scatterer, theory='mieonly', alpha=alpha)
-        chisq = np.std(residual) / np.std(data.values.squeeze())
-        isok = chisq < 1
-        self.assertTrue(isok)
+        raise NotImplementedError("test is now outdated")
 
 
 def _import_example_data():

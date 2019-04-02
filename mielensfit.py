@@ -154,41 +154,6 @@ def fit_mieonly(hologram, guess_parameters):
     fitter = Fitter(hologram, guess_parameters, theory='mieonly')
     return fitter.fit()
 
-# ~~~ priors
-
-
-def _make_position_only_priors(hologram, guess_parameters):
-    center = _make_center_priors(hologram, guess_parameters)
-    s = Sphere(n=guess_parameters['n'],
-               r=guess_parameters['r'],
-               center=center)
-    lens_guess = get_guess_angle(guess_parameters)
-    return s, lens_guess
-
-
-def get_guess_scatterer(data, guesses):
-    return _make_priors(data, guesses)[0].guess
-
-def get_guess_angle(guesses):
-    return guesses['lens_angle'] if 'lens_angle' in guesses else 0.8
-
-
-def calc_residual(data, scatterer, theory='mielens', **kwargs):
-    dt = data.values.squeeze()
-    if theory == 'mielens':
-        lens_angle = kwargs['lens_angle']
-        fit = calc_holo(data, scatterer, theory=MieLens(lens_angle=lens_angle)).values.squeeze()
-    elif theory == 'mieonly':
-        scaling = kwargs['alpha']
-        fit = calc_holo(data, scatterer, scaling=scaling).values.squeeze()
-    return fit - dt
-
-
-def calc_err_sq(data, scatterer, theory='mielens', **kwargs):
-    residual = calc_residual(data, scatterer, theory=theory, **kwargs)
-    return np.sum(residual ** 2)
-
-
 # ~~~ loading data
 
 class NormalizedDataLoader(object):
@@ -256,17 +221,15 @@ def load_bgdivide_crop_all_images(paths, metadata, particle_position, **kwargs):
 
 
 def load_bkg(path, bg_prefix, refimg):
-    bkg_paths = get_bkg_paths(path, bg_prefix)
+    subdir = os.path.dirname(path)
+    bkg_paths = [
+        subdir + '/' + pth for pth in os.listdir(subdir) if bg_prefix in pth]
+
     bkg = load_average(bkg_paths, refimg=refimg, channel=RGB_CHANNEL)
     return bkg
 
 def load_dark(path, df_prefix, refimg):
     return load_bkg(path, df_prefix, refimg) if df_prefix is not None else None
-
-def get_bkg_paths(path, bg_prefix):
-    subdir = os.path.dirname(path)
-    bkg_paths = [subdir + '/' + pth for pth in os.listdir(subdir) if bg_prefix in pth]
-    return bkg_paths
 
 def load_bgdivide_crop_v2(
         path, metadata, particle_position, bkg, dark, channel=RGB_CHANNEL,
@@ -276,7 +239,4 @@ def load_bgdivide_crop_v2(
     data = subimage(data, particle_position[::-1], size)
     data = normalize(data)
     return data
-
-def rgb2gray(rgb):
-    return np.dot(rgb[...,:3], [0.299, 0.587, 0.114])
 
