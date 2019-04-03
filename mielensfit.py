@@ -1,8 +1,6 @@
 import os
 
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import imread
 
 import holopy as hp
 from holopy.scattering import calc_holo, Sphere
@@ -10,8 +8,7 @@ from holopy.scattering.theory import MieLens
 from holopy.core.io import load_average
 from holopy.core.metadata import get_extents, get_spacing
 from holopy.core.process import subimage, normalize, center_find  # , bg_correct
-from holopy.inference import prior, AlphaModel, NmpfitStrategy, TemperedStrategy
-from holopy.inference.scipyfit import LeastSquaresScipyStrategy
+from holopy.inference import prior, AlphaModel, NmpfitStrategy
 from holopy.inference.model import PerfectLensModel
 
 
