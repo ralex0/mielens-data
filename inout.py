@@ -94,7 +94,12 @@ def load_json(filename):
     with open(filename, 'r') as f:
         return json.load(f)
 
-
+def save_json(obj, filename):
+    if isinstance(obj, MinimizerResult):
+        _save_MinimizerResult_to_json(obj, filename)
+    else:
+        with open(filename, 'w') as f:
+            json.dump(obj, f)
 
 def load_silica_sedimentation_data():
     camera_resolution = 5.6983 # px / um
@@ -194,10 +199,10 @@ def zfill(n, nzeros=4):
 RESULT_ATTRS = ['params', 'status', 'var_names', 'covar', 'init_vals', 
                 'init_values', 'nfev', 'success', 'errorbars', 'message', 'ier',
                 'lmdif_message', 'nvarys', 'ndata', 'nfree', 'residual',
-                'chisqr', 'redchi', 'aic', 'bic', 'chain', 'method']
+                'chisqr', 'redchi', 'aic', 'bic', 'chain', 'method', 'lnprob']
 
 
-def save_MinimizerResult_to_json(result, filename):
+def _save_MinimizerResult_to_json(result, filename):
     serialized_result = _serialize_MinimizerResult(result)
     with open(filename, 'w') as f:
         json.dump(serialized_result, f, indent=4)
@@ -207,11 +212,12 @@ def _serialize_MinimizerResult(result):
     attrs = [a for a in RESULT_ATTRS if hasattr(result, a)]
     serialized = {a: getattr(result, a) for a in attrs}
     serialized['params'] = serialized['params'].dumps()
-    serialized['covar'] = list(serialized['covar'])
-    serialized['residual'] = list(serialized['covar'])
-    serialized['init_vals'] = list(serialized['init_vals'])
-    serialized['success'] = 'True' if serialized['success'] else 'False' 
-    serialized['errorbars'] = 'True' if serialized['errorbars'] else 'False' 
+
+    for k, v in serialized.items():
+        if isinstance(v, np.ndarray):
+            serialized[k] = v.tolist()
+        elif isinstance(v, bool) or isinstance(v, np.bool_):
+            serialized[k] = 'True' if serialized[k] else 'False'
     return serialized
 
 
@@ -223,13 +229,15 @@ def load_MinimizerResult_from_json(filename):
 
 
 def _unserialize_MinimizerResult(serialized):
-    unserialized = copy(serialized)
+    unserialized = serialized
     unserialized['params'] = Parameters().loads(serialized['params'])
-    unserialized['covar'] = np.array(serialized['covar'])
-    unserialized['residual'] = np.array(serialized['residual'])
-    unserialized['init_vals'] = np.array(serialized['init_vals'])
-    unserialized['success'] = True if serialized['success'] == 'True' else False
-    unserialized['errorbars'] = (np.bool_(True) 
-                                 if serialized['errorbars'] == 'True'
-                                 else np.bool_(False))
+    for k in ['covar', 'residual', 'init_vals', 'lnprob', 'chain']:
+        if k in serialized:
+            unserialized[k] = np.array(serialized[k])
+    if 'success' in serialized:        
+        unserialized['success'] = True if serialized['success'] == 'True' else False
+    if 'errorbars' in serialized:
+        unserialized['errorbars'] = (np.bool_(True) 
+                                     if serialized['errorbars'] == 'True'
+                                     else np.bool_(False))
     return unserialized
