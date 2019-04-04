@@ -14,48 +14,64 @@ from lmfit.minimizer import MinimizerResult, Parameters
 RGB_CHANNEL = 'all'
 HOLOGRAM_SIZE = 100
 
-def load_mcmc_result_PS_mieonly():
-    return load_pickle('fits/sedimentation/mcmc/ps_mcmc_mo_1.pkl')
+
+def load_mcmc_result_PS_mieonly(fmt='json'):
+    file = 'fits/sedimentation/mcmc/ps_mcmc_mo_1'
+    return _load_mcmc_result(file, fmt)
 
 
-def load_mcmc_result_PS_mielens():
-    return load_pickle('fits/sedimentation/mcmc/ps_mcmc_ml_1.pkl')
+def load_mcmc_result_PS_mielens(fmt='json'):
+    file = 'fits/sedimentation/mcmc/ps_mcmc_ml_1'
+    return _load_mcmc_result(file, fmt)
 
 
-def load_mcmc_result_Si_mieonly():
-    return load_pickle('fits/sedimentation/mcmc/si_mcmc_mo_29.pkl')
+def load_mcmc_result_Si_mieonly(fmt='json'):
+    file = 'fits/sedimentation/mcmc/si_mcmc_mo_29'
+    return _load_mcmc_result(file, fmt)
 
 
-def load_mcmc_result_Si_mielens():
-    return load_pickle('fits/sedimentation/mcmc/si_mcmc_ml_29.pkl')
+def load_mcmc_result_Si_mielens(fmt='json'):
+    file = 'fits/sedimentation/mcmc/si_mcmc_ml_29'
+    return _load_mcmc_result(file, fmt)
 
 
-def load_PTmcmc_result_PS_mieonly():
+def load_PTmcmc_result_PS_mieonly(fmt='json'):
     """PS: 0001.tiff 
     {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 5, 'npixels': 100}
     """
-    return load_pickle('fits/sedimentation/mcmc/PT-4-4-19/ps_mcmc_mo_pt.pkl')
+    file = 'fits/sedimentation/mcmc/PT-4-4-19/ps_mcmc_mo_pt'
+    return _load_mcmc_result(file, fmt)
 
 
-def load_PTmcmc_result_PS_mielens():
+def load_PTmcmc_result_PS_mielens(fmt='json'):
     """PS: 0001.tiff 
     {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 5, 'npixels': 100}
     """
-    return load_pickle('fits/sedimentation/mcmc/PT-4-4-19/ps_mcmc_ml_pt.pkl')
+    file ='fits/sedimentation/mcmc/PT-4-4-19/ps_mcmc_ml_pt'
+    return _load_mcmc_result(file, fmt)
 
 
-def load_PTmcmc_result_Si_mieonly():
+def load_PTmcmc_result_Si_mieonly(fmt='json'):
     """Si: 0029.tiff
     {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 3, 'npixels': 100}
     """
-    return load_pickle('fits/sedimentation/mcmc/PT-4-4-19/si_mcmc_mo_pt.pkl')
+    file = 'fits/sedimentation/mcmc/PT-4-4-19/si_mcmc_mo_pt'
+    return _load_mcmc_result(file, fmt)
 
 
-def load_PTmcmc_result_Si_mielens():
+def load_PTmcmc_result_Si_mielens(fmt='json'):
     """Si: 0029.tiff
     {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 3, 'npixels': 100}
     """
-    return load_pickle('fits/sedimentation/mcmc/PT-4-4-19/si_mcmc_ml_pt.pkl')
+    file = 'fits/sedimentation/mcmc/PT-4-4-19/si_mcmc_ml_pt'
+    return _load_mcmc_result(file, fmt)
+
+
+def _load_mcmc_result(file, fmt):
+    if fmt == 'json':
+        return load_MinimizerResult_from_json(file + '.json')
+    elif fmt == 'pkl':
+        return load_pickle(file + '.pkl')
 
 
 def load_silica_sedimentation_params(date_subdir="04-02"):
@@ -86,13 +102,16 @@ def load_pickle(filename):
     with open(filename, 'rb') as f:
         return pickle.load(f)
 
+
 def save_pickle(obj, filename):
     with open(filename, 'wb') as f:
         return pickle.dump(obj, f)
 
+
 def load_json(filename):
     with open(filename, 'r') as f:
         return json.load(f)
+
 
 def save_json(obj, filename):
     if isinstance(obj, MinimizerResult):
@@ -100,6 +119,7 @@ def save_json(obj, filename):
     else:
         with open(filename, 'w') as f:
             json.dump(obj, f)
+
 
 def load_silica_sedimentation_data():
     camera_resolution = 5.6983 # px / um
