@@ -18,7 +18,7 @@ from holopy.scattering.theory import MieLens
 import mielensfit as mlf
 import figures
 import monkeyrc
-
+import inout
 
 class TrackingSedimentationFigure(object):
     _figsize = (5.25, 4.0) #  -- true figsize needs to be 5.25, x
@@ -108,11 +108,14 @@ class TrackingSedimentationFigure(object):
             ax.axis('off')
 
     def _plot_sedimentation(self, accent_these=None):
-        positions = {
-            k1: np.array(
-                [fit['center.{}'.format(k2)]
-                 for fit in self.mielens_fits.values()])
-            for k1, k2 in zip(['x', 'y', 'z'], [0, 1, 2])}
+        try:
+            positions = {
+                k1: np.array(
+                    [fit['center.{}'.format(k2)]
+                     for fit in self.mielens_fits.values()])
+                for k1, k2 in zip(['x', 'y', 'z'], [0, 1, 2])}
+        except KeyError:
+            positions = {key: np.array([fit[key] for fit in self.mielens_fits.values()]) for key in ['x', 'y', 'z']}
 
         plotter = figures.ThreeDPlot(
             self.ax_sed, azimuth_elevation=(0.75*np.pi, 0.1*np.pi))
@@ -182,8 +185,8 @@ class TrackingSedimentationFigure(object):
     def _plot_z(self, times):
         mieonly_times = times['mieonly']
         mielens_times = times['mielens']
-        mielens_z = [fit['center.2'] for fit in self.mielens_fits.values()]
-        mieonly_z = [fit['center.2'] for fit in self.mieonly_fits.values()]
+        mielens_z = [fit['z'] for fit in self.mielens_fits.values()]
+        mieonly_z = [fit['z'] for fit in self.mieonly_fits.values()]
 
         self.ax_z.set_ylabel('z-position  ($\mu m$)', labelpad=-4)
         self.ax_z.scatter(
@@ -193,55 +196,6 @@ class TrackingSedimentationFigure(object):
             mieonly_times, mieonly_z, color=monkeyrc.COLORS['red'], s=4,
             marker='^', label="Without Lens", zorder=3)
         self.ax_z.tick_params(labelsize=7)
-
-
-def load_Si_sedemintation_data_Feb15():
-    camera_resolution = 5.6983 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.33,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [553, 725]
-
-    holonums = range(100)
-    zpos = np.linspace(38, -12, 100)
-    paths = ["data/Silica1um-60xWater-021519/raw/image"
-             +  zfill(num, 4) + ".tif" for num in holonums]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        refimg = hp.load_image(paths[0], **metadata)
-        bkg = mlf.load_bkg(
-            "data/Silica1um-60xWater-021519/raw/bg/",
-            bg_prefix='bg', refimg=refimg)  # 10 s! all holopy
-        dark = mlf.load_dark(
-            "data/Silica1um-60xWater-021519/raw/dark/",
-            df_prefix='dark', refimg=refimg)  # 8.7 s! all holopy
-        holos = [mlf.load_bgdivide_crop_v2(path=path, metadata=metadata,
-                                        particle_position=position,
-                                        bkg=bkg, dark=dark, size=140)
-                 for path in paths]
-    return holos, zpos
-
-
-def load_few_PS_sedemintation_data_Jan24():
-    camera_resolution = 5.6983 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.33,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [242, 266]
-
-    holonums = range(50)
-    zpos = np.linspace(20, -12, 50)
-    paths = ["data/Polystyrene2-4um-60xWater-012419/raw/image"
-             +  zfill(num, 4) + ".tif" for num in holonums]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                        particle_position=position,
-                                        bg_prefix="bg", df_prefix="dark")
-             for path in paths]
-    return holos, zpos
 
 
 def zfill(n, nzeros=4):
@@ -287,17 +241,11 @@ def update_z_vs_t_plot_with_expected_sedimentation(
 
 def make_si_figure(si_data=None):
     if si_data is None:
-        si_data = load_Si_sedemintation_data_Feb15()[0]
+        si_data = inout.load_silica_sedimentation_data()[0]
     si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
-    mofit_si_full = json.load(
-        open("fits/sedimentation/mieonly_sedimentation_fits_Si.json", 'r'),
-        object_pairs_hook=OrderedDict)
-    mofit_si_clipped = clip_data_to(mofit_si_full, 45)
-    mlfit_si = json.load(
-        open("fits/sedimentation/mielens_sedimentation_fits_Si.json", 'r'),
-        object_pairs_hook=OrderedDict)
+    mofit_si, mlfit_si = inout.load_silica_sedimentation_fits("best_of_03-27_and_04-02")
     figure_si = TrackingSedimentationFigure(
-        si_data, mlfit_si, mofit_si_clipped, si_times)
+        si_data, mlfit_si, mofit_si, si_times)
     fig_si = figure_si.make_figure(holonums=[0, 45, 99])
     # Then we have to rescale the 3d plot b/c fuck matplotlib:
     figure_si.ax_sed.set_ylim(-69.8, -4.2)
@@ -316,7 +264,7 @@ def make_si_figure(si_data=None):
         ax.set_xlim(0, 60)
         ax.set_xticks([0, 30, 60])
 
-    initial_z = mlfit_si['0']['center.2']
+    initial_z = mlfit_si['0']['z']
     _ = update_z_vs_t_plot_with_expected_sedimentation(
         figure_si.ax_z, si_times, SILICA_PARTICLE, initial_z)
 
@@ -325,17 +273,11 @@ def make_si_figure(si_data=None):
 
 def make_ps_figure(ps_data=None):
     if ps_data is None:
-        ps_data = load_few_PS_sedemintation_data_Jan24()[0]
+        ps_data = inout.load_polystyrene_sedimentation_data()[0]
     ps_times = np.load("./fits/sedimentation/PS_frame_times.npy")
-    mofit_ps_full = json.load(
-        open("fits/sedimentation/mieonly_sedimentation_fits_PS.json", 'r'),
-        object_pairs_hook=OrderedDict)
-    mofit_ps_clipped = clip_data_to(mofit_ps_full, 19)
-    mlfit_ps = json.load(
-        open("fits/sedimentation/mielens_sedimentation_fits_PS.json", 'r'),
-        object_pairs_hook=OrderedDict)
+    mofit_ps, mlfit_ps = inout.load_polystyrene_sedimentation_fits("best_of_03-27_and_04-02")
     figure_ps = TrackingSedimentationFigure(
-        ps_data, mlfit_ps, mofit_ps_clipped, ps_times)
+        ps_data, mlfit_ps, mofit_ps, ps_times)
     fig_ps = figure_ps.make_figure(holonums=[0, 20, 49])
     figure_ps.plotter_sed.set_xlim(36, 53)
     figure_ps.plotter_sed.set_ylim(34, 51)
@@ -352,21 +294,19 @@ def make_ps_figure(ps_data=None):
         ax.set_xlim(0, 300)
         ax.set_xticks([0, 150, 300])
 
-    initial_z = mlfit_ps['0']['center.2']
+    initial_z = mlfit_ps['0']['z']
     _ = update_z_vs_t_plot_with_expected_sedimentation(
         figure_ps.ax_z, ps_times, POLYSTYRENE_PARTICLE, initial_z)
 
     return figure_ps, fig_ps
 
+if __name__ == '__main__':
+    si_data = inout.load_silica_sedimentation_data()[0]
+    ps_data = inout.load_polystyrene_sedimentation_data()[0]
 
-if __name__ == '__ma1in__':
-    # si_data = load_Si_sedemintation_data_Feb15()[0]
-    ps_data = load_few_PS_sedemintation_data_Jan24()[0]
-
-    # figure_si, fig_si = make_si_figure(si_data)
+    figure_si, fig_si = make_si_figure(si_data)
     figure_ps, fig_ps = make_ps_figure(ps_data)
 
-    plt.show()
     # fig_si.savefig('./silica-sedimentation.svg')
     # fig_ps.savefig('./polystyrene-sedimentation.svg')
 
