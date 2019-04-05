@@ -130,9 +130,6 @@ def fit_si_data():
     si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
     print("Time to load Si data: {}".format(tick_tock()))
 
-    fitter_ml = Fitter(theory='mielens')
-    fitter_mo = Fitter(theory='mieonly')
-
     old_si_fits_mo, old_si_fits_ml = inout.load_silica_sedimentation_fits()
     si_initial_z = old_si_fits_ml['0']['z']
     si_bottom_frame = 60
@@ -140,6 +137,9 @@ def fit_si_data():
         si_times, SILICA_PARTICLE, si_initial_z, si_bottom_frame)
     si_guesses = [
         {'n': 1.43, 'r': SILICA_PARTICLE.radius, 'z': z} for z in si_zpos]
+
+    fitter_ml = Fitter(theory='mielens')
+    fitter_mo = Fitter(theory='mieonly')
     try:
         pool = Pool(4)
         tick_tock()
@@ -160,9 +160,6 @@ def fit_ps_data():
     ps_times = np.load("./fits/sedimentation/PS_frame_times.npy")
     print("Time to load PS data: {}".format(tick_tock()))
 
-    fitter_ml = Fitter(theory='mielens')
-    fitter_mo = Fitter(theory='mieonly')
-
     old_ps_fits_mo, old_ps_fits_ml = inout.load_polystyrene_sedimentation_fits()
     ps_initial_z = old_ps_fits_ml['0']['z']
     ps_bottom_frame = 31 #Looks like it hits the coverslip around here
@@ -170,6 +167,9 @@ def fit_ps_data():
         ps_times, POLYSTYRENE_PARTICLE, ps_initial_z, ps_bottom_frame)
     ps_guesses = [
         {'n': 1.58, 'r': POLYSTYRENE_PARTICLE.radius, 'z': z} for z in ps_zpos]
+
+    fitter_ml = Fitter(theory='mielens')
+    fitter_mo = Fitter(theory='mieonly')
     try:
         pool = Pool(4)
         tick_tock()
