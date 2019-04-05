@@ -7,7 +7,7 @@ import numpy as np
 
 import holopy as hp
 from holopy.core.io import load_average
-from holopy.core.process import subimage, normalize
+from holopy.core.process import subimage, normalize, center_find
 
 from lmfit.minimizer import MinimizerResult, Parameters
 
@@ -198,7 +198,11 @@ def load_bgdivide_crop(
         size=HOLOGRAM_SIZE):
     data = hp.load_image(path, channel=channel, **metadata)
     data = bg_correct(data, bkg, dark)
-    data = subimage(data, particle_position[::-1], size)
+    bbox = subimage(data, particle_position[::-1], size)
+    bbox_corner = np.array([bbox.x.min(), bbox.y.min()])
+    particle_position = np.round(center_find(bbox) 
+                                 + bbox_corner / metadata['spacing'])
+    data = subimage(data, particle_position, size)
     data = normalize(data)
     return data
 
