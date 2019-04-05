@@ -9,9 +9,46 @@ from holopy.core.metadata import get_extents, get_spacing, make_subset_data
 from holopy.core.process import center_find, normalize
 from holopy.core.tests.common import get_example_data
 from holopy.scattering import Sphere, calc_holo
-from holopy.scattering.theory import MieLens
+from holopy.scattering.theory import MieLens, Mie
 
 from lmfit import Minimizer, Parameter, Parameters, report_fit
+
+
+class ResidualsCalculator(object):
+    """Stores the best-fit as self.best_fit_params, best_fit_chisq:w
+    """
+
+    def __init__(self, data, theory='mielens', noise=1.0):
+        self.data = data
+        self.theory = theory
+        self.best_params = []
+        self.best_chisq = np.inf
+
+    def calc_model(self, params, metadata):
+        sphere = self.create_sphere_from(params)
+        if self.theory == 'mielens':
+            theory = MieLens(lens_angle=params['lens_angle'])
+            scaling = 1.0
+        elif self.theory == 'mieonly':
+            theory = Mie()
+            scaling=params['alpha']
+        return calc_holo(metadata, sphere, theory=theory, scaling=scaling)
+
+    def create_sphere_from(self, params):
+        params = {name: param for name, param in params.items()}
+        sphere = Sphere(n=params['n'], r=params['r'],
+                        center=(params['x'], params['y'], params['z']))
+        return sphere
+
+    def calc_residuals(self, params, *, data=None, noise=1.0):
+        model = self.calc_model(params, data)
+        residuals = (model - data).values
+        chisq = np.linalg.norm(residuals)**2
+        if chisq < self.best_chisq:
+            self.best_chisq = chisq
+            self.best_params = params
+        return residuals / noise
+
 
 class Fitter(object):
     DEFAULT_MCMC_PARAMS = {}
@@ -23,9 +60,54 @@ class Fitter(object):
     def fit(self, data, initial_guess):
         params = self._setup_params_from(initial_guess, data)
         cost_kwargs = {'data': data, 'noise': self._estimate_noise_from(data)}
-        minimizer = self._setup_minimizer(params, cost_kwargs=cost_kwargs)
+
+        residuals_calculator = ResidualsCalculator(data, theory=self.theory)
+        minimizer = Minimizer(
+            residuals_calculator.calc_residuals,
+            params,
+            nan_policy='omit',
+            fcn_kws=cost_kwargs)
         fit_result = minimizer.minimize(params=params, method=self.method)
         return fit_result
+
+    def mcmc(self, initial_guesses, data, mcmc_kws=None, npixels=100):
+        if mcmc_kws is None:
+            mcmc_kws = self.DEFAULT_MCMC_PARAMS.copy()
+        print("Getting best fit with {}".format(self.method))
+        best_fit = self.fit(data, initial_guesses)
+        print(report_fit(best_fit))
+
+        subset_data = make_subset_data(data, pixels=npixels)
+        noise = self._estimate_noise_from(data)
+        params = best_fit.params
+        params.add(
+            '__lnsigma', value=np.log(noise), min=np.log(noise/10),
+            max=np.log(noise*10))
+
+        residuals_calculator = ResidualsCalculator(data, theory=self.theory)
+        minimizer = Minimizer(
+            residuals_calculator.calc_residuals,
+            params,
+            nan_policy='omit',
+            fcn_kws={'data': subset_data})
+
+        print("Sampling with emcee ({}, npixels: {})".format(mcmc_kws, npixels))
+        self._update_mcmc_kwargs_with_pos(mcmc_kws, params)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            mcmc_result = minimizer.minimize(
+                params=params, method='emcee', float_behavior='chi2',
+                is_weighted=False, **mcmc_kws)
+        print(report_fit(mcmc_result.params))
+        # Then the whole point of the ResidualsCalculator is storing the
+        # best-fit value:
+        best_params = {'parameters': residuals_calculator.best_params,
+                       'chisq': residuals_calculator.best_chisq}
+        result = {
+            'mcmc_result': mcmc_result,
+            'lmfit_result': best_fit,
+            'best_result': best_params}
+        return result
 
     def _setup_minimizer(self, params, cost_kwargs=None):
         cost_function = self._setup_cost_function()
@@ -85,48 +167,6 @@ class Fitter(object):
 
     def _calc_square_residuals_mieonly(self, params, *, data=None, noise=1.0):
         return self._calc_residuals(params, data=data, noise=noise) ** 2
-
-    def _calc_residuals(self, params, *, data=None, noise=1.0):
-        sphere = self._sphere_from(params)
-        model = self._calc_model(params, data)
-        return (model - data).values / noise
-
-    def _calc_model(self, params, metadata):
-        sphere = self._sphere_from(params)
-        if self.theory == 'mielens':
-            return calc_holo(metadata, sphere, theory=MieLens(lens_angle=params['lens_angle']))
-        elif self.theory == 'mieonly':
-            return calc_holo(metadata, sphere, scaling=params['alpha'])
-
-    def _sphere_from(self, params):
-        params = {name: param for name, param in params.items()}
-        s = Sphere(n = params['n'], r = params['r'],
-                   center = (params['x'], params['y'], params['z']))
-        return s
-
-    def mcmc(self, initial_guesses, data, mcmc_kws=None, npixels=100):
-        if mcmc_kws is None:
-            mcmc_kws = self.DEFAULT_MCMC_PARAMS.copy()
-        print("Getting best fit with {}".format(self.method))
-        best_fit = self.fit(data, initial_guesses)
-        print(report_fit(best_fit))
-        subset_data = make_subset_data(data, pixels=npixels)
-        noise = self._estimate_noise_from(data)
-        params = best_fit.params
-        params.add(
-            '__lnsigma', value=np.log(noise), min=np.log(noise/10),
-            max=np.log(noise*10))
-        minimizer = self._setup_minimizer(
-            params, cost_kwargs={'data': subset_data})
-        self._update_mcmc_kwargs_with_pos(mcmc_kws, params)
-        print("Sampling with emcee ({}, npixels: {})".format(mcmc_kws, npixels))
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            mcmc_result = minimizer.minimize(
-                params=params, method='emcee', float_behavior='chi2',
-                is_weighted=False, **mcmc_kws)
-        print(report_fit(mcmc_result.params))
-        return mcmc_result, best_fit
 
     def _estimate_noise_from(self, data):
         if data.noise_sd is None:
