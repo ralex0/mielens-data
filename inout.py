@@ -36,7 +36,7 @@ def load_mcmc_result_Si_mielens(fmt='json'):
 
 
 def load_PTmcmc_result_PS_mieonly(fmt='json'):
-    """PS: 0001.tiff 
+    """PS: 0001.tiff
     {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 5, 'npixels': 100}
     """
     file = 'fits/sedimentation/mcmc/PT-4-4-19/ps_mcmc_mo_pt'
@@ -44,7 +44,7 @@ def load_PTmcmc_result_PS_mieonly(fmt='json'):
 
 
 def load_PTmcmc_result_PS_mielens(fmt='json'):
-    """PS: 0001.tiff 
+    """PS: 0001.tiff
     {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 5, 'npixels': 100}
     """
     file ='fits/sedimentation/mcmc/PT-4-4-19/ps_mcmc_ml_pt'
@@ -75,26 +75,47 @@ def _load_mcmc_result(file, fmt):
 
 
 def load_silica_sedimentation_params(date_subdir="04-02"):
-    mo_fits = load_json(f"fits/sedimentation/{date_subdir}/mieonly_sedimentation_params_Si.json")
-    ml_fits = load_json(f"fits/sedimentation/{date_subdir}/mielens_sedimentation_params_Si.json")
+    mo_fits = load_json(
+        "fits/sedimentation/{}/mieonly_sedimentation_params_Si.json".format(
+            date_subdir))
+    ml_fits = load_json(
+        "fits/sedimentation/{}/mielens_sedimentation_params_Si.json".format(
+            date_subdir))
     return mo_fits, ml_fits
-    
+
 
 def load_polystyrene_sedimentation_params(date_subdir="04-02"):
-    mo_fits = load_json(f"fits/sedimentation/{date_subdir}/mieonly_sedimentation_params_PS.json")
-    ml_fits = load_json(f"fits/sedimentation/{date_subdir}/mielens_sedimentation_params_PS.json")
+    mo_fits = load_json(
+        "fits/sedimentation/{}/mieonly_sedimentation_params_PS.json".format(
+            date_subdir))
+    ml_fits = load_json(
+        "fits/sedimentation/{}/mielens_sedimentation_params_PS.json".format(
+            date_subdir))
     return mo_fits, ml_fits
 
 
 def load_silica_sedimentation_fits(date_subdir="04-02"):
-    mo_fits = [load_pickle(f"fits/sedimentation/{date_subdir}/Si_mieonly/{zfill(num, 4)}.pkl") for num in range(43)]
-    ml_fits = [load_pickle(f"fits/sedimentation/{date_subdir}/Si_mielens/{zfill(num, 4)}.pkl") for num in range(100)]
+    mo_fits = [
+        load_pickle(
+            "fits/sedimentation/{}/Si_mieonly/{}.pkl".format(
+                date_subdir, zfill(num, 4)))
+        for num in range(43)]
+    ml_fits = [
+        load_pickle("fits/sedimentation/{}/Si_mielens/{}.pkl".format(
+            date_subdir, zfill(num, 4)))
+        for num in range(100)]
     return mo_fits, ml_fits
-    
+
 
 def load_polystyrene_sedimentation_fits(date_subdir="04-02"):
-    mo_fits = [load_pickle(f"fits/sedimentation/{date_subdir}/PS_mieonly/{zfill(num, 4)}.pkl") for num in range(20)]
-    ml_fits = [load_pickle(f"fits/sedimentation/{date_subdir}/PS_mielens/{zfill(num, 4)}.pkl") for num in range(50)]
+    mo_fits = [
+        load_pickle("fits/sedimentation/{}/PS_mieonly/{}.pkl".format(
+            date_subdir, zfill(num, 4)))
+        for num in range(20)]
+    ml_fits = [
+        load_pickle("fits/sedimentation/{}/PS_mielens/{}.pkl".format(
+            date_subdir, zfill(num, 4)))
+        for num in range(50)]
     return mo_fits, ml_fits
 
 
@@ -200,7 +221,7 @@ def load_bgdivide_crop(
     data = bg_correct(data, bkg, dark)
     bbox = subimage(data, particle_position[::-1], size)
     bbox_corner = np.array([bbox.x.min(), bbox.y.min()])
-    particle_position = np.round(center_find(bbox) 
+    particle_position = np.round(center_find(bbox)
                                  + bbox_corner / metadata['spacing'])
     data = subimage(data, particle_position, size)
     data = normalize(data)
@@ -220,7 +241,7 @@ def zfill(n, nzeros=4):
     return str(n).rjust(nzeros, '0')
 
 
-RESULT_ATTRS = ['params', 'status', 'var_names', 'covar', 'init_vals', 
+RESULT_ATTRS = ['params', 'status', 'var_names', 'covar', 'init_vals',
                 'init_values', 'nfev', 'success', 'errorbars', 'message', 'ier',
                 'lmdif_message', 'nvarys', 'ndata', 'nfree', 'residual',
                 'chisqr', 'redchi', 'aic', 'bic', 'chain', 'method', 'lnprob']
@@ -258,10 +279,10 @@ def _unserialize_MinimizerResult(serialized):
     for k in ['covar', 'residual', 'init_vals', 'lnprob', 'chain']:
         if k in serialized:
             unserialized[k] = np.array(serialized[k])
-    if 'success' in serialized:        
+    if 'success' in serialized:
         unserialized['success'] = True if serialized['success'] == 'True' else False
     if 'errorbars' in serialized:
-        unserialized['errorbars'] = (np.bool_(True) 
+        unserialized['errorbars'] = (np.bool_(True)
                                      if serialized['errorbars'] == 'True'
                                      else np.bool_(False))
     return unserialized

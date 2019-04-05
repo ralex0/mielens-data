@@ -55,10 +55,10 @@ class Fitter(object):
         image_max_y = image_y_values.max()
 
         if ('x' in guess) and ('y' in guess):
-            x_guess = guess['x'] 
+            x_guess = guess['x']
             y_guess = guess['y']
         elif ('center.0' in guess) and ('center.1' in guess):
-            x_guess = guess['center.0'] 
+            x_guess = guess['center.0']
             y_guess = guess['center.1']
         else:
             pixel_spacing = get_spacing(data)
@@ -84,7 +84,7 @@ class Fitter(object):
         return self._calc_residuals
 
     def _calc_square_residuals_mieonly(self, params, *, data=None, noise=1.0):
-        return self._calc_residuals(params, data=data, noise=noise) ** 2 
+        return self._calc_residuals(params, data=data, noise=noise) ** 2
 
     def _calc_residuals(self, params, *, data=None, noise=1.0):
         sphere = self._sphere_from(params)
@@ -95,7 +95,7 @@ class Fitter(object):
         sphere = self._sphere_from(params)
         if self.theory == 'mielens':
             return calc_holo(metadata, sphere, theory=MieLens(lens_angle=params['lens_angle']))
-        elif self.theory == 'mieonly': 
+        elif self.theory == 'mieonly':
             return calc_holo(metadata, sphere, scaling=params['alpha'])
 
     def _sphere_from(self, params):
@@ -105,7 +105,7 @@ class Fitter(object):
         return s
 
     def mcmc(self, initial_guesses, data, mcmc_kws=DEFAULT_MCMC_PARAMS, npixels=100):
-        print(f"Getting best fit with {self.method}")
+        print("Getting best fit with {}".format(self.method))
         best_fit = self.fit(data, initial_guesses)
         print(report_fit(best_fit))
         subset_data = make_subset_data(data, pixels=npixels)
@@ -113,11 +113,11 @@ class Fitter(object):
         params = best_fit.params
         params.add('__lnsigma', value=np.log(noise), min=np.log(noise/10), max=np.log(noise*10))
         minimizer = self._setup_minimizer(params, cost_kwargs={'data': subset_data})
-        print(f"Sampling with emcee ({mcmc_kws}, npixels: {npixels})")
+        print("Sampling with emcee ({}, npixels: {})".format(mcmc_kws, npixels))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            mcmc_result = minimizer.minimize(params=params, method='emcee', 
-                                         float_behavior='chi2', is_weighted=False, 
+            mcmc_result = minimizer.minimize(params=params, method='emcee',
+                                         float_behavior='chi2', is_weighted=False,
                                          **mcmc_kws)
         print(report_fit(mcmc_result.params))
         return mcmc_result, best_fit
@@ -126,6 +126,7 @@ class Fitter(object):
         if data.noise_sd is None:
             return estimate_noise_from(data)
         return float(data.noise_sd)
+
 
 def estimate_noise_from(data):
     data = data.values.squeeze()
@@ -136,7 +137,7 @@ def estimate_noise_from(data):
 
 def load_example_data():
     imagepath = hp.core.io.get_example_data_path('image01.jpg')
-    raw_holo = hp.load_image(imagepath, spacing = 0.0851, medium_index = 1.33, 
+    raw_holo = hp.load_image(imagepath, spacing = 0.0851, medium_index = 1.33,
                              illum_wavelen = 0.66, illum_polarization = (1,0))
     bgpath = hp.core.io.get_example_data_path(['bg01.jpg', 'bg02.jpg', 'bg03.jpg'])
     bg = hp.core.io.load_average(bgpath, refimg = raw_holo)
@@ -145,13 +146,15 @@ def load_example_data():
     holo = hp.core.process.normalize(holo)
     return holo
 
+
 def load_gold_example_data():
     return normalize(hp.load(hp.core.io.get_example_data_path('image0001.h5')))
+
 
 if __name__ == '__main__':
     data = load_example_data()
     initial_guesses = {'z': 15.0, 'n': 1.58, 'r': .5}
-    
+
     # data = load_gold_example_data()
     # initial_guesses = {'z': 1.415e-5, 'n': 1.582, 'r': 6.484e-7}
 

@@ -6,15 +6,12 @@ import pickle
 import time
 
 import numpy as np
-
 import matplotlib.pyplot as plt
-
 import holopy as hp
-
 from lmfit import report_fit
 
-import mielensfit as mlf
-from lmfitFitter import Fitter
+import mielensfit as mlf  # 1.08 s
+from lmfitFitter import Fitter  # 17.5 ms
 import inout
 
 
