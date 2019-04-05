@@ -139,7 +139,7 @@ def save_json(obj, filename):
         _save_MinimizerResult_to_json(obj, filename)
     else:
         with open(filename, 'w') as f:
-            json.dump(obj, f)
+            json.dump(obj, f, indent=4)
 
 
 def load_silica_sedimentation_data():
