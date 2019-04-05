@@ -124,36 +124,52 @@ def _calc_particle_trajectory(
     return trajectory
 
 
-def fit_all_data():
+def fit_si_data():
     tick_tock()
     si_data = inout.load_silica_sedimentation_data()[0]
-    ps_data = inout.load_polystyrene_sedimentation_data()[0]
     si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
+    print("Time to load Si data: {}".format(tick_tock()))
+
+    fitter_ml = Fitter(theory='mielens')
+    fitter_mo = Fitter(theory='mieonly')
+
+    old_si_fits_mo, old_si_fits_ml = inout.load_silica_sedimentation_fits()
+    si_initial_z = old_si_fits_ml['0']['z']
+    si_bottom_frame = 60
+    si_zpos = _calc_particle_trajectory(
+        si_times, SILICA_PARTICLE, si_initial_z, si_bottom_frame)
+    si_guesses = [
+        {'n': 1.43, 'r': SILICA_PARTICLE.radius, 'z': z} for z in si_zpos]
+    try:
+        pool = Pool(4)
+        tick_tock()
+        si_fits_mo = pool.starmap(
+            fitter_mo.fit, zip(si_data[:43], si_guesses[:43]))
+        si_fits_ml = pool.starmap(
+            fitter_ml.fit, zip(si_data, si_guesses))
+        print("Time to fit Si: {}".format(tick_tock()))
+    finally:
+        pool.close()
+        pool.join()
+    return si_fits_mo, si_fits_ml
+
+
+def fit_ps_data():
+    tick_tock()
+    ps_data = inout.load_polystyrene_sedimentation_data()[0]
     ps_times = np.load("./fits/sedimentation/PS_frame_times.npy")
-    print("Time to load data: {}".format(tick_tock()))
+    print("Time to load PS data: {}".format(tick_tock()))
 
     fitter_ml = Fitter(theory='mielens')
     fitter_mo = Fitter(theory='mieonly')
 
     old_ps_fits_mo, old_ps_fits_ml = inout.load_polystyrene_sedimentation_fits()
-    old_si_fits_mo, old_si_fits_ml = inout.load_silica_sedimentation_fits()
-
     ps_initial_z = old_ps_fits_ml['0']['z']
-    si_initial_z = old_si_fits_ml['0']['z']
-
     ps_bottom_frame = 31 #Looks like it hits the coverslip around here
-    si_bottom_frame = 60
-
-    ps_zpos = _calc_particle_trajectory(ps_times, POLYSTYRENE_PARTICLE,
-                                        ps_initial_z, ps_bottom_frame)
-    si_zpos = _calc_particle_trajectory(si_times, SILICA_PARTICLE,
-                                        si_initial_z, si_bottom_frame)
-
-    ps_guesses = [{'n': 1.58, 'r': POLYSTYRENE_PARTICLE.radius, 'z': z}
-                  for z in ps_zpos]
-    si_guesses = [{'n': 1.43, 'r': SILICA_PARTICLE.radius, 'z': z}
-                  for z in si_zpos]
-
+    ps_zpos = _calc_particle_trajectory(
+        ps_times, POLYSTYRENE_PARTICLE, ps_initial_z, ps_bottom_frame)
+    ps_guesses = [
+        {'n': 1.58, 'r': POLYSTYRENE_PARTICLE.radius, 'z': z} for z in ps_zpos]
     try:
         pool = Pool(4)
         tick_tock()
@@ -161,16 +177,11 @@ def fit_all_data():
             fitter_mo.fit, zip(ps_data[:20], ps_guesses[:20]))
         ps_fits_ml = pool.starmap(
             fitter_ml.fit, zip(ps_data, ps_guesses))
-        si_fits_mo = pool.starmap(
-            fitter_mo.fit, zip(si_data[:43], si_guesses[:43]))
-        si_fits_ml = pool.starmap(
-            fitter_ml.fit, zip(si_data, si_guesses))
-        print("Time to do fits: {}".format(tick_tock()))
+        print("Time to fit PS: {}".format(tick_tock()))
     finally:
         pool.close()
         pool.join()
-
-    return ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml
+    return ps_fits_mo, ps_fits_ml
 
 
 def save_results(ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml):
@@ -213,7 +224,8 @@ def save_results(ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml):
 
 
 if __name__ == '__main__':
-    # ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml = fit_all_data()
+    # ps_fits_mo, ps_fits_ml = fit_ps_data()
+    # si_fits_mo, si_fits_ml = fit_si_data()
     # save_results(ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml)
     pass
 
