@@ -104,21 +104,27 @@ class Fitter(object):
                    center = (params['x'], params['y'], params['z']))
         return s
 
-    def mcmc(self, initial_guesses, data, mcmc_kws=DEFAULT_MCMC_PARAMS, npixels=100):
+    def mcmc(self, initial_guesses, data, mcmc_kws=None, npixels=100):
+        if mcmc_kws is None:
+            mcmc_kws = self.DEFAULT_MCMC_PARAMS.copy()
         print("Getting best fit with {}".format(self.method))
         best_fit = self.fit(data, initial_guesses)
         print(report_fit(best_fit))
         subset_data = make_subset_data(data, pixels=npixels)
         noise = self._estimate_noise_from(data)
         params = best_fit.params
-        params.add('__lnsigma', value=np.log(noise), min=np.log(noise/10), max=np.log(noise*10))
-        minimizer = self._setup_minimizer(params, cost_kwargs={'data': subset_data})
+        params.add(
+            '__lnsigma', value=np.log(noise), min=np.log(noise/10),
+            max=np.log(noise*10))
+        minimizer = self._setup_minimizer(
+            params, cost_kwargs={'data': subset_data})
+        self._update_mcmc_kwargs_with_pos(mcmc_kws, params)
         print("Sampling with emcee ({}, npixels: {})".format(mcmc_kws, npixels))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            mcmc_result = minimizer.minimize(params=params, method='emcee',
-                                         float_behavior='chi2', is_weighted=False,
-                                         **mcmc_kws)
+            mcmc_result = minimizer.minimize(
+                params=params, method='emcee', float_behavior='chi2',
+                is_weighted=False, **mcmc_kws)
         print(report_fit(mcmc_result.params))
         return mcmc_result, best_fit
 
@@ -126,6 +132,34 @@ class Fitter(object):
         if data.noise_sd is None:
             return estimate_noise_from(data)
         return float(data.noise_sd)
+
+    def _update_mcmc_kwargs_with_pos(self, mcmc_kws, params):
+        # The emcee code looks like it takes a starting guess (the pos kwarg)
+        # as params * (1 + 1e-4 * randn(*params.shape)), which might be a
+        # little small. We probably want something like delta_xyz ~ 0.03,
+        # delta_n ~ 0.03, delta_r ~ 0.03, delta_alpha / lensangle ~ 0.1,
+        # since those seem to be the scale of local minima...
+        # from the nature of the affine invariant stuff, IMO it will be
+        # easier to start broad and go down.
+        nwalkers = mcmc_kws['nwalkers'] if 'nwalkers' in mcmc_kws else 100
+        nwalkers = mcmc_kws['nwalkers'] if 'nwalkers' in mcmc_kws else 1
+        nparams = len(params)
+        if 'ntemps' in mcmc_kws:
+            ntemps = mcmc_kws['ntemps']
+            noise_shape = (ntemps, nwalkers, nparams)
+            sigma_shape = (1, 1, nparams)
+        else:
+            noise_shape = (nwalkers, nparams)
+            sigma_shape = (1, nparams)
+        noise_sigma = np.reshape(
+            [0.03, 0.03, 0.03, 0.03, 0.03, 0.05, 0.05],
+            # x     y      z    n     r     lens  noise
+            sigma_shape)
+        noise = np.random.randn(*noise_shape) * noise_sigma
+
+        pos_center = np.reshape([params[k].value for k in params], sigma_shape)
+        pos_randomized = pos_center + noise
+        mcmc_kws.update({'pos': pos_randomized})
 
 
 def estimate_noise_from(data):
