@@ -213,24 +213,7 @@ def save_results(ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml):
 
 
 if __name__ == '__main__':
-    tick_tock()
-    si_data = inout.load_silica_sedimentation_data()[0]
-    ps_data = inout.load_polystyrene_sedimentation_data()[0]
-    si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
-    ps_times = np.load("./fits/sedimentation/PS_frame_times.npy")
-    print("Time to load data: {}".format(tick_tock()))
-
-    fitter_ml = Fitter(theory='mielens')
-    fitter_mo = Fitter(theory='mieonly')
-
-    tick_tock()
-    restarted_ps_fits_mo, restarted_ps_fits_ml = inout.load_polystyrene_sedimentation_fits("03-27")
-    restarted_si_fits_mo, restarted_si_fits_ml = inout.load_silica_sedimentation_fits("03-27")
-
-    fresh_ps_fits_mo, fresh_ps_fits_ml = inout.load_polystyrene_sedimentation_fits("04-02")
-    fresh_si_fits_mo, fresh_si_fits_ml = inout.load_silica_sedimentation_fits("04-02")
-    print("Time to load fits: {}".format(tick_tock()))
-
     # ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml = fit_all_data()
     # save_results(ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml)
+    pass
 
