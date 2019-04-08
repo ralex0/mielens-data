@@ -78,8 +78,10 @@ class MCMCJointPlotFigure(object):
 
     def _set_joint_axes_style(self, ax, x, y):
         x_bw, y_bw = np.array((x.std(), y.std())) * 2.5
-        xmin, xmax = np.median(x) - x_bw, np.median(x) + x_bw
-        ymin, ymax = np.median(y) - y_bw, np.median(y) + y_bw
+        xmin = max(np.median(x) - x_bw, x.min())
+        xmax = min(np.median(x) + x_bw, x.max())
+        ymin = max(np.median(y) - y_bw, y.min())
+        ymax = min(np.median(y) + y_bw, y.max())
         
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
@@ -163,8 +165,8 @@ def plot_mcmc_samples(mcmc_result):
 
 
 if __name__ == '__main__':
-    data = inout.load_mcmc_result_PS_mieonly()
+    data = inout.load_mcmc_result_PS_mielens()
     plotter = MCMCJointPlotFigure(data, burnin=200)
-    labels = ["refractive index", "radius (μm)", "alpha"]
-    fig = plotter.plot('n', 'r', 'alpha', labels = labels)
+    labels = ["refractive index", "radius (μm)", "angular aperture (rad)"]
+    fig = plotter.plot('n', 'r', 'lens_angle', labels = labels)
     plt.show()
