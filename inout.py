@@ -94,6 +94,18 @@ def load_polystyrene_sedimentation_params(date_subdir="04-02"):
     return mo_fits, ml_fits
 
 
+def load_silica_sedimentation_fits_json(date_subdir="04-02"):
+    mo_fits = [load_json(f"fits/sedimentation/{date_subdir}/Si_mieonly/{zfill(num, 4)}.json") for num in range(43)]
+    ml_fits = [load_json(f"fits/sedimentation/{date_subdir}/Si_mielens/{zfill(num, 4)}.json") for num in range(100)]
+    return mo_fits, ml_fits
+    
+
+def load_polystyrene_sedimentation_fits_json(date_subdir="04-02"):
+    mo_fits = [load_json(f"fits/sedimentation/{date_subdir}/PS_mieonly/{zfill(num, 4)}.json") for num in range(20)]
+    ml_fits = [load_json(f"fits/sedimentation/{date_subdir}/PS_mielens/{zfill(num, 4)}.json") for num in range(50)]
+    return mo_fits, ml_fits
+
+
 def load_silica_sedimentation_fits(date_subdir="04-02"):
     mo_fits = [
         load_pickle(
