@@ -34,7 +34,7 @@ if __name__ == '__main__':
     print("Starting mieonly mcmc")
     tick_tock()
     optimization_result = mieonlyFitter.mcmc(
-        guess_mo, data[1], mcmc_kws=mcmc_kws, npixels=100)
+        guess_mo, data[1], mcmc_kws=mcmc_kws, npixels=npixels)
     print("mieonly mcmc took {}".format(tick_tock()))
     mcmc_mo = optimization_result['mcmc_result']
     fit_mo = optimization_result['lmfit_result']
@@ -47,8 +47,10 @@ if __name__ == '__main__':
 
     print("Starting mielens mcmc")
     tick_tock()
+    npixels = data[2].values.size
     optimization_result = mielensFitter.mcmc(
-        guess_ml, data[2], mcmc_kws=mcmc_kws, npixels=10000)
+        guess_ml, data[2], mcmc_kws=mcmc_kws, npixels=npixels)
+
     print("mielens mcmc took {}".format(tick_tock()))
     # With 10,000 px (all of them), it takes 24 s / step to run MCMC,
     # with 5 temps, 100 walkers, 4 workers
