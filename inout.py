@@ -12,7 +12,7 @@ from holopy.core.process import subimage, normalize, center_find
 from lmfit.minimizer import MinimizerResult, Parameters
 
 RGB_CHANNEL = 'all'
-HOLOGRAM_SIZE = 100
+HOLOGRAM_SIZE = 120
 
 
 def load_mcmc_result_PS_mieonly(fmt='json'):
@@ -193,7 +193,7 @@ def load_polystyrene_sedimentation_data():
             df_prefix='dark', refimg=refimg)
         holos = [load_bgdivide_crop(path=path, metadata=metadata,
                                     particle_position=position,
-                                    bkg=bkg, dark=dark, size=100)
+                                    bkg=bkg, dark=dark, size=HOLOGRAM_SIZE)
                  for path in paths]
     return holos, zpos
 
