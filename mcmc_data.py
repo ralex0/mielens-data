@@ -16,20 +16,25 @@ def tick_tock():
 # TODO:
 # Time mielens with npixels=1e2 vs npixels=1e3 vs npixels=1e4
 if __name__ == '__main__':
+    WHICH_IMAGE = 2
+    WHICH_FIT = str(WHICH_IMAGE)
     data, zpos = inout.load_polystyrene_sedimentation_data()
     fits_mo, fits_ml = inout.load_polystyrene_sedimentation_params("03-27")
 
     mielensFitter = Fitter(theory='mielens')
     mieonlyFitter = Fitter(theory='mieonly')
 
-    guess_mo = fits_mo['1']
-    guess_ml = fits_ml['1']
 
     # mcmc_kws = {'burn': 0, 'steps': 2, 'nwalkers': 100,
     #            'thin': 1, 'workers': 4, 'ntemps': 5}
-    mcmc_kws = {'burn': 0, 'steps': 5000, 'nwalkers': 100,
+    mcmc_kws = {'burn': 0, 'steps': 1000, 'nwalkers': 100,
                 'thin': 1, 'workers': 16, 'ntemps': 10}
 
+    npixels = data[2].values.size
+    # WTF? 10000 pixels takes 10 s / iteration,
+    # 14400 px takes 48.74 s / iteration
+    # On the same image size...
+    # npixels = 10000
     """
     print("Starting mieonly mcmc")
     tick_tock()
@@ -45,11 +50,12 @@ if __name__ == '__main__':
     inout.save_pickle(fit_mo, 'ps_fit_mo_pt.pkl')
     """
 
+    guess_mo = fits_mo[WHICH_FIT]
+    guess_ml = fits_ml[WHICH_FIT]
     print("Starting mielens mcmc")
     tick_tock()
-    npixels = data[2].values.size
     optimization_result = mielensFitter.mcmc(
-        guess_ml, data[2], mcmc_kws=mcmc_kws, npixels=npixels)
+        guess_ml, data[WHICH_IMAGE], mcmc_kws=mcmc_kws, npixels=npixels)
 
     print("mielens mcmc took {}".format(tick_tock()))
     # With 10,000 px (all of them), it takes 24 s / step to run MCMC,
