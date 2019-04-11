@@ -171,7 +171,7 @@ def save_json(obj, filename):
             json.dump(obj, f, indent=4)
 
 
-def load_silica_sedimentation_data():
+def load_silica_sedimentation_data(size=HOLOGRAM_SIZE):
     camera_resolution = 5.6983 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                     'medium_index' : 1.33,
@@ -194,12 +194,12 @@ def load_silica_sedimentation_data():
             df_prefix='dark', refimg=refimg)  # 8.7 s! all holopy
         holos = [load_bgdivide_crop(path=path, metadata=metadata,
                                     particle_position=position,
-                                    bkg=bkg, dark=dark, size=140)
+                                    bkg=bkg, dark=dark, size=size)
                  for path in paths]
     return holos, zpos
 
 
-def load_polystyrene_sedimentation_data():
+def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE):
     camera_resolution = 5.6983 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                     'medium_index' : 1.33,
@@ -222,7 +222,7 @@ def load_polystyrene_sedimentation_data():
             df_prefix='dark', refimg=refimg)
         holos = [load_bgdivide_crop(path=path, metadata=metadata,
                                     particle_position=position,
-                                    bkg=bkg, dark=dark, size=HOLOGRAM_SIZE)
+                                    bkg=bkg, dark=dark, size=size)
                  for path in paths]
     return holos, zpos
 
