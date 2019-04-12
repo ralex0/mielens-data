@@ -1,7 +1,8 @@
-import pickle
-import json
 import os
+import json
+import pickle
 import warnings
+from collections import OrderedDict
 
 import numpy as np
 
@@ -95,14 +96,30 @@ def load_polystyrene_sedimentation_params(date_subdir="04-02"):
 
 
 def load_silica_sedimentation_fits_json(date_subdir="04-02"):
-    mo_fits = [load_json(f"fits/sedimentation/{date_subdir}/Si_mieonly/{zfill(num, 4)}.json") for num in range(43)]
-    ml_fits = [load_json(f"fits/sedimentation/{date_subdir}/Si_mielens/{zfill(num, 4)}.json") for num in range(100)]
+    mo_fits = [
+        load_json(
+            "fits/sedimentation/{}/Si_mieonly/{}.json".format(
+                date_subdir, zfill(num, 4)))
+        for num in range(43)]
+    ml_fits = [
+        load_json(
+            "fits/sedimentation/{}/Si_mielens/{}.json".format(
+                date_subdir, zfill(num, 4)))
+        for num in range(100)]
     return mo_fits, ml_fits
-    
+
 
 def load_polystyrene_sedimentation_fits_json(date_subdir="04-02"):
-    mo_fits = [load_json(f"fits/sedimentation/{date_subdir}/PS_mieonly/{zfill(num, 4)}.json") for num in range(20)]
-    ml_fits = [load_json(f"fits/sedimentation/{date_subdir}/PS_mielens/{zfill(num, 4)}.json") for num in range(50)]
+    mo_fits = [
+        load_json(
+            "fits/sedimentation/{}/PS_mieonly/{}.json".format(
+                date_subdir, zfill(num, 4)))
+        for num in range(20)]
+    ml_fits = [
+        load_json(
+            "fits/sedimentation/{}/PS_mielens/{}.json".format(
+                date_subdir, zfill(num, 4)))
+        for num in range(50)]
     return mo_fits, ml_fits
 
 
@@ -143,7 +160,7 @@ def save_pickle(obj, filename):
 
 def load_json(filename):
     with open(filename, 'r') as f:
-        return json.load(f)
+        return json.load(f, object_pairs_hook=OrderedDict)
 
 
 def save_json(obj, filename):
@@ -239,6 +256,7 @@ def load_bgdivide_crop(
     data = normalize(data)
     return data
 
+
 def bg_correct(raw, bg, df=None):
     if df is None:
         df = raw.copy()
@@ -248,6 +266,7 @@ def bg_correct(raw, bg, df=None):
     holo = (raw - df) / denominator
     holo = hp.core.copy_metadata(raw, holo)
     return holo
+
 
 def zfill(n, nzeros=4):
     return str(n).rjust(nzeros, '0')
@@ -279,8 +298,7 @@ def _serialize_MinimizerResult(result):
 
 
 def load_MinimizerResult_from_json(filename):
-    with open(filename, 'r') as f:
-        serialized_result = json.load(f)
+    serialized_result = load_json(filename)
     unserialized_result = _unserialize_MinimizerResult(serialized_result)
     return MinimizerResult(**unserialized_result)
 
