@@ -199,15 +199,16 @@ def load_silica_sedimentation_data(size=HOLOGRAM_SIZE):
     return holos, zpos
 
 
-def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE):
+def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
+    if holonums is None:
+        holonums = range(50)
     camera_resolution = 5.6983 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.33,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
+                'medium_index' : 1.33,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
     position = [242, 266]
 
-    holonums = range(50)
     zpos = np.linspace(20, -12, 50)
     paths = ["data/Polystyrene2-4um-60xWater-012419/raw/image"
              +  zfill(num, 4) + ".tif" for num in holonums]
