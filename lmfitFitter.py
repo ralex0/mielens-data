@@ -71,12 +71,16 @@ class Fitter(object):
         return fit_result
 
     def mcmc(self, initial_guesses, data, mcmc_kws=None, npixels=100):
-        if mcmc_kws is None:
-            mcmc_kws = self.DEFAULT_MCMC_PARAMS.copy()
         print("Getting best fit with {}".format(self.method))
         best_fit = self.fit(data, initial_guesses)
         print(report_fit(best_fit))
+        result = self._mcmc(
+            best_fit, data, mcmc_kws=mcmc_kws, npixels=npixels)
+        return result
 
+    def _mcmc(self, best_fit, data, mcmc_kws=None, npixels=100):
+        if mcmc_kws is None:
+            mcmc_kws = self.DEFAULT_MCMC_PARAMS.copy()
         subset_data = make_subset_data(data, pixels=npixels)
         noise = self._estimate_noise_from(data)
         params = best_fit.params
