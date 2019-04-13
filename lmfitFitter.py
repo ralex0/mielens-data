@@ -70,6 +70,7 @@ class Fitter(object):
         fit_result = minimizer.minimize(params=params, method=self.method)
         return fit_result
 
+    # FIXME why is the param order backwards from fit?
     def mcmc(self, initial_guesses, data, mcmc_kws=None, npixels=100):
         print("Getting best fit with {}".format(self.method))
         best_fit = self.fit(data, initial_guesses)
