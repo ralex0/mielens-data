@@ -52,15 +52,15 @@ if __name__ == '__main__':
     guess_ml = fits_ml[WHICH_FIT]
 
     mielensFitter = Fitter(theory='mielens')
-    mcmc_kws = {'burn': 0, 'steps': 2000, 'nwalkers': 100,
+    mcmc_kws = {'burn': 0, 'steps': 5000, 'nwalkers': 100,
                 'thin': 1, 'workers': 16, 'ntemps': 7}
 
     # WTF? 10000 pixels takes 10 s / iteration,
     # 14400 px takes 48.74 s / iteration. So, 1e4 px:
     npixels = int(1e4)
-    time_mcmc(
-        data, guess_ml, theory='mielens', mcmc_kws=mcmc_kws, npixels=npixels)
-    raise ValueError
+    # time_mcmc(
+        # data, guess_ml, theory='mielens', mcmc_kws=mcmc_kws, npixels=npixels)
+    # raise ValueError
 
     print("Starting mielens mcmc")
     tick_tock()
