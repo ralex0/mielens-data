@@ -15,7 +15,7 @@ from lmfit import Minimizer, Parameter, Parameters, report_fit
 
 
 class ResidualsCalculator(object):
-    """Stores the best-fit as self.best_fit_params, best_fit_chisq:w
+    """Stores the best-fit as self.best_fit_params, best_fit_chisq
     """
 
     def __init__(self, data, theory='mielens', noise=1.0):
@@ -25,13 +25,14 @@ class ResidualsCalculator(object):
         self.best_chisq = np.inf
 
     def calc_model(self, params, metadata):
-        sphere = self.create_sphere_from(params)
+        sphere = self.create_sphere_from(params)  # 0.036 ms
         if self.theory == 'mielens':
-            theory = MieLens(lens_angle=params['lens_angle'])
+            theory = MieLens(lens_angle=params['lens_angle'])  # 0.0015 ms
             scaling = 1.0
         elif self.theory == 'mieonly':
             theory = Mie()
             scaling=params['alpha']
+        # calc_holo is 133 ms
         return calc_holo(metadata, sphere, theory=theory, scaling=scaling)
 
     def create_sphere_from(self, params):
@@ -40,10 +41,10 @@ class ResidualsCalculator(object):
                         center=(params['x'], params['y'], params['z']))
         return sphere
 
-    def calc_residuals(self, params, *, data=None, noise=1.0):
-        model = self.calc_model(params, data)
-        residuals = (model - data).values
-        chisq = np.linalg.norm(residuals)**2
+    def calc_residuals(self, params, *, data=None, noise=1.0):  # 170 ms
+        model = self.calc_model(params, data)  # 134 ms
+        residuals = (model - data).values  # 2.8 ms
+        chisq = np.linalg.norm(residuals)**2  # 0.5 ms
         if chisq < self.best_chisq:
             self.best_chisq = chisq
             self.best_params = params
@@ -118,9 +119,9 @@ class Fitter(object):
         cost_function = self._setup_cost_function()
         return Minimizer(cost_function, params, nan_policy='omit', fcn_kws=cost_kwargs)
 
-    def _setup_params_from(self, initial_guess, data):
+    def _setup_params_from(self, initial_guess, data):  # 5 ms
         params = Parameters()
-        x, y, z = self._make_center_priors(data, initial_guess)
+        x, y, z = self._make_center_priors(data, initial_guess)  # 4.47 ms
         n = Parameter(name = 'n', value=initial_guess['n'], min=data.medium_index*1.001, max=2.33)
         r = Parameter(name = 'r', value=initial_guess['r'], min=0.05, max=5)
         params.add_many(x, y, z, n, r)
