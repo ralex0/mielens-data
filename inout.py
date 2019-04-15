@@ -179,7 +179,7 @@ def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
                     'medium_index' : 1.33,
                     'illum_wavelen' : .660,
                     'illum_polarization' : (1, 0)}
-    position = [553, 725]
+    position = [725, 553]
 
     zpos = np.linspace(38, -12, 100)
     paths = ["data/Silica1um-60xWater-021519/raw/image"
@@ -193,10 +193,12 @@ def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
         dark = load_dark(
             "data/Silica1um-60xWater-021519/raw/dark/",
             df_prefix='dark', refimg=refimg)  # 8.7 s! all holopy
-        holos = [load_bgdivide_crop(path=path, metadata=metadata,
-                                    particle_position=position,
-                                    bkg=bkg, dark=dark, size=size)
-                 for path in paths]
+        holos = []
+        for path in paths:
+            this_holo = load_bgdivide_crop(
+                path=path, metadata=metadata, particle_position=position,
+                bkg=bkg, dark=dark, size=size)
+            holos.append(this_holo)
     return holos, zpos
 
 
@@ -208,7 +210,7 @@ def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
-    position = [242, 266]
+    position = [266, 242]
 
     zpos = np.linspace(20, -12, 50)
     paths = ["data/Polystyrene2-4um-60xWater-012419/raw/image"
@@ -250,7 +252,8 @@ def load_bgdivide_crop(
         size=HOLOGRAM_SIZE):
     data = hp.load_image(path, channel=channel, **metadata)
     data = bg_correct(data, bkg, dark)
-    bbox = subimage(data, particle_position[::-1], size)
+
+    bbox = subimage(data, particle_position, size)
     bbox_corner = np.array([bbox.x.min(), bbox.y.min()])
     particle_position = np.round(center_find(bbox)
                                  + bbox_corner / metadata['spacing'])
