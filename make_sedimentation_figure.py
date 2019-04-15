@@ -277,7 +277,8 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
         ps_data = inout.load_polystyrene_sedimentation_data()[0]
     ps_times = np.load("./fits/sedimentation/PS_frame_times.npy")
     if (mofit_ps is None) or (mlfit_ps is None):
-        mofit_ps, mlfit_ps = inout.load_polystyrene_sedimentation_params("best_of_03-27_and_04-02")
+        mofit_ps, mlfit_ps = inout.load_polystyrene_sedimentation_params(
+            "best_of_03-27_and_04-02")
     figure_ps = TrackingSedimentationFigure(
         ps_data, mlfit_ps, mofit_ps, ps_times)
     fig_ps = figure_ps.make_figure(holonums=[0, 20, 49])
@@ -302,9 +303,11 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
 
     return figure_ps, fig_ps
 
+
 if __name__ == '__main__':
-    si_data = inout.load_silica_sedimentation_data()[0]
-    ps_data = inout.load_polystyrene_sedimentation_data()[0]
+    si_data = inout.load_silica_sedimentation_data(size=200, recenter=False)[0]
+    ps_data = inout.load_polystyrene_sedimentation_data(
+        size=175, recenter=False)[0]
 
 
     si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params('draft0')
@@ -313,6 +316,6 @@ if __name__ == '__main__':
     figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
     figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
 
-    #fig_si.savefig('./silica-sedimentation.svg')
-    #fig_ps.savefig('./polystyrene-sedimentation.svg')
+    fig_si.savefig('./silica-sedimentation.svg')
+    fig_ps.savefig('./polystyrene-sedimentation.svg')
 
