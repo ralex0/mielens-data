@@ -171,7 +171,8 @@ def save_json(obj, filename):
             json.dump(obj, f, indent=4)
 
 
-def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
+def load_silica_sedimentation_data(
+        size=HOLOGRAM_SIZE, holonums=None, recenter=True):
     if holonums is None:
         holonums = range(100)
     camera_resolution = 5.6983 # px / um
@@ -179,11 +180,11 @@ def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
                     'medium_index' : 1.33,
                     'illum_wavelen' : .660,
                     'illum_polarization' : (1, 0)}
-    position = [725, 553]
+    position = [741, 540]  # first frame is found at 692, 609, 50th at 741, 540
 
     zpos = np.linspace(38, -12, 100)
-    paths = ["data/Silica1um-60xWater-021519/raw/image"
-             +  zfill(num, 4) + ".tif" for num in holonums]
+    paths = ["data/Silica1um-60xWater-021519/raw/image" +
+             zfill(num, 4) + ".tif" for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         refimg = hp.load_image(paths[0], **metadata)
@@ -197,12 +198,13 @@ def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
         for path in paths:
             this_holo = load_bgdivide_crop(
                 path=path, metadata=metadata, particle_position=position,
-                bkg=bkg, dark=dark, size=size)
+                bkg=bkg, dark=dark, size=size, recenter=recenter)
             holos.append(this_holo)
     return holos, zpos
 
 
-def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
+def load_polystyrene_sedimentation_data(
+        size=HOLOGRAM_SIZE, holonums=None, recenter=True):
     if holonums is None:
         holonums = range(50)
     camera_resolution = 5.6983 # px / um
@@ -210,7 +212,8 @@ def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
-    position = [266, 242]
+    # position = [263, 218]  # center of the midpoint
+    position = [263, 238]  #  leaves all the particles mostly in the hologram
 
     zpos = np.linspace(20, -12, 50)
     paths = ["data/Polystyrene2-4um-60xWater-012419/raw/image"
@@ -224,10 +227,12 @@ def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
         dark = load_dark(
             "data/Polystyrene2-4um-60xWater-012419/raw/",
             df_prefix='dark', refimg=refimg)
-        holos = [load_bgdivide_crop(path=path, metadata=metadata,
-                                    particle_position=position,
-                                    bkg=bkg, dark=dark, size=size)
-                 for path in paths]
+        holos = []
+        for path in paths:
+            this_holo = load_bgdivide_crop(
+                path=path, metadata=metadata, particle_position=position,
+                bkg=bkg, dark=dark, size=size, recenter=recenter)
+            holos.append(this_holo)
     return holos, zpos
 
 
@@ -249,15 +254,18 @@ def get_bkg_paths(path, bg_prefix):
 
 def load_bgdivide_crop(
         path, metadata, particle_position, bkg, dark, channel=RGB_CHANNEL,
-        size=HOLOGRAM_SIZE):
+        size=HOLOGRAM_SIZE, recenter=True):
     data = hp.load_image(path, channel=channel, **metadata)
     data = bg_correct(data, bkg, dark)
 
-    bbox = subimage(data, particle_position, size)
-    bbox_corner = np.array([bbox.x.min(), bbox.y.min()])
-    particle_position = np.round(center_find(bbox)
-                                 + bbox_corner / metadata['spacing'])
-    data = subimage(data, particle_position, size)
+    if recenter:
+        bbox = subimage(data, particle_position, size)
+        bbox_corner = np.array([bbox.x.min(), bbox.y.min()])
+        found_position = np.round(
+            center_find(bbox) + bbox_corner / metadata['spacing'])
+        data = subimage(data, found_position, size)
+    else:
+        data = subimage(data, particle_position, size)
     data = normalize(data)
     return data
 
