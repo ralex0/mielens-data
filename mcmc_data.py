@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
     # WTF? 10000 pixels takes 10 s / iteration,
     # 14400 px takes 48.74 s / iteration. So, 1e4 px:
-    # npixels = int(1e4)
+    npixels = int(1e4)
     # time_mcmc(
     #     data, guess, theory=THEORY, mcmc_kws=mcmc_kws, npixels=npixels)
 
