@@ -54,9 +54,10 @@ class ResidualsCalculator(object):
 class Fitter(object):
     DEFAULT_MCMC_PARAMS = {}
 
-    def __init__(self, theory="mielens", method="leastsq"):
+    def __init__(self, theory="mielens", method="leastsq", quiet=False):
         self.theory = theory
         self.method = method
+        self.quiet = quiet
 
     def fit(self, data, initial_guess):
         params = self._setup_params_from(initial_guess, data)
@@ -73,9 +74,11 @@ class Fitter(object):
 
     # FIXME why is the param order backwards from fit?
     def mcmc(self, initial_guesses, data, mcmc_kws=None, npixels=100):
-        print("Getting best fit with {}".format(self.method))
+        if not self.quiet:
+            print("Getting best fit with {}".format(self.method))
         best_fit = self.fit(data, initial_guesses)
-        print(report_fit(best_fit))
+        if not quiet:
+            print(report_fit(best_fit))
         result = self._mcmc(
             best_fit, data, mcmc_kws=mcmc_kws, npixels=npixels)
         return result
@@ -97,14 +100,17 @@ class Fitter(object):
             nan_policy='omit',
             fcn_kws={'data': subset_data})
 
-        print("Sampling with emcee ({}, npixels: {})".format(mcmc_kws, npixels))
+        if not self.quiet:
+            print("Sampling with emcee ({}, npixels: {})".format(
+                mcmc_kws, npixels))
         self._update_mcmc_kwargs_with_pos(mcmc_kws, params)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             mcmc_result = minimizer.minimize(
                 params=params, method='emcee', float_behavior='chi2',
                 is_weighted=False, **mcmc_kws)
-        print(report_fit(mcmc_result.params))
+        if not self.quiet:
+            print(report_fit(mcmc_result.params))
         # Then the whole point of the ResidualsCalculator is storing the
         # best-fit value:
         best_params = {'parameters': residuals_calculator.best_params,
