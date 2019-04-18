@@ -40,18 +40,27 @@ def time_mcmc(
 # TODO:
 # Time mielens with npixels=1e2 vs npixels=1e3 vs npixels=1e4
 if __name__ == '__main__':
+    # WHICH_SPHERE = 'polystyrene'
+    WHICH_SPHERE = 'silica'
     WHICH_IMAGE = 2
     WHICH_FIT = str(WHICH_IMAGE)
-    SIZE = 175
+    SIZE = 250
     THEORY = 'mielens'
 
-    data_list, zpos = inout.load_polystyrene_sedimentation_data(
-        size=SIZE, holonums=[WHICH_IMAGE])
+    if WHICH_SPHERE == 'polystyrene':
+        data_list, zpos = inout.load_polystyrene_sedimentation_data(
+            size=SIZE, holonums=[WHICH_IMAGE])
+        fits_mo, fits_ml = inout.load_polystyrene_sedimentation_params("03-27")
+    elif WHICH_SPHERE == 'silica':
+        data_list, zpos = inout.load_silica_sedimentation_data(
+            size=SIZE, holonums=[WHICH_IMAGE])
+        fits_mo, fits_ml = inout.load_silica_sedimentation_params("04-02")
     data = data_list[0]
 
-    fits_mo, fits_ml = inout.load_polystyrene_sedimentation_params("03-27")
-    guess_mo = fits_mo[WHICH_FIT]
-    guess_ml = fits_ml[WHICH_FIT]
+    if THEORY == 'mieonly':
+        guess = fits_mo[WHICH_FIT]
+    elif THEORY == 'mielens':
+        guess = fits_ml[WHICH_FIT]
 
     fitter = Fitter(theory=THEORY)
     mcmc_kws = {'burn': 0, 'steps': 5000, 'nwalkers': 100,
@@ -59,15 +68,14 @@ if __name__ == '__main__':
 
     # WTF? 10000 pixels takes 10 s / iteration,
     # 14400 px takes 48.74 s / iteration. So, 1e4 px:
-    npixels = int(1e4)
+    # npixels = int(1e4)
     # time_mcmc(
-    #     data, guess_ml, theory=THEORY, mcmc_kws=mcmc_kws, npixels=npixels)
-    # raise ValueError
+    #     data, guess, theory=THEORY, mcmc_kws=mcmc_kws, npixels=npixels)
 
     print("Starting {} mcmc".format(THEORY))
     tick_tock()
     optimization_result = fitter.mcmc(
-        guess_ml, data, mcmc_kws=mcmc_kws, npixels=npixels)
+        guess, data, mcmc_kws=mcmc_kws, npixels=npixels)
 
     print("{} mcmc took {}".format(THEORY, tick_tock()))
     # With 10,000 px (all of them), it takes 24 s / step to run MCMC,
