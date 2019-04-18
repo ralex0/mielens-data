@@ -84,8 +84,8 @@ if __name__ == '__main__':
     fit_ml = optimization_result['lmfit_result']
     best_ml = optimization_result['best_result']
 
-    prefix = 'polystyrene-{}-frame={}-size={}-npx={}'.format(
-        THEORY, WHICH_IMAGE, SIZE, npixels)
+    prefix = '{}-{}-frame={}-size={}-npx={}'.format(
+        WHICH_SPHERE, THEORY, WHICH_IMAGE, SIZE, npixels)
 
     tosave = {'fit': fit_ml, 'mcmc': mcmc_ml, 'best': best_ml}
     for suffix, obj in tosave.items():
