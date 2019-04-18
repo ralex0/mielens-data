@@ -171,7 +171,9 @@ def save_json(obj, filename):
             json.dump(obj, f, indent=4)
 
 
-def load_silica_sedimentation_data(size=HOLOGRAM_SIZE):
+def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=None):
+    if holonums is None:
+        holonums = range(100)
     camera_resolution = 5.6983 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                     'medium_index' : 1.33,
@@ -179,7 +181,6 @@ def load_silica_sedimentation_data(size=HOLOGRAM_SIZE):
                     'illum_polarization' : (1, 0)}
     position = [553, 725]
 
-    holonums = range(100)
     zpos = np.linspace(38, -12, 100)
     paths = ["data/Silica1um-60xWater-021519/raw/image"
              +  zfill(num, 4) + ".tif" for num in holonums]
