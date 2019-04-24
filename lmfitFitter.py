@@ -77,7 +77,7 @@ class Fitter(object):
         if not self.quiet:
             print("Getting best fit with {}".format(self.method))
         best_fit = self.fit(data, initial_guesses)
-        if not quiet:
+        if not self.quiet:
             print(report_fit(best_fit))
         result = self._mcmc(
             best_fit, data, mcmc_kws=mcmc_kws, npixels=npixels)
