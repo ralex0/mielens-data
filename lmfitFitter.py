@@ -6,6 +6,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 import holopy as hp
 from holopy.core.metadata import get_extents, get_spacing, make_subset_data
+from holopy.core.metadata import update_metadata
 from holopy.core.process import center_find, normalize
 from holopy.core.tests.common import get_example_data
 from holopy.scattering import Sphere, calc_holo
@@ -32,7 +33,9 @@ class ResidualsCalculator(object):
         elif self.theory == 'mieonly':
             theory = Mie()
             scaling=params['alpha']
-        # calc_holo is 133 ms
+        if 'illum_wavelen' in params:
+            wavelength = float(params['illum_wavelen'])
+            metadata = update_metadata(metadata, illum_wavelen=wavelength)
         return calc_holo(metadata, sphere, theory=theory, scaling=scaling)
 
     def create_sphere_from(self, params):
@@ -137,6 +140,10 @@ class Fitter(object):
         elif self.theory == 'mielens':
             angle_val = self._lens_guess(initial_guess)
             params.add(name = 'lens_angle', value=angle_val, min=0.05, max=1.1)
+        if 'illum_wavelen' in initial_guess:
+            wavelength = initial_guess['illum_wavelen']
+            params.add(name = 'illum_wavelen', value=wavelength,
+                       min=.565, max=.740)
         return params
 
     def _make_center_priors(self, data, guess):
@@ -239,18 +246,21 @@ def load_gold_example_data():
 
 if __name__ == '__main__':
     data = load_example_data()
-    initial_guesses = {'z': 15.0, 'n': 1.58, 'r': .5}
+    initial_guesses = {'z': 15.0, 'n': 1.58, 'r': .5, 'illum_wavelen': .660}
 
     # data = load_gold_example_data()
     # initial_guesses = {'z': 1.415e-5, 'n': 1.582, 'r': 6.484e-7}
 
-    mielensFitter = Fitter(data, theory='mielens')
-    mieonlyFitter = Fitter(data, theory='mieonly')
+    mielensFitter = Fitter(theory='mielens')
+    mieonlyFitter = Fitter(theory='mieonly')
 
-    mcmc_kws = {'burn': 0, 'steps': 10, 'thin': 1, 'walkers': 14,'workers': 1}
+    #mcmc_kws = {'burn': 0, 'steps': 10, 'thin': 1, 'walkers': 14,'workers': 1}
 
-    mo_mcmc_result, mo_fit_result = mieonlyFitter.mcmc(initial_guesses, mcmc_kws=mcmc_kws, npixels=100)
-    ml_mcmc_result, ml_fit_result = mielensFitter.mcmc(initial_guesses, mcmc_kws=mcmc_kws, npixels=100)
+    #mo_mcmc_result, mo_fit_result = mieonlyFitter.mcmc(initial_guesses, mcmc_kws=mcmc_kws, npixels=100)
+    #ml_mcmc_result, ml_fit_result = mielensFitter.mcmc(initial_guesses, mcmc_kws=mcmc_kws, npixels=100)
+
+    mo_fit_result = mieonlyFitter.fit(data, initial_guesses)
+    ml_fit_result = mielensFitter.fit(data, initial_guesses)
 
     print(report_fit(ml_fit_result))
     print(report_fit(mo_fit_result))
