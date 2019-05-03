@@ -10,10 +10,11 @@ from pandas import DataFrame
 
 import inout
 
+
 class MCMCJointPlotFigure(object):
     def __init__(self, result, burnin=0, joint_kdes=None):
         self.chain = self._burn_in(result.chain, burnin)
-        self.flatchain = DataFrame(self.chain.reshape(-1, result.nvarys), 
+        self.flatchain = DataFrame(self.chain.reshape(-1, result.nvarys),
                                    columns=result.var_names)
 
     def _burn_in(self, chain, n):
@@ -33,33 +34,33 @@ class MCMCJointPlotFigure(object):
     def _setup_axes(self):
         gs = gridspec.GridSpec(1, 3)
 
-        gs01 = gridspec.GridSpecFromSubplotSpec(6, 6, subplot_spec=gs[0], 
+        gs01 = gridspec.GridSpecFromSubplotSpec(6, 6, subplot_spec=gs[0],
                                                 hspace=0, wspace=0)
-        gs02 = gridspec.GridSpecFromSubplotSpec(6, 6, subplot_spec=gs[1], 
+        gs02 = gridspec.GridSpecFromSubplotSpec(6, 6, subplot_spec=gs[1],
                                                 hspace=0, wspace=0)
-        gs12 = gridspec.GridSpecFromSubplotSpec(6, 6, subplot_spec=gs[2], 
+        gs12 = gridspec.GridSpecFromSubplotSpec(6, 6, subplot_spec=gs[2],
                                                 hspace=0, wspace=0)
 
         self._ax01_joint = plt.Subplot(self.fig, gs01[1:, :-1])
-        self._ax01_margx = plt.Subplot(self.fig, gs01[0, :-1], 
+        self._ax01_margx = plt.Subplot(self.fig, gs01[0, :-1],
                                        sharex=self._ax01_joint)
-        self._ax01_margy = plt.Subplot(self.fig, gs01[1:, -1], 
+        self._ax01_margy = plt.Subplot(self.fig, gs01[1:, -1],
                                        sharey=self._ax01_joint)
 
         self._ax02_joint = plt.Subplot(self.fig, gs02[1:, :-1])
-        self._ax02_margx = plt.Subplot(self.fig, gs02[0, :-1], 
+        self._ax02_margx = plt.Subplot(self.fig, gs02[0, :-1],
                                        sharex=self._ax02_joint)
-        self._ax02_margy = plt.Subplot(self.fig, gs02[1:, -1], 
+        self._ax02_margy = plt.Subplot(self.fig, gs02[1:, -1],
                                        sharey=self._ax02_joint)
 
         self._ax12_joint = plt.Subplot(self.fig, gs12[1:, :-1])
-        self._ax12_margx = plt.Subplot(self.fig, gs12[0, :-1], 
+        self._ax12_margx = plt.Subplot(self.fig, gs12[0, :-1],
                                        sharex=self._ax12_joint)
-        self._ax12_margy = plt.Subplot(self.fig, gs12[1:, -1], 
+        self._ax12_margy = plt.Subplot(self.fig, gs12[1:, -1],
                                        sharey=self._ax12_joint)
 
-        all_axes = [self._ax01_joint, self._ax01_margx, self._ax01_margy, 
-                    self._ax02_joint, self._ax02_margx, self._ax02_margy, 
+        all_axes = [self._ax01_joint, self._ax01_margx, self._ax01_margy,
+                    self._ax02_joint, self._ax02_margx, self._ax02_margy,
                     self._ax12_joint, self._ax12_margx, self._ax12_margy]
 
         for ax in all_axes:
@@ -67,7 +68,7 @@ class MCMCJointPlotFigure(object):
 
     def _plot_joints(self, var0, var1, var2):
         data = [np.array(self.flatchain[v]) for v in [var0, var1, var2]]
-        data_paired = [(data[0], data[1]), (data[0], data[2]), 
+        data_paired = [(data[0], data[1]), (data[0], data[2]),
                        (data[1], data[2])]
 
         joint_axes = [self._ax01_joint, self._ax02_joint, self._ax12_joint]
@@ -82,7 +83,7 @@ class MCMCJointPlotFigure(object):
         xmax = min(np.median(x) + x_bw, x.max())
         ymin = max(np.median(y) - y_bw, y.min())
         ymax = min(np.median(y) + y_bw, y.max())
-        
+
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
 
@@ -91,12 +92,12 @@ class MCMCJointPlotFigure(object):
 
         xticklabels = ["{:.2f}".format(tick) for tick in xticks]
         yticklabels = ["{:.2f}".format(tick) for tick in yticks]
-        
+
         ax.set_xticks(xticks)
         ax.set_yticks(yticks)
         ax.set_xticklabels(xticklabels, {'family': 'serif', 'size': 6})
         ax.set_yticklabels(yticklabels, {'family': 'serif', 'size': 6})
-        
+
         ax.margins(x=0, y=0)
 
     def _plot_marginals(self, var0, var1, var2):
@@ -136,9 +137,9 @@ class MCMCJointPlotFigure(object):
             plt.setp(ax.get_xticklabels(), visible=False)
             plt.setp(ax.yaxis.get_majorticklines(), visible=False)
             plt.setp(ax.yaxis.get_minorticklines(), visible=False)
-            plt.setp(ax.get_yticklabels(), visible=False)        
+            plt.setp(ax.get_yticklabels(), visible=False)
             ax.yaxis.grid(False)
-            
+
         for ax in margy_axes:
             plt.setp(ax.get_yticklabels(), visible=False)
             plt.setp(ax.xaxis.get_majorticklines(), visible=False)
@@ -170,3 +171,4 @@ if __name__ == '__main__':
     labels = ["refractive index", "radius (μm)", "angular aperture (rad)"]
     fig = plotter.plot('n', 'r', 'lens_angle', labels = labels)
     plt.show()
+
