@@ -96,7 +96,8 @@ class Fitter(object):
             '__lnsigma', value=np.log(noise), min=np.log(noise/10),
             max=np.log(noise*10))
 
-        residuals_calculator = ResidualsCalculator(data, theory=self.theory)
+        residuals_calculator = ResidualsCalculator(
+            subset_data, theory=self.theory)
         minimizer = Minimizer(
             residuals_calculator.calc_residuals,
             params,
