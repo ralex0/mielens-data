@@ -42,7 +42,11 @@ def _get_bounds(hologram, guess_parameters):
 
 class Fitter(object):
     _default_lens_angle = 0.8
+    _min_lens_angle = 0.0
+    _max_lens_angle = 1.2
     _default_alpha = 1.0
+    _min_alpha = 0.0
+    _max_alpha = 2.0
     _min_index = 1.33
     _max_index = 2.3
     _min_radius = 0.05
@@ -66,12 +70,13 @@ class Fitter(object):
         sphere_priors = self.make_guessed_scatterer()
         if self.theory == 'mielens':
             lens_prior = self.guess_lens_angle()
-            model = PerfectLensModel(sphere_priors, noise_sd=self.data.noise_sd,
-                                     lens_angle=lens_prior)
+            model = PerfectLensModel(
+                sphere_priors, noise_sd=self.data.noise_sd,
+                lens_angle=lens_prior)
         elif self.theory == 'mieonly':
             alpha_prior = self.guess_alpha()
-            model = AlphaModel(sphere_priors, noise_sd=self.data.noise_sd,
-                               alpha=alpha_prior)
+            model = AlphaModel(
+                sphere_priors, noise_sd=self.data.noise_sd, alpha=alpha_prior)
         optimizer = NmpfitStrategy()
         result = optimizer.optimize(model, self.data)
         # FIXME this result sometimes leaves the allowed ranges. To get
@@ -106,13 +111,15 @@ class Fitter(object):
     def guess_lens_angle(self):
         lens_angle = (self.guess['lens_angle'] if 'lens_angle' in self.guess
                       else self._default_lens_angle)
-        lens_prior = prior.Uniform(0, 1.2, guess=lens_angle)
+        lens_prior = prior.Uniform(
+            self._min_lens_angle, self._max_lens_angle, guess=lens_angle)
         return lens_prior
 
     def guess_alpha(self):
-        alpha = (self.guess['alpha'] if 'lens_angle' in self.guess
+        alpha = (self.guess['alpha'] if 'alpha' in self.guess
                       else self._default_alpha)
-        alpha_prior = prior.Uniform(0, 1.2, guess=alpha)
+        alpha_prior = prior.Uniform(
+            self._min_alpha, self._max_alpha, guess=alpha)
         return alpha_prior
 
     def _make_center_priors(self):
@@ -150,6 +157,7 @@ def fit_mielens(hologram, guess_parameters):
 def fit_mieonly(hologram, guess_parameters):
     fitter = Fitter(hologram, guess_parameters, theory='mieonly')
     return fitter.fit()
+
 
 # ~~~ loading data
 
@@ -225,8 +233,10 @@ def load_bkg(path, bg_prefix, refimg):
     bkg = load_average(bkg_paths, refimg=refimg, channel=RGB_CHANNEL)
     return bkg
 
+
 def load_dark(path, df_prefix, refimg):
     return load_bkg(path, df_prefix, refimg) if df_prefix is not None else None
+
 
 def load_bgdivide_crop_v2(
         path, metadata, particle_position, bkg, dark, channel=RGB_CHANNEL,
