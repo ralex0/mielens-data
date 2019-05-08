@@ -27,7 +27,7 @@ class ResidualsCalculator(object):
 
     def calc_model(self, params, metadata):
         sphere = self.create_sphere_from(params)  # 0.036 ms
-        theory, scaling = self._get_theory_and_scaling()
+        theory, scaling = self._get_theory_and_scaling(params)
         if 'illum_wavelen' in params:
             wavelength = float(params['illum_wavelen'])
             metadata = update_metadata(metadata, illum_wavelen=wavelength)
@@ -48,16 +48,16 @@ class ResidualsCalculator(object):
             self.best_params = params
         return residuals / noise
 
-    def _get_theory_and_scaling(self):
+    def _get_theory_and_scaling(self, params):
         if self.theory == 'mielens':
             theory = MieLens(lens_angle=params['lens_angle'])  # 0.0015 ms
             scaling = 1.0
         elif self.theory == 'mieonly':
             theory = Mie()
-            scaling=params['alpha']
+            scaling = params['alpha']
         elif self.theory == 'mielensalpha':
             theory = MieLens(lens_angle=params['lens_angle'])  # 0.0015 ms
-            scaling=params['alpha']
+            scaling = params['alpha']
         return theory, scaling
 
 
@@ -230,10 +230,7 @@ class Fitter(object):
         else:
             noise_shape = (nwalkers, nparams)
             sigma_shape = (1, nparams)
-        noise_sigma = np.reshape(
-            [0.03, 0.03, 0.03, 0.03, 0.03, 0.05, 0.05],
-            # x     y      z    n     r     lens  noise
-            sigma_shape)
+        noise_sigma = np.full(sigma_shape, 0.05)
         noise = np.random.randn(*noise_shape) * noise_sigma
 
         pos_center = np.reshape([params[k].value for k in params], sigma_shape)
