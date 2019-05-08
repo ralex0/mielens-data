@@ -218,8 +218,8 @@ class MCMCJointPlotFigure_v2(object):
         
         cmap = cubehelix_palette(n_colors=12, start=2.95, rot=-0.10, light=1.00, 
                                  dark=0.20, as_cmap=True)
-        #sns.kdeplot(datax, datay, shade=True, cmap=cmap, n_levels=12, shade_lowest=False)
-        plt.hexbin(datax, datay, cmap=cmap)
+        sns.kdeplot(datax, datay, shade=True, cmap=cmap, n_levels=12, shade_lowest=False)
+        #plt.hexbin(datax, datay, cmap=cmap)
 
     def _plot_marginals(self):
         self._plot_marginal(self._axMO_n, self.data_mo['n'])
@@ -245,34 +245,41 @@ class MCMCJointPlotFigure_v2(object):
         tick_font = {'family': 'Times New Roman', 'size': 6}
 
         n_lim_mo = self._get_lims(self.data_mo['n'])
+        n_ticks_mo, n_labels_mo = self._get_ticks_labels(self.data_mo['n'])
+        
         r_lim_mo = self._get_lims(self.data_mo['r'])
+        r_ticks_mo, r_labels_mo = self._get_ticks_labels(self.data_mo['r'])
+
         a_lim_mo = self._get_lims(self.data_mo['alpha'])
+        a_ticks_mo, a_labels_mo = self._get_ticks_labels(self.data_mo['alpha'])
 
         n_lim_ml = self._get_lims(self.data_ml['n'])
+        n_ticks_ml, n_labels_ml = self._get_ticks_labels(self.data_ml['n'])
+
         r_lim_ml = self._get_lims(self.data_ml['r'])
+        r_ticks_ml, r_labels_ml = self._get_ticks_labels(self.data_ml['r'])
+
         l_lim_ml = self._get_lims(self.data_ml['lens_angle'])
+        l_ticks_ml, l_labels_ml = self._get_ticks_labels(self.data_ml['lens_angle'])
 
         # Mieonly n/r joint
         self._axMO_nr.set_xlim(n_lim_mo)
         self._axMO_nr.set_ylim(r_lim_mo)
-        ticks, labels = self._get_ticks_labels(r_lim_mo)
         self._axMO_nr.yaxis.tick_right()
         self._axMO_nr.yaxis.set_label_position("right")
-        self._axMO_nr.set_yticks(ticks)
-        self._axMO_nr.set_yticklabels(labels, **tick_font)
+        self._axMO_nr.set_yticks(r_ticks_mo)
+        self._axMO_nr.set_yticklabels(r_labels_mo, **tick_font)
         self._axMO_nr.set_ylabel("Radius (μm)", **label_font)
-        ticks, labels = self._get_ticks_labels(n_lim_mo)
-        self._axMO_nr.set_xticks(ticks)
-        self._axMO_nr.set_xticklabels(labels, **tick_font)
+        self._axMO_nr.set_xticks(n_ticks_mo)
+        self._axMO_nr.set_xticklabels(n_labels_mo, **tick_font)
         self._axMO_nr.set_xlabel("Refractive index", **label_font)
 
         # Mieonly n/alpha joint
         self._axMO_na.set_ylim(a_lim_mo)
-        ticks, labels = self._get_ticks_labels(a_lim_mo)
         self._axMO_na.yaxis.tick_right()
         self._axMO_na.yaxis.set_label_position("right")
-        self._axMO_na.set_yticks(ticks)
-        self._axMO_na.set_yticklabels(labels, **tick_font)
+        self._axMO_na.set_yticks(a_ticks_mo)
+        self._axMO_na.set_yticklabels(a_labels_mo, **tick_font)
         self._axMO_na.set_ylabel("Alpha", **label_font)
         plt.setp(self._axMO_na.get_xticklabels(), visible=False)
         plt.setp(self._axMO_na.xaxis.get_majorticklines(), visible=False)
@@ -281,9 +288,8 @@ class MCMCJointPlotFigure_v2(object):
         # Mieonly alpha/r joint
         self._axMO_ar.set_xlim(a_lim_mo)
         self._axMO_ar.set_ylim(r_lim_mo)
-        ticks, labels = self._get_ticks_labels(a_lim_mo)
-        self._axMO_ar.set_xticks(ticks)
-        self._axMO_ar.set_xticklabels(labels, **tick_font)
+        self._axMO_ar.set_xticks(a_ticks_mo)
+        self._axMO_ar.set_xticklabels(a_labels_mo, **tick_font)
         self._axMO_ar.set_xlabel("Alpha", **label_font)
         self._axMO_ar.set_yticks([])
         self._axMO_ar.set_yticklabels([])
@@ -292,24 +298,21 @@ class MCMCJointPlotFigure_v2(object):
         # Mielens n/r joint
         self._axML_nr.set_xlim(n_lim_ml)
         self._axML_nr.set_ylim(r_lim_ml)
-        ticks, labels = self._get_ticks_labels(r_lim_ml)
         self._axML_nr.yaxis.tick_right()
         self._axML_nr.yaxis.set_label_position("right")
-        self._axML_nr.set_yticks(ticks)
-        self._axML_nr.set_yticklabels(labels, **tick_font)
+        self._axML_nr.set_yticks(r_ticks_ml)
+        self._axML_nr.set_yticklabels(r_labels_ml, **tick_font)
         self._axML_nr.set_ylabel("Radius (μm)", **label_font)
-        ticks, labels = self._get_ticks_labels(n_lim_ml)
-        self._axML_nr.set_xticks(ticks)
-        self._axML_nr.set_xticklabels(labels, **tick_font)
+        self._axML_nr.set_xticks(n_ticks_ml)
+        self._axML_nr.set_xticklabels(n_labels_ml, **tick_font)
         self._axML_nr.set_xlabel("Refractive index", **label_font)
 
         # Mielens n/lens_angle joint
         self._axML_nl.set_ylim(l_lim_ml)
-        ticks, labels = self._get_ticks_labels(l_lim_ml)
         self._axML_nl.yaxis.tick_right()
         self._axML_nl.yaxis.set_label_position("right")
-        self._axML_nl.set_yticks(ticks)
-        self._axML_nl.set_yticklabels(labels, **tick_font)
+        self._axML_nl.set_yticks(l_ticks_ml)
+        self._axML_nl.set_yticklabels(l_labels_ml, **tick_font)
         self._axML_nl.set_ylabel("Acceptance\nangle (rad)", **label_font)
         plt.setp(self._axML_nl.get_xticklabels(), visible=False)
         plt.setp(self._axML_nl.xaxis.get_majorticklines(), visible=False)
@@ -318,9 +321,8 @@ class MCMCJointPlotFigure_v2(object):
         # Mielens lens_angle/r joint
         self._axML_lr.set_xlim(l_lim_ml)
         self._axML_lr.set_ylim(r_lim_ml)
-        ticks, labels = self._get_ticks_labels(l_lim_ml)
-        self._axML_lr.set_xticks(ticks)
-        self._axML_lr.set_xticklabels(labels, **tick_font)
+        self._axML_lr.set_xticks(l_ticks_ml)
+        self._axML_lr.set_xticklabels(l_labels_ml, **tick_font)
         self._axML_lr.set_xlabel("Acceptance\nangle (rad)", **label_font)
         self._axML_lr.set_yticks([])
         self._axML_lr.set_yticklabels([])
@@ -328,14 +330,15 @@ class MCMCJointPlotFigure_v2(object):
 
 
     def _get_lims(self, data):
-        median = np.median(data)
-        std = np.std(data)
-        high = min(median + std * 2.5, max(data))
-        low = max(median - std * 2.5, min(data))
+        #median = np.median(data)
+        #std = np.std(data)
+        #high = min(median + std * 2.5, max(data))
+        #low = max(median - std * 2.5, min(data))
+        low, high = np.quantile(data, [.01, .99])
         return low, high
 
-    def _get_ticks_labels(self, lims, numticks=3):
-        ticks = np.linspace(*lims, numticks+2)[1:-1]
+    def _get_ticks_labels(self, data):
+        ticks = np.quantile(data, [0.05, 0.50, 0.95])
         labels = ["{:.2f}".format(tick) for tick in ticks]
         return ticks, labels
 
