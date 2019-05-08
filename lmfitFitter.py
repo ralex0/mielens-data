@@ -159,8 +159,8 @@ class Fitter(object):
 
         if 'illum_wavelen' in initial_guess:
             wavelength = initial_guess['illum_wavelen']
-            params.add(
-                name='illum_wavelen', value=wavelength, min=.565, max=.740)
+            params.add(name = 'illum_wavelen', value=wavelength,
+                       min=.1, max=2.000)
         return params
 
     def _make_center_priors(self, data, guess):
