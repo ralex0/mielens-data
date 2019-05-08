@@ -27,12 +27,7 @@ class ResidualsCalculator(object):
 
     def calc_model(self, params, metadata):
         sphere = self.create_sphere_from(params)  # 0.036 ms
-        if self.theory == 'mielens':
-            theory = MieLens(lens_angle=params['lens_angle'])  # 0.0015 ms
-            scaling = 1.0
-        elif self.theory == 'mieonly':
-            theory = Mie()
-            scaling=params['alpha']
+        theory, scaling = self._get_theory_and_scaling()
         if 'illum_wavelen' in params:
             wavelength = float(params['illum_wavelen'])
             metadata = update_metadata(metadata, illum_wavelen=wavelength)
@@ -52,6 +47,18 @@ class ResidualsCalculator(object):
             self.best_chisq = chisq
             self.best_params = params
         return residuals / noise
+
+    def _get_theory_and_scaling(self):
+        if self.theory == 'mielens':
+            theory = MieLens(lens_angle=params['lens_angle'])  # 0.0015 ms
+            scaling = 1.0
+        elif self.theory == 'mieonly':
+            theory = Mie()
+            scaling=params['alpha']
+        elif self.theory == 'mielensalpha':
+            theory = MieLens(lens_angle=params['lens_angle'])  # 0.0015 ms
+            scaling=params['alpha']
+        return theory, scaling
 
 
 class Fitter(object):
@@ -132,19 +139,28 @@ class Fitter(object):
     def _setup_params_from(self, initial_guess, data):  # 5 ms
         params = Parameters()
         x, y, z = self._make_center_priors(data, initial_guess)  # 4.47 ms
-        n = Parameter(name = 'n', value=initial_guess['n'], min=data.medium_index*1.001, max=2.33)
-        r = Parameter(name = 'r', value=initial_guess['r'], min=0.05, max=5)
+        min_index = data.medium_index * 1.001
+        n = Parameter(
+            name='n', value=initial_guess['n'], min=min_index, max=2.33)
+        r = Parameter(
+            name='r', value=initial_guess['r'], min=0.05, max=5)
         params.add_many(x, y, z, n, r)
         if self.theory == 'mieonly':
             alpha_val = self._alpha_guess(initial_guess)
-            params.add(name = 'alpha', value=alpha_val, min=0.05, max=1.0)
+            params.add(name='alpha', value=alpha_val, min=0.05, max=1.0)
         elif self.theory == 'mielens':
             angle_val = self._lens_guess(initial_guess)
-            params.add(name = 'lens_angle', value=angle_val, min=0.05, max=1.1)
+            params.add(name='lens_angle', value=angle_val, min=0.05, max=1.1)
+        if self.theory == 'mielensalpha':
+            alpha_val = self._alpha_guess(initial_guess)
+            angle_val = self._lens_guess(initial_guess)
+            params.add(name='alpha', value=alpha_val, min=0.05, max=1.0)
+            params.add(name='lens_angle', value=angle_val, min=0.05, max=1.1)
+
         if 'illum_wavelen' in initial_guess:
             wavelength = initial_guess['illum_wavelen']
-            params.add(name = 'illum_wavelen', value=wavelength,
-                       min=.565, max=.740)
+            params.add(
+                name='illum_wavelen', value=wavelength, min=.565, max=.740)
         return params
 
     def _make_center_priors(self, data, guess):
@@ -177,7 +193,10 @@ class Fitter(object):
         return x, y, z
 
     def _lens_guess(self, guess):
-        return guess['lens_angle'] if 'lens_angle' in guess else np.arcsin(1.2/2)
+        lens_angle = (
+            guess['lens_angle'] if 'lens_angle' in guess
+            else np.arcsin(1.2/2))
+        return lens_angle
 
     def _alpha_guess(self, guess):
         return guess['alpha'] if 'alpha' in guess else 0.8
