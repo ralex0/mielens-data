@@ -189,13 +189,13 @@ class MCMCJointPlotFigure_v2(object):
         gs = gridspec.GridSpecFromSubplotSpec(11, 11, subplot_spec=subplotspec,
                                               hspace=0, wspace=0)
         # Joint marginal axes
-        ax01 = plt.Subplot(self.fig, gs[1:6, :5])
-        ax02 = plt.Subplot(self.fig, gs[6:, :5], sharex=ax01)
-        ax21 = plt.Subplot(self.fig, gs[1:6, 5:10])
+        ax01 = plt.Subplot(self.fig, gs[-5:, -5:])
+        ax02 = plt.Subplot(self.fig, gs[1:6, -5:], sharex=ax01)
+        ax21 = plt.Subplot(self.fig, gs[-5:, 1:6])
         # Fully marginalized axes
-        ax0 = plt.Subplot(self.fig, gs[0, :5], sharex=ax01)
-        ax1 = plt.Subplot(self.fig, gs[1:6, -1], sharey=ax01)
-        ax2 = plt.Subplot(self.fig, gs[6:, 5], sharey=ax02)
+        ax0 = plt.Subplot(self.fig, gs[0, -5:], sharex=ax01)
+        ax1 = plt.Subplot(self.fig, gs[-5:, 0], sharey=ax21)
+        ax2 = plt.Subplot(self.fig, gs[5, 1:6], sharex=ax21)
         return ax01, ax02, ax21, ax0, ax1, ax2
 
     def plot(self):
@@ -224,14 +224,16 @@ class MCMCJointPlotFigure_v2(object):
     def _plot_marginals(self):
         self._plot_marginal(self._axMO_n, self.data_mo['n'])
         self._plot_marginal(self._axMO_r, self.data_mo['r'], vertical=True)
-        self._plot_marginal(self._axMO_a, self.data_mo['alpha'], vertical=True)
+        self._plot_marginal(self._axMO_a, self.data_mo['alpha'])
         self._plot_marginal(self._axML_n, self.data_ml['n'])
         self._plot_marginal(self._axML_r, self.data_ml['r'], vertical=True)
-        self._plot_marginal(self._axML_l, self.data_ml['lens_angle'], vertical=True)
+        self._plot_marginal(self._axML_l, self.data_ml['lens_angle'])
 
     def _plot_marginal(self, ax, data, vertical=False):
         plt.sca(ax)
         sns.kdeplot(np.array(data), shade=True, vertical=vertical, legend=False)
+        if vertical:
+            ax.invert_xaxis()
 
     def _set_axes_style(self):
         self._set_joint_axes_style()
@@ -251,29 +253,37 @@ class MCMCJointPlotFigure_v2(object):
         l_lim_ml = self._get_lims(self.data_ml['lens_angle'])
 
         # Mieonly n/r joint
-        plt.sca(self._axMO_nr)
-        plt.xlim(n_lim_mo)
-        plt.ylim(r_lim_mo)
-        plt.yticks(*self._get_ticks_labels(r_lim_mo), **tick_font)
-        plt.ylabel("Radius (μm)", **label_font)
+        self._axMO_nr.set_xlim(n_lim_mo)
+        self._axMO_nr.set_ylim(r_lim_mo)
+        ticks, labels = self._get_ticks_labels(r_lim_mo)
+        self._axMO_nr.yaxis.tick_right()
+        self._axMO_nr.yaxis.set_label_position("right")
+        self._axMO_nr.set_yticks(ticks)
+        self._axMO_nr.set_yticklabels(labels, **tick_font)
+        self._axMO_nr.set_ylabel("Radius (μm)", **label_font)
+        ticks, labels = self._get_ticks_labels(n_lim_mo)
+        self._axMO_nr.set_xticks(ticks)
+        self._axMO_nr.set_xticklabels(labels, **tick_font)
+        self._axMO_nr.set_xlabel("Refractive index", **label_font)
 
         # Mieonly n/alpha joint
         self._axMO_na.set_ylim(a_lim_mo)
-        ticks, labels = self._get_ticks_labels(n_lim_mo)
-        self._axMO_na.set_xticks(ticks)
-        self._axMO_na.set_xticklabels(labels, **tick_font, rotation='vertical')
-        self._axMO_na.set_xlabel("Refractive index", **label_font)
         ticks, labels = self._get_ticks_labels(a_lim_mo)
+        self._axMO_na.yaxis.tick_right()
+        self._axMO_na.yaxis.set_label_position("right")
         self._axMO_na.set_yticks(ticks)
         self._axMO_na.set_yticklabels(labels, **tick_font)
         self._axMO_na.set_ylabel("Alpha", **label_font)
+        plt.setp(self._axMO_na.get_xticklabels(), visible=False)
+        plt.setp(self._axMO_na.xaxis.get_majorticklines(), visible=False)
+        plt.setp(self._axMO_na.xaxis.get_minorticklines(), visible=False)
 
         # Mieonly alpha/r joint
         self._axMO_ar.set_xlim(a_lim_mo)
         self._axMO_ar.set_ylim(r_lim_mo)
         ticks, labels = self._get_ticks_labels(a_lim_mo)
         self._axMO_ar.set_xticks(ticks)
-        self._axMO_ar.set_xticklabels(labels, **tick_font, rotation='vertical')
+        self._axMO_ar.set_xticklabels(labels, **tick_font)
         self._axMO_ar.set_xlabel("Alpha", **label_font)
         self._axMO_ar.set_yticks([])
         self._axMO_ar.set_yticklabels([])
@@ -283,27 +293,34 @@ class MCMCJointPlotFigure_v2(object):
         self._axML_nr.set_xlim(n_lim_ml)
         self._axML_nr.set_ylim(r_lim_ml)
         ticks, labels = self._get_ticks_labels(r_lim_ml)
+        self._axML_nr.yaxis.tick_right()
+        self._axML_nr.yaxis.set_label_position("right")
         self._axML_nr.set_yticks(ticks)
         self._axML_nr.set_yticklabels(labels, **tick_font)
         self._axML_nr.set_ylabel("Radius (μm)", **label_font)
+        ticks, labels = self._get_ticks_labels(n_lim_ml)
+        self._axML_nr.set_xticks(ticks)
+        self._axML_nr.set_xticklabels(labels, **tick_font)
+        self._axML_nr.set_xlabel("Refractive index", **label_font)
 
         # Mielens n/lens_angle joint
         self._axML_nl.set_ylim(l_lim_ml)
-        ticks, labels = self._get_ticks_labels(n_lim_ml)
-        self._axML_nl.set_xticks(ticks)
-        self._axML_nl.set_xticklabels(labels, **tick_font, rotation='vertical')
-        self._axML_nl.set_xlabel("Refractive index", **label_font)
         ticks, labels = self._get_ticks_labels(l_lim_ml)
+        self._axML_nl.yaxis.tick_right()
+        self._axML_nl.yaxis.set_label_position("right")
         self._axML_nl.set_yticks(ticks)
         self._axML_nl.set_yticklabels(labels, **tick_font)
         self._axML_nl.set_ylabel("Acceptance\nangle (rad)", **label_font)
+        plt.setp(self._axML_nl.get_xticklabels(), visible=False)
+        plt.setp(self._axML_nl.xaxis.get_majorticklines(), visible=False)
+        plt.setp(self._axML_nl.xaxis.get_minorticklines(), visible=False)
 
         # Mielens lens_angle/r joint
         self._axML_lr.set_xlim(l_lim_ml)
         self._axML_lr.set_ylim(r_lim_ml)
         ticks, labels = self._get_ticks_labels(l_lim_ml)
         self._axML_lr.set_xticks(ticks)
-        self._axML_lr.set_xticklabels(labels, **tick_font, rotation='vertical')
+        self._axML_lr.set_xticklabels(labels, **tick_font)
         self._axML_lr.set_xlabel("Acceptance\nangle (rad)", **label_font)
         self._axML_lr.set_yticks([])
         self._axML_lr.set_yticklabels([])
@@ -323,36 +340,34 @@ class MCMCJointPlotFigure_v2(object):
         return ticks, labels
 
     def _set_marginal_axes_style(self):
-        margx_axes = [self._axMO_n, self._axML_n]
-        margy_axes0 = [self._axMO_r, self._axML_r]
-        margy_axes1 = [self._axMO_a, self._axML_l]
-        for ax in margx_axes + margy_axes0 + margy_axes1:
+        margx_axes0 = [self._axMO_n, self._axML_n]
+        margy_axes = [self._axMO_r, self._axML_r]
+        margx_axes2 = [self._axMO_a, self._axML_l]
+        for ax in margx_axes0 + margy_axes + margx_axes2:
             plt.setp(ax.get_yticklabels(), visible=False)
             plt.setp(ax.get_xticklabels(), visible=False)
             plt.setp(ax.xaxis.get_majorticklines(), visible=False)
             plt.setp(ax.xaxis.get_minorticklines(), visible=False)
             plt.setp(ax.yaxis.get_majorticklines(), visible=False)
             plt.setp(ax.yaxis.get_minorticklines(), visible=False)
-            #ax.xaxis.grid(False)
-        for ax in margx_axes:
+        for ax in margx_axes0:
             sns.utils.despine(ax=ax, left=True)
-        for ax in margy_axes0:
-            sns.utils.despine(ax=ax, bottom=True)
-        for ax in margy_axes1:
-            sns.utils.despine(ax=ax, top=False, bottom=True)
-            ax.set_xticks([])
-            ax.set_xticklabels([])
+        for ax in margy_axes:
+            sns.utils.despine(ax=ax, left=True, bottom=True)
+        for ax in margx_axes2:
+            sns.utils.despine(ax=ax, left=True)
+            
 
     def _add_figlabels(self):
         figlabel_font = {'family': 'Times New Roman', 'size': 9}
 
-        self._ax_labela = self.fig.add_axes([.05, .95, .05, .05])
+        self._ax_labela = self.fig.add_axes([.05, .90, .05, .05])
         plt.sca(self._ax_labela)
         plt.text(0, 0, "a)", **figlabel_font)
         plt.xticks([])
         plt.yticks([])
 
-        self._ax_labelb = self.fig.add_axes([.55, .95, .05, .05])
+        self._ax_labelb = self.fig.add_axes([.55, .90, .05, .05])
         plt.sca(self._ax_labelb)
         plt.text(0, 0, "b)", **figlabel_font)
         plt.xticks([])
