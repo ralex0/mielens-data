@@ -95,7 +95,7 @@ class Fitter(object):
         model = self.evaluate_model(params)
         return self.data.values.squeeze() - model.values.squeeze()
 
-    def evalaute_chisq(self, params):
+    def evaluate_chisq(self, params):
         residuals = self.evaluate_residuals(params)
         return np.sum(residuals**2)
 
