@@ -35,7 +35,6 @@ class KDEEstimator(object):
         return kernel_callable
 
 
-
 class MCMCFigure(object):
     figsize = (5.25, 1)
 

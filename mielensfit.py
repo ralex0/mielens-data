@@ -4,7 +4,7 @@ import numpy as np
 
 import holopy as hp
 from holopy.scattering import calc_holo, Sphere
-from holopy.scattering.theory import MieLens
+from holopy.scattering.theory import MieLens, Mie
 from holopy.core.io import load_average
 from holopy.core.metadata import get_extents, get_spacing
 from holopy.core.process import subimage, normalize, center_find  # , bg_correct
@@ -84,10 +84,17 @@ class Fitter(object):
         return result
 
     def evaluate_model(self, params):
-        fitter = Fitter(self.data, params)  # FIXME a bit weird
-        scatterer = fitter.make_guessed_scatterer()
-        theory = MieLens(lens_angle=params['lens_angle'])
-        model = calc_holo(self.data, scatterer, theory=theory)
+        scatterer = self.make_scatterer(params)
+        if self.theory == 'mieonly':
+            theory = Mie()
+        else:
+            theory = MieLens(lens_angle=params['lens_angle'])
+        if self.theory == 'mielens':
+            scaling = 1.0
+        else:
+            scaling = params['alpha']
+
+        model = calc_holo(self.data, scatterer, theory=theory, scaling=scaling)
         return model
 
     def evaluate_residuals(self, params):
@@ -100,11 +107,14 @@ class Fitter(object):
         return np.sum(residuals**2)
 
     def make_guessed_scatterer(self):
-        center = self._make_center_priors()
+        return self.make_scatterer(self.guess)
+
+    def make_scatterer(self, params):
+        center = self._make_center_priors(params)
         index = prior.Uniform(
-            self._min_index, self._max_index, guess=self.guess['n'])
+            self._min_index, self._max_index, guess=params['n'])
         radius = prior.Uniform(
-            self._min_radius, self._max_radius, guess=self.guess['r'])
+            self._min_radius, self._max_radius, guess=params['r'])
         scatterer = Sphere(n=index, r=radius, center=center)
         return scatterer
 
@@ -122,7 +132,7 @@ class Fitter(object):
             self._min_alpha, self._max_alpha, guess=alpha)
         return alpha_prior
 
-    def _make_center_priors(self):
+    def _make_center_priors(self, params):
         image_x_values = self.data.x.values
         image_min_x = image_x_values.min()
         image_max_x = image_x_values.max()
@@ -131,12 +141,12 @@ class Fitter(object):
         image_min_y = image_y_values.min()
         image_max_y = image_y_values.max()
 
-        if ('x' not in self.guess) or ('y' not in self.guess):
+        if ('x' not in params) or ('y' not in params):
             pixel_spacing = get_spacing(self.data)
             image_lower_left = np.array([image_min_x, image_min_y])
             center = center_find(self.data) * pixel_spacing + image_lower_left
         else:
-            center = [self.guess['x'], self.guess['y']]
+            center = [params['x'], params['y']]
 
         xpar = prior.Uniform(image_min_x, image_max_x, guess=center[0])
         ypar = prior.Uniform(image_min_y, image_max_y, guess=center[1])
@@ -145,7 +155,7 @@ class Fitter(object):
         extent = max(extents['x'], extents['y'])
         zextent = 5
         zpar = prior.Uniform(
-            -extent * zextent, extent * zextent, guess=self.guess['z'])
+            -extent * zextent, extent * zextent, guess=params['z'])
         return xpar, ypar, zpar
 
 
