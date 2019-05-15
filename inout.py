@@ -14,6 +14,7 @@ from lmfit.minimizer import MinimizerResult, Parameters
 
 RGB_CHANNEL = 'all'
 HOLOGRAM_SIZE = 120
+HERE = os.path.dirname(__file__)
 
 
 def load_mcmc_result_PS_mieonly(fmt='json'):
@@ -173,6 +174,8 @@ def save_json(obj, filename):
 
 def load_silica_sedimentation_data(
         size=HOLOGRAM_SIZE, holonums=None, recenter=True):
+
+    silica_folder = os.path.join(HERE, "data/Silica1um-60xWater-021519/raw/")
     if holonums is None:
         holonums = range(100)
     camera_resolution = 5.6983 # px / um
@@ -183,16 +186,17 @@ def load_silica_sedimentation_data(
     position = [741, 540]  # first frame is found at 692, 609, 50th at 741, 540
 
     zpos = np.linspace(38, -12, 100)
-    paths = ["data/Silica1um-60xWater-021519/raw/image" +
-             zfill(num, 4) + ".tif" for num in holonums]
+    paths = [
+        os.path.join(silica_folder, "image" + zfill(num, 4) + ".tif")
+        for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         refimg = hp.load_image(paths[0], **metadata)
         bkg = load_bkg(
-            "data/Silica1um-60xWater-021519/raw/bg/",
+            os.path.join(silica_folder, "bg/"),
             bg_prefix='bg', refimg=refimg)  # 10 s! all holopy
         dark = load_dark(
-            "data/Silica1um-60xWater-021519/raw/dark/",
+            os.path.join(silica_folder, "dark/"),
             df_prefix='dark', refimg=refimg)  # 8.7 s! all holopy
         holos = []
         for path in paths:
