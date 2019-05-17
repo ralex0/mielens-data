@@ -172,8 +172,22 @@ def save_json(obj, filename):
             json.dump(obj, f, indent=4)
 
 
-def load_silica_sedimentation_data(
-        size=HOLOGRAM_SIZE, holonums=None, recenter=True):
+def load_silica_sedimentation_data(*args, **kwargs):
+    folder = os.path.join(HERE, "data/Silica1um-60xWater-021519/processed/")
+    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif') for num in range(100)]
+    try:
+        data = [hp.load(path) for path in paths]
+        zpos = None # TODO grep this function and remove references to returning z
+    # if processed data not found, process it and svae for next time
+    except FileNotFoundError:
+        data, zpos = load_process_silica_sedimentation_data(*args, **kwargs)
+        for path, im in zip(paths, data):
+            hp.save_image(path, im)
+    return data, zpos
+
+
+def load_process_silica_sedimentation_data(
+        size=140, holonums=None, recenter=True):
 
     silica_folder = os.path.join(HERE, "data/Silica1um-60xWater-021519/raw/")
     if holonums is None:
@@ -207,7 +221,21 @@ def load_silica_sedimentation_data(
     return holos, zpos
 
 
-def load_polystyrene_sedimentation_data(
+def load_polystyrene_sedimentation_data(*args, **kwargs):
+    folder = os.path.join(HERE, "data/Polystyrene2-4um-60xWater-012419/processed/")
+    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif') for num in range(50)]
+    try:
+        data = [hp.load(path) for path in paths]
+        zpos = None # TODO grep this function and remove references to returning z
+    # if processed data not found, process it and svae for next time
+    except FileNotFoundError:
+        data, zpos = load_process_polystyrene_sedimentation_data(*args, **kwargs)
+        for path, im in zip(paths, data):
+            hp.save_image(path, im)
+    return data, zpos
+
+
+def load_process_polystyrene_sedimentation_data(
         size=HOLOGRAM_SIZE, holonums=None, recenter=True):
     if holonums is None:
         holonums = range(50)
