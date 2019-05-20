@@ -79,7 +79,7 @@ def clip_data_to(fits, max_frame):
     return clipped_data
 
 
-def cascade_fit(data, first_guess, fitter, particle, bottom_frame):
+def cascade_fit(data, first_guess, fitter):
     guess = first_guess
     fits = []
     for d in data:
@@ -224,8 +224,16 @@ def save_results(ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml):
 
 
 if __name__ == '__main__':
-    # ps_fits_mo, ps_fits_ml = fit_ps_data()
-    # si_fits_mo, si_fits_ml = fit_si_data()
-    # save_results(ps_fits_mo, ps_fits_ml, si_fits_mo, si_fits_ml)
-    pass
+    data = inout.load_polystyrene_sedimentation_data_new(size=128)
+    first_guess = {'r': 1.2, 'n': 1.58, 'z': 14.8}
 
+    fitter_ml = Fitter(theory='mielens')
+    fitter_mo = Fitter(theory='mieonly')
+
+    print("Fitting with mieonly...")
+    fits_mo = cascade_fit(data[:14], first_guess, fitter_mo)
+    print(f"Done. fits took {tick_tock()}")
+
+    print("Fitting with mielens...")
+    fit_ml = cascade_fit(data, first_guess, fitter_ml)
+    print(f"Done. fit took {tick_tock()}")
