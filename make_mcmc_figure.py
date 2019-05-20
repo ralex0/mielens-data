@@ -161,7 +161,10 @@ class MCMCJointPlotFigure_v2(object):
         self._setup_axes()
 
     def _burn_in(self, chain, n):
-        return chain[:, n:, :]
+        if len(chain.shape) == 3:
+            return chain[:, n:, :]
+        elif len(chain.shape) == 4:
+            return chain[0, :, n:, :]
 
     def _setup_axes(self):
         gs = gridspec.GridSpec(1, 2)
@@ -280,6 +283,7 @@ class MCMCJointPlotFigure_v2(object):
         self._axMO_na.set_yticks(a_ticks_mo)
         self._axMO_na.set_yticklabels(a_labels_mo, **tick_font)
         self._axMO_na.set_ylabel("Alpha", **label_font)
+        self._axMO_na.set_xlabel('')
         plt.setp(self._axMO_na.get_xticklabels(), visible=False)
         plt.setp(self._axMO_na.xaxis.get_majorticklines(), visible=False)
         plt.setp(self._axMO_na.xaxis.get_minorticklines(), visible=False)
@@ -313,6 +317,7 @@ class MCMCJointPlotFigure_v2(object):
         self._axML_nl.set_yticks(l_ticks_ml)
         self._axML_nl.set_yticklabels(l_labels_ml, **tick_font)
         self._axML_nl.set_ylabel("Acceptance\nangle (rad)", **label_font)
+        self._axML_nl.set_xlabel('')
         plt.setp(self._axML_nl.get_xticklabels(), visible=False)
         plt.setp(self._axML_nl.xaxis.get_majorticklines(), visible=False)
         plt.setp(self._axML_nl.xaxis.get_minorticklines(), visible=False)
@@ -338,7 +343,7 @@ class MCMCJointPlotFigure_v2(object):
 
     def _get_ticks_labels(self, data):
         ticks = np.quantile(data, [0.05, 0.50, 0.95])
-        labels = ["{:.2f}".format(tick) for tick in ticks]
+        labels = ["{:.3f}".format(tick) for tick in ticks]
         return ticks, labels
 
     def _set_marginal_axes_style(self):
@@ -389,11 +394,22 @@ def plot_mcmc_samples(mcmc_result):
     return fig
 
 
+def plot_PTmcmc_samples(mcmc_result):
+    fig = plt.figure()
+    for i, var in enumerate(mcmc_result.var_names):
+        plt.subplot(len(mcmc_result.var_names), 1, i+1)
+        for chain in mcmc_result.chain[0,...].T[i].T:
+            plt.plot(chain)
+        plt.ylabel(var)
+    return fig
+
+
 if __name__ == '__main__':
-    result_ml = inout.load_mcmc_result_Si_mielens()
-    result_mo = inout.load_mcmc_result_Si_mieonly()
-    plotter = MCMCJointPlotFigure_v2(result_mo, result_ml, burnin=200)
-    #labels = ["Refractive index", "Radius (μm)", "Acceptance angle (rad)"]
+    result_ml = inout.load_mcmc_result_PS_mielens()
+    result_mo = inout.load_mcmc_result_PS_mieonly()
+
+    plotter = MCMCJointPlotFigure_v2(result_mo, result_ml, burnin=500)
+    labels = ["Refractive index", "Radius (μm)", "Acceptance angle (rad)"]
     fig = plotter.plot()
     plt.show()
 
