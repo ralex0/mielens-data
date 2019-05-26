@@ -48,7 +48,7 @@ def analyze_one_image(which_image):
 
     best_ml = optimization_result['best_result']
 
-    prefix = 'n/manoharan/alexander/mielens-data/fits/sedimentation/newdata'
+    prefix = 'n/manoharan/alexander/mielens-data/fits/sedimentation/newdata/'
     prefix += '{}-{}-frame={}-size={}-npx={}'.format(
         WHICH_SPHERE, THEORY, which_image, SIZE, npixels)
 
