@@ -12,6 +12,13 @@ THEORY = 'mielensalpha'
 MCMC_KWS = {'burn': 0, 'steps': 16, 'nwalkers': 20,
             'thin': 1, 'workers': os.cpu_count(), 'ntemps': 7}
 
+__TIMER_CLICK__ = time.time()
+
+def tick_tock():
+    global __TIMER_CLICK__
+    last_time =  __TIMER_CLICK__
+    current_time  = __TIMER_CLICK__ = time.time()
+    return timedelta(seconds=current_time - last_time)
 
 def analyze_one_image(which_image):
     which_fit = str(which_image)
