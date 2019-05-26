@@ -31,130 +31,11 @@ def load_mcmc_result_PS_mielens(fmt='pkl'):
     return _load_mcmc_result(file, fmt)
 
 
-def load_mcmc_result_Si_mieonly(fmt='pkl'):
-    #file = 'fits/sedimentation/mcmc/si_mcmc_mo_29'
-    file = ('fits/sedimentation/mcmc/PT-Brian/' + 
-            'silica-mieonly-frame=10-size=250-npx=10000-mcmc')
-    return _load_mcmc_result(file, fmt)
-
-
-def load_mcmc_result_Si_mielens(fmt='pkl'):
-    #file = 'fits/sedimentation/mcmc/si_mcmc_ml_29'
-    file = ('fits/sedimentation/mcmc/PT-Brian/' + 
-            'silica-mielens-frame=10-size=250-npx=10000-mcmc')
-    return _load_mcmc_result(file, fmt)
-
-
-def load_PTmcmc_result_PS_mieonly(fmt='json'):
-    """PS: 0001.tiff
-    {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 5, 'npixels': 100}
-    """
-    file = 'fits/sedimentation/mcmc/PT-4-4-19/ps_mcmc_mo_pt'
-    return _load_mcmc_result(file, fmt)
-
-
-def load_PTmcmc_result_PS_mielens(fmt='json'):
-    """PS: 0001.tiff
-    {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 5, 'npixels': 100}
-    """
-    file ='fits/sedimentation/mcmc/PT-4-4-19/ps_mcmc_ml_pt'
-    return _load_mcmc_result(file, fmt)
-
-
-def load_PTmcmc_result_Si_mieonly(fmt='json'):
-    """Si: 0029.tiff
-    {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 3, 'npixels': 100}
-    """
-    file = 'fits/sedimentation/mcmc/PT-4-4-19/si_mcmc_mo_pt'
-    return _load_mcmc_result(file, fmt)
-
-
-def load_PTmcmc_result_Si_mielens(fmt='json'):
-    """Si: 0029.tiff
-    {'burn': 0, 'steps': 1000, 'nwalkers': 100, 'thin': 1, 'workers': 4, 'ntemps': 3, 'npixels': 100}
-    """
-    file = 'fits/sedimentation/mcmc/PT-4-4-19/si_mcmc_ml_pt'
-    return _load_mcmc_result(file, fmt)
-
-
 def _load_mcmc_result(file, fmt):
     if fmt == 'json':
         return load_MinimizerResult_from_json(file + '.json')
     elif fmt == 'pkl':
         return load_pickle(file + '.pkl')
-
-
-def load_silica_sedimentation_params(date_subdir="04-02"):
-    mo_fits = load_json(
-        "fits/sedimentation/{}/mieonly_sedimentation_params_Si.json".format(
-            date_subdir))
-    ml_fits = load_json(
-        "fits/sedimentation/{}/mielens_sedimentation_params_Si.json".format(
-            date_subdir))
-    return mo_fits, ml_fits
-
-
-def load_polystyrene_sedimentation_params(date_subdir="04-02"):
-    mo_fits = load_json(
-        "fits/sedimentation/{}/mieonly_sedimentation_params_PS.json".format(
-            date_subdir))
-    ml_fits = load_json(
-        "fits/sedimentation/{}/mielens_sedimentation_params_PS.json".format(
-            date_subdir))
-    return mo_fits, ml_fits
-
-
-def load_silica_sedimentation_fits_json(date_subdir="04-02"):
-    mo_fits = [
-        load_json(
-            "fits/sedimentation/{}/Si_mieonly/{}.json".format(
-                date_subdir, zfill(num, 4)))
-        for num in range(43)]
-    ml_fits = [
-        load_json(
-            "fits/sedimentation/{}/Si_mielens/{}.json".format(
-                date_subdir, zfill(num, 4)))
-        for num in range(100)]
-    return mo_fits, ml_fits
-
-
-def load_polystyrene_sedimentation_fits_json(date_subdir="04-02"):
-    mo_fits = [
-        load_json(
-            "fits/sedimentation/{}/PS_mieonly/{}.json".format(
-                date_subdir, zfill(num, 4)))
-        for num in range(20)]
-    ml_fits = [
-        load_json(
-            "fits/sedimentation/{}/PS_mielens/{}.json".format(
-                date_subdir, zfill(num, 4)))
-        for num in range(50)]
-    return mo_fits, ml_fits
-
-
-def load_silica_sedimentation_fits(date_subdir="04-02"):
-    mo_fits = [
-        load_pickle(
-            "fits/sedimentation/{}/Si_mieonly/{}.pkl".format(
-                date_subdir, zfill(num, 4)))
-        for num in range(43)]
-    ml_fits = [
-        load_pickle("fits/sedimentation/{}/Si_mielens/{}.pkl".format(
-            date_subdir, zfill(num, 4)))
-        for num in range(100)]
-    return mo_fits, ml_fits
-
-
-def load_polystyrene_sedimentation_fits(date_subdir="04-02"):
-    mo_fits = [
-        load_pickle("fits/sedimentation/{}/PS_mieonly/{}.pkl".format(
-            date_subdir, zfill(num, 4)))
-        for num in range(20)]
-    ml_fits = [
-        load_pickle("fits/sedimentation/{}/PS_mielens/{}.pkl".format(
-            date_subdir, zfill(num, 4)))
-        for num in range(50)]
-    return mo_fits, ml_fits
 
 
 def load_pickle(filename):
@@ -180,66 +61,26 @@ def save_json(obj, filename):
             json.dump(obj, f, indent=4)
 
 
-def load_silica_sedimentation_data(*args, **kwargs):
-    folder = os.path.join(HERE, "data/Silica1um-60xWater-021519/processed/")
-    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif') for num in range(100)]
+def fastload_polystyrene_sedimentation_data(size=128, *args, **kwargs):
+    folder = os.path.join(HERE, 
+             'data/Polystyrene2-4um-60xWater-042919/processed-{}/'.format(size))
+    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
+             for num in range(100)]
     try:
         data = [hp.load(path) for path in paths]
-        zpos = None # TODO grep this function and remove references to returning z
-    # if processed data not found, process it and svae for next time
     except FileNotFoundError:
-        data, zpos = load_process_silica_sedimentation_data(*args, **kwargs)
-        for path, im in zip(paths, data):
-            hp.save_image(path, im)
-    return data, zpos
+        data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
+    return data
 
 
-def load_process_silica_sedimentation_data(
-        size=140, holonums=None, recenter=True):
-
-    silica_folder = os.path.join(HERE, "data/Silica1um-60xWater-021519/raw/")
-    if holonums is None:
-        holonums = range(100)
-    camera_resolution = 5.6983 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.33,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [741, 540]  # first frame is found at 692, 609, 50th at 741, 540
-
-    zpos = np.linspace(38, -12, 100)
-    paths = [
-        os.path.join(silica_folder, "image" + zfill(num, 4) + ".tif")
-        for num in holonums]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        refimg = hp.load_image(paths[0], **metadata)
-        bkg = load_bkg(
-            os.path.join(silica_folder, "bg/"),
-            bg_prefix='bg', refimg=refimg)  # 10 s! all holopy
-        dark = load_dark(
-            os.path.join(silica_folder, "dark/"),
-            df_prefix='dark', refimg=refimg)  # 8.7 s! all holopy
-        holos = []
-        for path in paths:
-            this_holo = load_bgdivide_crop(
-                path=path, metadata=metadata, particle_position=position,
-                bkg=bkg, dark=dark, size=size, recenter=recenter)
-            holos.append(this_holo)
-    return holos, zpos
-
-
-def load_polystyrene_sedimentation_data_new(size=HOLOGRAM_SIZE, holonums=None, 
-                                            recenter=True):
-    if holonums is None:
-        holonums = range(35)
+def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(100),
+                                        recenter=True):
     camera_resolution = 5.6983 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
-    position = [300, 375]  #  leaves all the particles mostly in the hologram
-
+    position = [270, 370]  #  leaves all the particles mostly in the hologram
     paths = ["data/Polystyrene2-4um-60xWater-042919/raw/im"
              +  zfill(num, 4) + ".tif" for num in holonums]
     refimg = hp.load_image(paths[0], **metadata)
@@ -258,51 +99,16 @@ def load_polystyrene_sedimentation_data_new(size=HOLOGRAM_SIZE, holonums=None,
     return holos
 
 
-def load_polystyrene_sedimentation_data(*args, **kwargs):
-    folder = os.path.join(HERE, "data/Polystyrene2-4um-60xWater-012419/processed/")
-    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif') for num in range(50)]
-    try:
-        data = [hp.load(path) for path in paths]
-        zpos = None # TODO grep this function and remove references to returning z
-    # if processed data not found, process it and svae for next time
-    except FileNotFoundError:
-        data, zpos = load_process_polystyrene_sedimentation_data(*args, **kwargs)
-        for path, im in zip(paths, data):
-            hp.save_image(path, im)
-    return data, zpos
+def load_polystyrene_sedimentation_params():
+    mo_fits = load_json('fits/sedimentation/newdata/fits_mo4.json')
+    ml_fits = load_json('fits/sedimentation/newdata/fits_ml3.json')
+    return mo_fits, ml_fits
 
 
-def load_process_polystyrene_sedimentation_data(
-        size=HOLOGRAM_SIZE, holonums=None, recenter=True):
-    if holonums is None:
-        holonums = range(50)
-    camera_resolution = 5.6983 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                'medium_index' : 1.33,
-                'illum_wavelen' : .660,
-                'illum_polarization' : (1, 0)}
-    # position = [263, 218]  # center of the midpoint
-    position = [263, 238]  #  leaves all the particles mostly in the hologram
-
-    zpos = np.linspace(20, -12, 50)
-    paths = ["data/Polystyrene2-4um-60xWater-012419/raw/image"
-             +  zfill(num, 4) + ".tif" for num in holonums]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        refimg = hp.load_image(paths[0], **metadata)
-        bkg = load_bkg(
-            "data/Polystyrene2-4um-60xWater-012419/raw/",
-            bg_prefix='bg', refimg=refimg)
-        dark = load_dark(
-            "data/Polystyrene2-4um-60xWater-012419/raw/",
-            df_prefix='dark', refimg=refimg)
-        holos = []
-        for path in paths:
-            this_holo = load_bgdivide_crop(
-                path=path, metadata=metadata, particle_position=position,
-                bkg=bkg, dark=dark, size=size, recenter=recenter)
-            holos.append(this_holo)
-    return holos, zpos
+def load_polystyrene_sedimentation_fits(date_subdir="04-02"):
+    mo_fits = load_pickle('fits/sedimentation/newdata/fits_mo4.pkl')
+    ml_fits = load_pickle('fits/sedimentation/newdata/fits_ml3.pkl')
+    return mo_fits, ml_fits
 
 
 def load_bkg(path, bg_prefix, refimg):
@@ -398,3 +204,26 @@ def _unserialize_MinimizerResult(serialized):
                                      if serialized['errorbars'] == 'True'
                                      else np.bool_(False))
     return unserialized
+
+
+def save_fits_to_json(fits, filename):
+    params = OrderedDict()
+    for i, fit in enumerate(fits):
+        params.update({str(i): fit.params.valuesdict()})
+    save_json(params, filename)
+
+
+def load_example_data():
+    imagepath = hp.core.io.get_example_data_path('image01.jpg')
+    raw_holo = hp.load_image(imagepath, spacing = 0.0851, medium_index = 1.33,
+                             illum_wavelen = 0.66, illum_polarization = (1,0))
+    bgpath = hp.core.io.get_example_data_path(['bg01.jpg', 'bg02.jpg', 'bg03.jpg'])
+    bg = hp.core.io.load_average(bgpath, refimg = raw_holo)
+    holo = hp.core.process.bg_correct(raw_holo, bg)
+    holo = hp.core.process.subimage(holo, [250,250], 200)
+    holo = hp.core.process.normalize(holo)
+    return holo
+
+
+def load_gold_example_data():
+    return normalize(hp.load(hp.core.io.get_example_data_path('image0001.h5')))
