@@ -245,30 +245,15 @@ def estimate_noise_from(data):
     return noise
 
 
-def load_example_data():
-    imagepath = hp.core.io.get_example_data_path('image01.jpg')
-    raw_holo = hp.load_image(imagepath, spacing = 0.0851, medium_index = 1.33,
-                             illum_wavelen = 0.66, illum_polarization = (1,0))
-    bgpath = hp.core.io.get_example_data_path(['bg01.jpg', 'bg02.jpg', 'bg03.jpg'])
-    bg = hp.core.io.load_average(bgpath, refimg = raw_holo)
-    holo = hp.core.process.bg_correct(raw_holo, bg)
-    holo = hp.core.process.subimage(holo, [250,250], 200)
-    holo = hp.core.process.normalize(holo)
-    return holo
-
-
-def load_gold_example_data():
-    return normalize(hp.load(hp.core.io.get_example_data_path('image0001.h5')))
-
-
 if __name__ == '__main__':
-    data = load_example_data()
-    initial_guesses = {'z': 15.0, 'n': 1.58, 'r': .5, 'illum_wavelen': .660}
+    import inout
+    data = inout.load_example_data()
+    initial_guesses = {'z': 15.0, 'n': 1.58, 'r': .5}
 
     # data = load_gold_example_data()
     # initial_guesses = {'z': 1.415e-5, 'n': 1.582, 'r': 6.484e-7}
 
-    mielensFitter = Fitter(theory='mielens')
+    mielensFitter = Fitter(theory='mielensalpha')
     mieonlyFitter = Fitter(theory='mieonly')
 
     #mcmc_kws = {'burn': 0, 'steps': 10, 'thin': 1, 'walkers': 14,'workers': 1}
