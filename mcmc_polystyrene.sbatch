@@ -2,10 +2,10 @@
 #SBATCH -J mcmc_polystyrene
 #SBATCH -o mcmc_polystyrene.%j.out
 #SBATCH -e mcmc_polystyrene.%j.err
-#SBATCH -p test
+#SBATCH -p shared
 #SBATCH -t 10:00:00
 #SBATCH -n 32
-#SBATCH --mem-per-cpu=512
+#SBATCH --mem-per-cpu=1024
 
 ML_PREFIX="/n/manoharan/alexander/mielens-data"
 DATA_DIR="data/Polystyrene2-4um-60xWater-042919/processed-256"
