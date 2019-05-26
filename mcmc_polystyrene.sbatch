@@ -3,8 +3,8 @@
 #SBATCH -o mcmc_polystyrene.%j.out
 #SBATCH -e mcmc_polystyrene.%j.err
 #SBATCH -p test
-#SBATCH -t 15
-#SBATCH -n 2
+#SBATCH -t 30
+#SBATCH -n 4
 #SBATCH --mem-per-cpu=1000
 
 ML_PREFIX="/n/manoharan/alexander/mielens-data"
@@ -27,7 +27,6 @@ cd $STORAGE_DIR
 source new-modules.sh
 module purge
 module load Anaconda/5.0.1-fasrc01
-module load gcc/7.1.0-fasrc01 openmpi/2.1.0-fasrc01
 source activate holopy-dev
 
 ## RUN PROGRAM ##
