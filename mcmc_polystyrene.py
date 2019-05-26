@@ -4,11 +4,13 @@ import time
 from lmfitFitter import Fitter
 import inout
 
+from schwimmbad import MPIPool
+
 WHICH_SPHERE = 'polystyrene'
 SIZE = 256
 THEORY = 'mielensalpha'
 MCMC_KWS = {'burn': 0, 'steps': 16, 'nwalkers': 20,
-            'thin': 1, 'workers': 16, 'ntemps': 7}
+            'thin': 1, 'workers': MPIPool(), 'ntemps': 7}
 
 
 def analyze_one_image(which_image):
@@ -49,5 +51,5 @@ def analyze_one_image(which_image):
 
 
 if __name__ == '__main__':
-    for which_image in [2, 12]:
+    for which_image in [2]:
         analyze_one_image(which_image)
