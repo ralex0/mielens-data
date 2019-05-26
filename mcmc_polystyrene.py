@@ -9,8 +9,8 @@ import inout
 WHICH_SPHERE = 'polystyrene'
 SIZE = 256
 THEORY = 'mielensalpha'
-MCMC_KWS = {'burn': 0, 'steps': 16, 'nwalkers': 20,
-            'thin': 1, 'workers': 4, 'ntemps': 7}
+MCMC_KWS = {'burn': 0, 'steps': 1024, 'nwalkers': 128,
+            'thin': 1, 'workers': 32, 'ntemps': 7}
 
 __TIMER_CLICK__ = time.time()
 
