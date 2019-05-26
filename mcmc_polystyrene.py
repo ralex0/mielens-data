@@ -48,7 +48,8 @@ def analyze_one_image(which_image):
 
     best_ml = optimization_result['best_result']
 
-    prefix = '{}-{}-frame={}-size={}-npx={}'.format(
+    prefix = 'n/manoharan/alexander/mielens-data/fits/sedimentation/newdata'
+    prefix += '{}-{}-frame={}-size={}-npx={}'.format(
         WHICH_SPHERE, THEORY, which_image, SIZE, npixels)
 
     tosave = {'fit': fit_ml, 'mcmc': mcmc_ml, 'best': best_ml}

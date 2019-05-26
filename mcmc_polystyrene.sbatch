@@ -30,7 +30,4 @@ module load Anaconda/5.0.1-fasrc01
 source activate holopy-dev
 
 ## RUN PROGRAM ##
-srun -n 2 --mpi=pmi2 python $SLURM_SUBMIT_DIR/mcmc_polystyrene.py
-
-## COPY OUTPUT BACK ##
-cp *.pkl $FITS_DIR/
+python $SLURM_SUBMIT_DIR/mcmc_polystyrene.py
