@@ -19,7 +19,8 @@ mkdir -pv $STORAGE_DIR/$FITS_DIR
 
 ## COPY INPUT FILES AND MOVE TO WORKING DIR##
 cp -R $ML_PREFIX/$DATA_DIR $STORAGE_DIR/$DATA_DIR
-cp $ML_PREFIX/$FITS_DIR/*.pkl $STORAGE_DIR/$FITS_DIR
+cp $ML_PREFIX/$FITS_DIR/fits_mo4.json $STORAGE_DIR/$FITS_DIR/fits_mo4.json
+cp $ML_PREFIX/$FITS_DIR/fits_ml3.json $STORAGE_DIR/$FITS_DIR/fits_ml3.json
 cd $STORAGE_DIR
 
 # Load required modules
