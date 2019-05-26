@@ -22,7 +22,7 @@ def tick_tock():
 
 def analyze_one_image(which_image):
     which_fit = str(which_image)
-    data = inout.fastload_polystyrene_sedimentation_data(size=SIZE)
+    data = inout.fastload_polystyrene_sedimentation_data(size=SIZE)[which_image]
     fits_mo, fits_ml = inout.load_polystyrene_sedimentation_params()
 
     if THEORY == 'mieonly':
