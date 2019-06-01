@@ -4,11 +4,9 @@ import numpy as np
 
 from scipy.ndimage.filters import gaussian_filter
 
-import holopy as hp
 from holopy.core.metadata import get_extents, get_spacing, make_subset_data
 from holopy.core.metadata import update_metadata
-from holopy.core.process import center_find, normalize
-from holopy.core.tests.common import get_example_data
+from holopy.core.process import center_find
 from holopy.scattering import Sphere, calc_holo
 from holopy.scattering.theory import MieLens, Mie
 
@@ -100,8 +98,8 @@ class Fitter(object):
         noise = self._estimate_noise_from(data)
         params = best_fit.params
         params.add(
-            '__lnsigma', value=np.log(noise), min=np.log(noise/10),
-            max=np.log(noise*10))
+            '__lnsigma', value=np.log(noise), min=np.log(noise / 10),
+            max=np.log(noise * 10))
 
         residuals_calculator = ResidualsCalculator(
             subset_data, theory=self.theory)
@@ -134,7 +132,8 @@ class Fitter(object):
 
     def _setup_minimizer(self, params, cost_kwargs=None):
         cost_function = self._setup_cost_function()
-        return Minimizer(cost_function, params, nan_policy='omit', fcn_kws=cost_kwargs)
+        return Minimizer(cost_function, params, nan_policy='omit',
+                         fcn_kws=cost_kwargs)
 
     def _setup_params_from(self, initial_guess, data):  # 5 ms
         params = Parameters()
@@ -159,7 +158,7 @@ class Fitter(object):
 
         if 'illum_wavelen' in initial_guess:
             wavelength = initial_guess['illum_wavelen']
-            params.add(name = 'illum_wavelen', value=wavelength,
+            params.add(name='illum_wavelen', value=wavelength,
                        min=.1, max=2.000)
         return params
 
@@ -181,21 +180,25 @@ class Fitter(object):
         else:
             pixel_spacing = get_spacing(data)
             image_lower_left = np.array([image_min_x, image_min_y])
-            x_guess, y_guess = center_find(data) * pixel_spacing + image_lower_left
+            x_guess, y_guess = (center_find(data) * pixel_spacing +
+                                image_lower_left)
 
         extents = get_extents(data)
-        zextent = 5 * max(extents['x'], extents['y']) # FIXME: 5 is a magic number.
+        # FIXME: 5 is a magic number.
+        zextent = 5 * max(extents['x'], extents['y'])
         z_guess = guess['z'] if 'z' in guess else guess['center.2']
 
-        x = Parameter(name='x', value=x_guess, min=image_min_x, max=image_max_x)
-        y = Parameter(name='y', value=y_guess, min=image_min_y, max=image_max_y)
+        x = Parameter(name='x', value=x_guess,
+                      min=image_min_x, max=image_max_x)
+        y = Parameter(name='y', value=y_guess,
+                      min=image_min_y, max=image_max_y)
         z = Parameter(name='z', value=z_guess, min=-zextent, max=zextent)
         return x, y, z
 
     def _lens_guess(self, guess):
         lens_angle = (
             guess['lens_angle'] if 'lens_angle' in guess
-            else np.arcsin(1.2/2))
+            else np.arcsin(1.2 / 2))
         return lens_angle
 
     def _alpha_guess(self, guess):
@@ -243,26 +246,3 @@ def estimate_noise_from(data):
     smoothed_data = gaussian_filter(data, sigma=1)
     noise = np.std(data - smoothed_data)
     return noise
-
-
-if __name__ == '__main__':
-    import inout
-    data = inout.load_example_data()
-    initial_guesses = {'z': 15.0, 'n': 1.58, 'r': .5}
-
-    # data = load_gold_example_data()
-    # initial_guesses = {'z': 1.415e-5, 'n': 1.582, 'r': 6.484e-7}
-
-    mielensFitter = Fitter(theory='mielensalpha')
-    mieonlyFitter = Fitter(theory='mieonly')
-
-    #mcmc_kws = {'burn': 0, 'steps': 10, 'thin': 1, 'walkers': 14,'workers': 1}
-
-    #mo_mcmc_result, mo_fit_result = mieonlyFitter.mcmc(initial_guesses, mcmc_kws=mcmc_kws, npixels=100)
-    #ml_mcmc_result, ml_fit_result = mielensFitter.mcmc(initial_guesses, mcmc_kws=mcmc_kws, npixels=100)
-
-    mo_fit_result = mieonlyFitter.fit(data, initial_guesses)
-    ml_fit_result = mielensFitter.fit(data, initial_guesses)
-
-    print(report_fit(ml_fit_result))
-    print(report_fit(mo_fit_result))
