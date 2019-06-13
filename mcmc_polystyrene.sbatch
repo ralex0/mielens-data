@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH -J mcmc_polystyrene
-#SBATCH -o mcmc_polystyrene.%j.out
-#SBATCH -e mcmc_polystyrene.%j.err
+#SBATCH -o mcmc_polystyrene.out
+#SBATCH -e mcmc_polystyrene.err
 #SBATCH -p shared
-#SBATCH -t 10:00:00
-#SBATCH -n 32
-#SBATCH --mem-per-cpu=1024
+#SBATCH -t 8:00:00
+#SBATCH -n 128
+#SBATCH --mem=8182
 
 ML_PREFIX="/n/manoharan/alexander/mielens-data"
 DATA_DIR="data/Polystyrene2-4um-60xWater-042919/processed-256"

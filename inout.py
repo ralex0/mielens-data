@@ -14,7 +14,7 @@ from lmfit.minimizer import MinimizerResult, Parameters
 
 RGB_CHANNEL = 'all'
 HOLOGRAM_SIZE = 250
-HERE = os.path.dirname(__file__)
+HERE = '/n/manoharan/alexander/mielens-data'
 
 
 def load_mcmc_result_PS_mieonly(fmt='pkl'):
