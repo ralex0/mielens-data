@@ -1,11 +1,12 @@
 #!/bin/bash
-#SBATCH -J mcmc_polystyrene
-#SBATCH -o mcmc_polystyrene.out
-#SBATCH -e mcmc_polystyrene.err
+#SBATCH -J mcmc_mielens_polystyrene
+#SBATCH -o mcmc_polystyrene_%j.out
+#SBATCH -e mcmc_polystyrene_%j.err
 #SBATCH -p shared
-#SBATCH -t 8:00:00
-#SBATCH -n 128
-#SBATCH --mem=8182
+#SBATCH -t 12:45:00
+#SBATCH -n 32
+#SBATCH -N 1
+#SBATCH --mem=8000
 
 ML_PREFIX="/n/manoharan/alexander/mielens-data"
 DATA_DIR="data/Polystyrene2-4um-60xWater-042919/processed-256"
@@ -30,4 +31,4 @@ module load Anaconda/5.0.1-fasrc01
 source activate holopy-dev
 
 ## RUN PROGRAM ##
-python $SLURM_SUBMIT_DIR/mcmc_polystyrene.py
+python $SLURM_SUBMIT_DIR/mcmc_polystyrene.py ${IM_NUMBER}

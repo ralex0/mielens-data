@@ -1,5 +1,6 @@
 from datetime import timedelta
 import os
+import sys
 import time
 
 from lmfitFitter import Fitter
@@ -10,7 +11,7 @@ WHICH_SPHERE = 'polystyrene'
 SIZE = 256
 THEORY = 'mielensalpha'
 MCMC_KWS = {'burn': 0, 'steps': 1024, 'nwalkers': 128,
-            'thin': 1, 'workers': 128, 'ntemps': 7}
+            'thin': 1, 'workers': 32, 'ntemps': 7}
 
 __TIMER_CLICK__ = time.time()
 
@@ -59,9 +60,5 @@ def analyze_one_image(which_image):
 
 
 if __name__ == '__main__':
-    for which_image in [5, 15]:
-        THEORY = 'mielensalpha'
-        analyze_one_image(which_image)
-        THEORY = 'mieonly'
-        analyze_one_image(which_image)
-
+    im_number = sys.argv[1]
+    analyze_one_image(im_number)
