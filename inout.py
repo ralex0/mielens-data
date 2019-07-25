@@ -13,22 +13,20 @@ from holopy.core.process import subimage, normalize, center_find
 from lmfit.minimizer import MinimizerResult, Parameters
 
 RGB_CHANNEL = 'all'
-HOLOGRAM_SIZE = 250
+HOLOGRAM_SIZE = 256
 HERE = os.path.dirname(__file__)
 
 
 def load_mcmc_result_PS_mieonly(fmt='pkl'):
-    #file = 'fits/sedimentation/mcmc/ps_mcmc_mo_1'
-    file = ('fits/sedimentation/mcmc/PT-Brian/' + 
-            'polystyrene-mieonly-frame=2-size=250-npx=10000-mcmc')
-    return _load_mcmc_result(file, fmt)
+    folder = 'fits/Polystyrene2-4um-60xWater-042919/'
+    file = ('polystyrene-mieonly-frame=1-size=256-npx=10000-mcmc')
+    return _load_mcmc_result(folder + file, fmt)
 
 
 def load_mcmc_result_PS_mielens(fmt='pkl'):
-    #file = 'fits/sedimentation/mcmc/ps_mcmc_ml_1'
-    file = ('fits/sedimentation/mcmc/PT-Brian/' + 
-            'polystyrene-mielens-frame=2-size=250-npx=10000-mcmc')
-    return _load_mcmc_result(file, fmt)
+    folder = 'fits/Polystyrene2-4um-60xWater-042919/'
+    file = ('polystyrene-mielensalpha-frame=1-size=256-npx=10000-mcmc')
+    return _load_mcmc_result(folder + file, fmt)
 
 
 def _load_mcmc_result(file, fmt):
@@ -62,7 +60,7 @@ def save_json(obj, filename):
 
 
 def fastload_polystyrene_sedimentation_data(size=128, *args, **kwargs):
-    folder = os.path.join(HERE, 
+    folder = os.path.join(HERE,
              'data/Polystyrene2-4um-60xWater-042919/processed-{}/'.format(size))
     paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
              for num in range(100)]
