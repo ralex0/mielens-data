@@ -17,15 +17,15 @@ HOLOGRAM_SIZE = 256
 HERE = os.path.dirname(__file__)
 
 
-def load_mcmc_result_PS_mieonly(fmt='pkl'):
+def load_mcmc_result_PS_mieonly(frame=1, fmt='pkl'):
     folder = 'fits/Polystyrene2-4um-60xWater-042919/'
-    file = ('polystyrene-mieonly-frame=1-size=256-npx=10000-mcmc')
+    file = ('polystyrene-mieonly-frame={}-size=256-npx=10000-mcmc'.format(frame))
     return _load_mcmc_result(folder + file, fmt)
 
 
-def load_mcmc_result_PS_mielens(fmt='pkl'):
+def load_mcmc_result_PS_mielens(frame=1, fmt='pkl'):
     folder = 'fits/Polystyrene2-4um-60xWater-042919/'
-    file = ('polystyrene-mielensalpha-frame=1-size=256-npx=10000-mcmc')
+    file = ('polystyrene-mielensalpha-frame={}-size=256-npx=10000-mcmc'.format(frame))
     return _load_mcmc_result(folder + file, fmt)
 
 
