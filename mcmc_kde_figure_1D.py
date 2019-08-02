@@ -39,12 +39,11 @@ class MCMCKDEFigure:
 
     def _setup_axes(self):
         gs = gridspec.GridSpec(2, 5)
-
         self._ax_holo = [plt.Subplot(self.fig, gs[i, 0]) for i in range(2)]
-        self._ax_radius = [plt.Subplot(self.fig, gs[i, 1]) for i in range(2)]
-        self._ax_index = [plt.Subplot(self.fig, gs[i, 2]) for i in range(2)]
-        self._ax_alpha = [plt.Subplot(self.fig, gs[i, 3]) for i in range(2)]
-        self._ax_z = [plt.Subplot(self.fig, gs[i, 4]) for i in range(2)]
+        self._ax_z = [plt.Subplot(self.fig, gs[i, 1]) for i in range(2)]
+        self._ax_radius = [plt.Subplot(self.fig, gs[i, 2]) for i in range(2)]
+        self._ax_index = [plt.Subplot(self.fig, gs[i, 3]) for i in range(2)]
+        self._ax_alpha = [plt.Subplot(self.fig, gs[i, 4]) for i in range(2)]
 
         self._all_axes = [*self._ax_holo, *self._ax_radius, *self._ax_index,
                           *self._ax_alpha, *self._ax_z]
@@ -72,8 +71,8 @@ class MCMCKDEFigure:
 
     def _plot_kdes(self):
         for i in range(2):
-            self._plot_kde(self._ax_radius[i], 'r', i, legend=True)
-            self._plot_kde(self._ax_index[i], 'n', i)
+            self._plot_kde(self._ax_radius[i], 'r', i)
+            self._plot_kde(self._ax_index[i], 'n', i, legend=True)
             self._plot_kde(self._ax_alpha[i], 'alpha', i)
             self._plot_kde(self._ax_z[i], 'z', i)
 
@@ -81,7 +80,7 @@ class MCMCKDEFigure:
         labels = {'r': 'radius (μm)', 'n': 'refractive index',
                   'alpha': 'alpha', 'z': 'focal distance (μm)'}
         xlim = self._get_xlim(param, data_index)
-        ticks, tick_labels = self._get_xticks(xlim)
+        ticks, tick_labels = self._get_xticks(param, data_index)
 
         bw = self.data_ml[data_index][param].size**(-1./(1+4)) # Scott's bw
         x = np.linspace(*xlim, 200) # 200 is magic
@@ -101,42 +100,34 @@ class MCMCKDEFigure:
         ax.set_xlim(xlim)
         ax.set_xticks(ticks)
         ax.set_xticklabels(tick_labels, **TICK_FONT)
-        ax.set_xlabel(labels[param], **LABEL_FONT)
+        if data_index == 1: ax.set_xlabel(labels[param], **LABEL_FONT)
         ax.set_yticks([])
         ax.set_yticklabels([])
         ax.set_ylabel('')
 
     def _get_xlim(self, param, data_index):
-        low = np.min([self._get_lims(self.data_mo[data_index][param]),
-                      self._get_lims(self.data_ml[data_index][param])])
-        high = np.max([self._get_lims(self.data_mo[data_index][param]),
-                       self._get_lims(self.data_ml[data_index][param])])
-        return low, high
+        lims = {'r': [[1.12, 1.2], [1.12, 1.2]],
+                 'n': [[1.45, 1.61], [1.45, 1.61]],
+                 'z': [[15.99, 16.21], [3.54, 3.76]],
+                 'alpha': [[.64, .86], [.64, .86]]}
+        return lims[param][data_index]
 
     def _set_axes_style(self):
-        plt.sca(self._ax_radius[0])
+        plt.sca(self._ax_index[0])
         plt.legend(loc=(.05, .95), fontsize='x-small', numpoints=7)
-        self.fig.tight_layout()
+        self.fig.tight_layout(w_pad=0.01, h_pad=0.05)
 
     def _get_lims(self, data):
         low, high = np.quantile(data, [.001, .999])
         return np.array([low, high])
 
-    def _get_xticks(self, lims):
-        # if param == 'r':
-        #     ticks = [1.16, 1.165, 1.17]
-        # elif param == 'n':
-        #     ticks = [1.598, 1.6, 1.602]
-        # elif param == 'alpha':
-        #     ticks = [.665, .675, .685]
-        # elif param == 'z':
-        #     if data_index == 0:
-        #         ticks = [16.075, 16.1, 16.125]
-        #     else:
-        #         ticks = [3.55, 3.65, 3.75]
-        ticks = np.linspace(*lims, 11)[[1,5,9]]
-        labels = ["{:.3f}".format(tick) for tick in ticks]
-        return ticks, labels
+    def _get_xticks(self, param, data_index):
+        ticks = {'r': [[1.13, 1.16, 1.19], [1.13, 1.16, 1.19]],
+                 'n': [[1.46, 1.53, 1.60], [1.46, 1.53, 1.60]],
+                 'z': [[16.0, 16.1, 16.2], [3.55, 3.65, 3.75]],
+                 'alpha': [[.65, .75, .85], [.65, .75, .85]]}
+        labels = ["{:.2f}".format(tick) for tick in ticks[param][data_index]]
+        return ticks[param][data_index], labels
 
     def _add_figlabels(self):
         self._ax_labela = self.fig.add_axes([.05, .90, .05, .05])
@@ -145,7 +136,7 @@ class MCMCKDEFigure:
         plt.xticks([])
         plt.yticks([])
 
-        self._ax_labelb = self.fig.add_axes([.05, .45, .05, .05])
+        self._ax_labelb = self.fig.add_axes([.05, .50, .05, .05])
         plt.sca(self._ax_labelb)
         plt.text(0, 0, "b)", **FIGLABEL_FONT)
         plt.xticks([])
