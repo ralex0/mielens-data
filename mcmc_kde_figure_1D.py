@@ -67,6 +67,8 @@ class MCMCKDEFigure:
                       vmin=vmin, vmax=vmax, cmap='gray')
             ax.set_xticks([])
             ax.set_yticks([])
+            ax.spines['left'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
 
 
     def _plot_kdes(self):
@@ -78,7 +80,7 @@ class MCMCKDEFigure:
 
     def _plot_kde(self, ax, param, data_index, legend=False):
         labels = {'r': 'radius (μm)', 'n': 'refractive index',
-                  'alpha': 'alpha', 'z': 'focal distance (μm)'}
+                  'alpha': 'alpha', 'z': 'z position (μm)'}
         xlim = self._get_xlim(param, data_index)
         ticks, tick_labels = self._get_xticks(param, data_index)
 
@@ -114,8 +116,8 @@ class MCMCKDEFigure:
 
     def _set_axes_style(self):
         plt.sca(self._ax_index[0])
-        plt.legend(loc=(.05, .95), fontsize='x-small', numpoints=7)
-        self.fig.tight_layout(w_pad=0.01, h_pad=0.05)
+        plt.legend(loc=(.05, .65), fontsize='x-small', numpoints=7)
+        self.fig.tight_layout(w_pad=0.001, h_pad=0.05)
 
     def _get_lims(self, data):
         low, high = np.quantile(data, [.001, .999])
@@ -130,13 +132,13 @@ class MCMCKDEFigure:
         return ticks[param][data_index], labels
 
     def _add_figlabels(self):
-        self._ax_labela = self.fig.add_axes([.05, .90, .05, .05])
+        self._ax_labela = self.fig.add_axes([0.01, .9, .01, .01])
         plt.sca(self._ax_labela)
         plt.text(0, 0, "a)", **FIGLABEL_FONT)
         plt.xticks([])
         plt.yticks([])
 
-        self._ax_labelb = self.fig.add_axes([.05, .50, .05, .05])
+        self._ax_labelb = self.fig.add_axes([0.01, .47, .01, .01])
         plt.sca(self._ax_labelb)
         plt.text(0, 0, "b)", **FIGLABEL_FONT)
         plt.xticks([])
