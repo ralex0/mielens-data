@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -J mcmc_mielens_polystyrene
-#SBATCH -o mcmc_polystyrene_%j.out
-#SBATCH -e mcmc_polystyrene_%j.err
+#SBATCH -J mcmc_mieonly_polystyrene
+#SBATCH -o mcmc_mo_polystyrene_%j.out
+#SBATCH -e mcmc_mo_polystyrene_%j.err
 #SBATCH -p shared
-#SBATCH -t 12:45:00
+#SBATCH -t 03:00:00
 #SBATCH -n 32
 #SBATCH -N 1
 #SBATCH --mem=8000
@@ -27,8 +27,8 @@ cd $STORAGE_DIR
 # Load required modules
 source new-modules.sh
 module purge
-module load Anaconda/5.0.1-fasrc01
+module load Anaconda3/5.0.1-fasrc02
 source activate holopy-dev
 
 ## RUN PROGRAM ##
-python $SLURM_SUBMIT_DIR/mcmc_polystyrene.py ${IM_NUMBER}
+python $SLURM_SUBMIT_DIR/mcmc_polystyrene.py $IM_NUMBER

@@ -61,11 +61,11 @@ def save_json(obj, filename):
             json.dump(obj, f, indent=4)
 
 
-def fastload_polystyrene_sedimentation_data(size=128, *args, **kwargs):
+def fastload_polystyrene_sedimentation_data(size=256, *args, **kwargs):
     folder = os.path.join(HERE, 
              'data/Polystyrene2-4um-60xWater-042919/processed-{}/'.format(size))
     paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
-             for num in range(100)]
+             for num in range(1000)]
     try:
         data = [hp.load(path) for path in paths]
     except FileNotFoundError:
@@ -73,7 +73,7 @@ def fastload_polystyrene_sedimentation_data(size=128, *args, **kwargs):
     return data
 
 
-def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(100),
+def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
                                         recenter=True):
     camera_resolution = 5.6983 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
@@ -104,6 +104,9 @@ def load_polystyrene_sedimentation_params():
     ml_fits = load_json('fits/sedimentation/newdata/fits_ml3.json')
     return mo_fits, ml_fits
 
+def load_polystyrene_sedimentation_params_temp():
+    fits = load_json('fits/Polystyrene2-4um-60xWater-042919/mla_PTfits.json')
+    return fits
 
 def load_polystyrene_sedimentation_fits(date_subdir="04-02"):
     mo_fits = load_pickle('fits/sedimentation/newdata/fits_mo4.pkl')

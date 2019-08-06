@@ -60,5 +60,5 @@ def analyze_one_image(which_image):
 
 
 if __name__ == '__main__':
-    im_number = sys.argv[1]
+    im_number = int(sys.argv[1])
     analyze_one_image(im_number)
