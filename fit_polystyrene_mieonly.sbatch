@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -J mcmc_mieonly_polystyrene
-#SBATCH -o mcmc_mo_polystyrene_%j.out
-#SBATCH -e mcmc_mo_polystyrene_%j.err
+#SBATCH -J fit_PS_mieonly
+#SBATCH -o fit_PS_mieonly%j.out
+#SBATCH -e fit_PS_mieonly%j.err
 #SBATCH -p shared
 #SBATCH -t 03:00:00
 #SBATCH -n 32
 #SBATCH -N 1
-#SBATCH --mem=8000
+#SBATCH --mem=3000
 
 ML_PREFIX="/n/manoharan/alexander/mielens-data"
 DATA_DIR="data/Polystyrene2-4um-60xWater-042919/processed-256"
@@ -22,7 +22,7 @@ mkdir -pv $STORAGE_DIR/$FITS_DIR
 
 ## COPY INPUT FILES AND MOVE TO WORKING DIR##
 cp -R $ML_PREFIX/$DATA_DIR $STORAGE_DIR/$DATA_DIR
-cp $ML_PREFIX/$DATA_DIR/fits_mo4.json $STORAGE_DIR/$DATA_DIR/best_guesses.json
+cp $ML_PREFIX/$DATA_DIR/best_guesses.json $STORAGE_DIR/$DATA_DIR/best_guesses.json
 cd $STORAGE_DIR
 
 # Load required modules
