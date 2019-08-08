@@ -140,9 +140,9 @@ class Fitter(object):
         x, y, z = self._make_center_priors(data, initial_guess)  # 4.47 ms
         min_index = data.medium_index * 1.001
         n = Parameter(
-            name='n', value=initial_guess['n'], min=1.579, max=1.611)
+            name='n', value=initial_guess['n'], min=1.40, max=1.611)
         r = Parameter(
-            name='r', value=initial_guess['r'], min=1.1, max=1.2)
+            name='r', value=initial_guess['r'], min=0.3, max=1.2)
         params.add_many(x, y, z, n, r)
         if self.theory == 'mieonly':
             alpha_val = self._alpha_guess(initial_guess)
