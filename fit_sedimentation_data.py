@@ -109,7 +109,7 @@ def _pick_best_fit(*fits):
             best_fit = fit
     return best_fit
 
-def run_fits(particle, theory, guesses):
+def run_fits(particle, theory):
     if particle == 'polystyrene':
         data = inout.fastload_polystyrene_sedimentation_data()
         guesses = inout.load_polystyrene_sedimentation_guesses()
@@ -129,7 +129,7 @@ def fit_data(data, guesses, theory='mielensalpha'):
     tick_tock()
     print('Fiting {}...'.format(theory))
     with Pool(os.cpu_count()) as pool:
-        fits = pool.starmap(fitter_ml.fit, zip(data, guesses))
+        fits = pool.starmap(fitter.fit, zip(data, guesses))
     print("Time to fit {}: {}".format(theory, tick_tock()))
     return fits
 
@@ -173,19 +173,18 @@ def holo_from_fit(fit, refimg):
     return calc_holo(refimg, sph, scaling=alpha, theory=theory)
 
 if __name__ == '__main__':
-    # particle = str(sys.argv[1]).lower()
-    # theory = str(sys.argv[2]).lower()
-    # guesses = get_guesses(particle, theory)
-    # fits = run_fits(particle, theory, guesses)
-    # fits_dict = {"{}".format(num): fit.params.valuesdict()
-    #              for num, fit in enumerate(fits)}
-    # prefix = '/n/manoharan/alexander/mielens-data/fits/'
-    # inout.save_json(fits_dict, prefix + '{}_{}_fits.json'.format(partcle, theory))
-    fitter = Fitter(theory='mielensalpha')
-    data = inout.fastload_silica_sedimentation_data()[0]
-    guess = {'n': 1.43, 'r': 0.5, 'z': 20.}
-    tick_tock()
-    fit = fitter.fit(data, guess)
-    print(f"fit took {tick_tock()}.")
-    holo = holo_from_fit(fit.params.valuesdict(), refimg=data)
-    compare_imgs(data.values.squeeze(), holo.values.squeeze())
+    particle = str(sys.argv[1]).lower()
+    theory = str(sys.argv[2]).lower()
+    fits = run_fits(particle, theory)
+    fits_dict = {"{}".format(num): fit.params.valuesdict()
+                 for num, fit in enumerate(fits)}
+    prefix = '/n/manoharan/alexander/mielens-data/fits/'
+    inout.save_json(fits_dict, prefix + '{}_{}_fits.json'.format(particle, theory))
+    # fitter = Fitter(theory='mielensalpha')
+    # data = inout.fastload_silica_sedimentation_data()[0]
+    # guess = {'n': 1.43, 'r': 0.5, 'z': 20.}
+    # tick_tock()
+    # fit = fitter.fit(data, guess)
+    # print(f"fit took {tick_tock()}.")
+    # holo = holo_from_fit(fit.params.valuesdict(), refimg=data)
+    # compare_imgs(data.values.squeeze(), holo.values.squeeze())

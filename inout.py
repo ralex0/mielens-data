@@ -301,8 +301,8 @@ def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
 
 def load_polystyrene_sedimentation_guesses():
     guesses = load_json('data/Polystyrene2-4um-60xWater-042919/best_guesses.json')
-    return list(guesses.keys())
+    return list(guesses.values())
 
 def load_silica_sedimentation_guesses():
     guesses = load_json('data/Silica1um-60xWater-080619/best_guesses.json')
-    return list(guesses.keys())
+    return list(guesses.values())
