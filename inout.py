@@ -284,12 +284,25 @@ def centerfind_xy_positions_silica(size=HOLOGRAM_SIZE, holonums=range(1000)):
     return all_positions
 
 def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
+    camera_resolution = 5.6983 / 1.5 # px / um
+    metadata = {'spacing' : 1 / camera_resolution,
+                'medium_index' : 1.33,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
     folder = os.path.join(HERE,
              'data/Silica1um-60xWater-080619/processed0-{}/'.format(size))
     paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
              for num in range(1000)]
     try:
-        data = [hp.load(path) for path in paths]
+        data = [hp.load_image(path, **metadata) for path in paths]
     except FileNotFoundError:
         data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
     return data
+
+def load_polystyrene_sedimentation_guesses():
+    guesses = load_json('data/Polystyrene2-4um-60xWater-042919/best_guesses.json')
+    return list(guesses.keys())
+
+def load_silica_sedimentation_guesses():
+    guesses = load_json('data/Silica1um-60xWater-080619/best_guesses.json')
+    return list(guesses.keys())
