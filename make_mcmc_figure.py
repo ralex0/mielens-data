@@ -220,8 +220,8 @@ class MCMCJointPlotFigure_v2(object):
         
         cmap = cubehelix_palette(n_colors=12, start=2.95, rot=-0.10, light=1.00, 
                                  dark=0.20, as_cmap=True)
-        sns.kdeplot(datax, datay, shade=True, cmap=cmap, n_levels=12, shade_lowest=False)
-        #plt.hexbin(datax, datay, cmap=cmap)
+        #sns.kdeplot(datax, datay, shade=True, cmap=cmap, n_levels=12, shade_lowest=False)
+        plt.hexbin(datax, datay, cmap=cmap)
 
     def _plot_marginals(self):
         self._plot_marginal(self._axMO_n, self.data_mo['n'])
@@ -384,6 +384,303 @@ class MCMCJointPlotFigure_v2(object):
         sns.utils.despine(ax=self._ax_labelb, bottom=True, left=True)
 
 
+class MCMCJointPlotFigure_v3(object):
+    def __init__(self, result_mo, result_ml, burnin=0):
+        self._chain_mo = self._burn_in(result_mo.chain, burnin)
+        self._chain_ml = self._burn_in(result_ml.chain, burnin)
+        self.data_mo = DataFrame(self._chain_mo.reshape(-1, result_mo.nvarys), 
+                                 columns=result_mo.var_names)
+        self.data_ml = DataFrame(self._chain_ml.reshape(-1, result_ml.nvarys), 
+                                 columns=result_ml.var_names)
+        self.fig = plt.figure(figsize=(5.25, 3.75))
+        self._setup_axes()
+
+    def _burn_in(self, chain, n):
+        if len(chain.shape) == 3:
+            return chain[:, n:, :]
+        elif len(chain.shape) == 4:
+            return chain[0, :, n:, :]
+
+    def _setup_axes(self):
+        gs = gridspec.GridSpec(2, 2)
+        self._setup_axes_mieonly(gs[0, 0])
+        self._setup_axes_mielens(gs[0, 1])
+        self._setup_lens_axes(gs[1,:])
+        all_axes = [self._axMO_nr, self._axMO_na, self._axMO_ar, 
+                    self._axMO_n, self._axMO_r, self._axMO_a,
+                    self._axML_nr, self._axML_na, self._axML_ar, 
+                    self._axML_n, self._axML_r, self._axML_a,
+                    self._axML_nl, self._axML_rl, self._axML_al, self._axML_l]
+        for ax in all_axes:
+            self.fig.add_subplot(ax)
+
+    def _setup_axes_mieonly(self, subplotspec):
+        (self._axMO_nr, self._axMO_na, 
+         self._axMO_ar, self._axMO_n, 
+         self._axMO_r, self._axMO_a) = self._setup_jointplot_axes(subplotspec)
+
+    def _setup_axes_mielens(self, subplotspec):
+        (self._axML_nr, self._axML_na,
+         self._axML_ar, self._axML_n, 
+         self._axML_r, self._axML_a) = self._setup_jointplot_axes(subplotspec)
+
+    def _setup_lens_axes(self, subplotspec):
+        (self._axML_nl, self._axML_rl, 
+         self._axML_al, self._axML_l) = self._setup_lens_jointplot_axes(subplotspec)
+
+    def _setup_jointplot_axes(self, subplotspec):
+        gs = gridspec.GridSpecFromSubplotSpec(11, 11, subplot_spec=subplotspec,
+                                              hspace=0, wspace=0)
+        # Joint marginal axes
+        ax01 = plt.Subplot(self.fig, gs[-5:, -5:])
+        ax02 = plt.Subplot(self.fig, gs[1:6, -5:], sharex=ax01)
+        ax21 = plt.Subplot(self.fig, gs[-5:, 1:6])
+        # Fully marginalized axes
+        ax0 = plt.Subplot(self.fig, gs[0, -5:], sharex=ax01)
+        ax1 = plt.Subplot(self.fig, gs[-5:, 0], sharey=ax21)
+        ax2 = plt.Subplot(self.fig, gs[5, 1:6], sharex=ax21)
+        return ax01, ax02, ax21, ax0, ax1, ax2
+
+    def _setup_lens_jointplot_axes(self, subplotspec):
+        gs = gridspec.GridSpecFromSubplotSpec(5, 16, subplot_spec=subplotspec,
+                                              hspace=0, wspace=0)
+        ax01 = plt.Subplot(self.fig, gs[:, :5])
+        ax02 = plt.Subplot(self.fig, gs[:, 5:10], sharey=ax01)
+        ax03 = plt.Subplot(self.fig, gs[:, 10:15], sharey=ax01)
+        ax0 = plt.Subplot(self.fig, gs[:, -1], sharey=ax01)
+        return ax01, ax02, ax03, ax0
+
+    def plot(self):
+        self._plot_joints()
+        self._plot_marginals()
+        self._plot_lens_kdes()
+        self._set_axes_style()
+        self._add_figlabels()
+        return self.fig
+
+    def _plot_joints(self):
+        self._plot_joint(self._axMO_nr, self.data_mo['n'], self.data_mo['r'])
+        self._plot_joint(self._axMO_na, self.data_mo['n'], self.data_mo['alpha'])
+        self._plot_joint(self._axMO_ar, self.data_mo['alpha'], self.data_mo['r'])
+        self._plot_joint(self._axML_nr, self.data_ml['n'], self.data_ml['r'])
+        self._plot_joint(self._axML_na, self.data_ml['n'], self.data_ml['alpha'])
+        self._plot_joint(self._axML_ar, self.data_ml['alpha'], self.data_ml['r'])
+
+    def _plot_joint(self, ax, datax, datay):
+        plt.sca(ax)
+        
+        cmap = cubehelix_palette(n_colors=12, start=2.95, rot=-0.10, light=1.00, 
+                                 dark=0.20, as_cmap=True)
+        #sns.kdeplot(datax, datay, shade=True, cmap=cmap, n_levels=12, shade_lowest=False)
+        plt.hexbin(datax, datay, cmap=cmap)
+
+    def _plot_marginals(self):
+        self._plot_marginal(self._axMO_n, self.data_mo['n'])
+        self._plot_marginal(self._axMO_r, self.data_mo['r'], vertical=True)
+        self._plot_marginal(self._axMO_a, self.data_mo['alpha'])
+        self._plot_marginal(self._axML_n, self.data_ml['n'])
+        self._plot_marginal(self._axML_r, self.data_ml['r'], vertical=True)
+        self._plot_marginal(self._axML_a, self.data_ml['alpha'])
+
+    def _plot_marginal(self, ax, data, vertical=False):
+        plt.sca(ax)
+        sns.kdeplot(np.array(data), shade=True, vertical=vertical, legend=False)
+        if vertical:
+            ax.invert_xaxis()
+
+    def _plot_lens_kdes(self):
+        self._plot_joint(self._axML_nl, self.data_ml['n'], self.data_ml['lens_angle'])
+        self._plot_joint(self._axML_rl, self.data_ml['r'], self.data_ml['lens_angle'])
+        self._plot_joint(self._axML_al, self.data_ml['alpha'], self.data_ml['lens_angle'])
+        self._plot_marginal(self._axML_l, self.data_ml['lens_angle'], vertical=True)
+        self._axML_l.invert_xaxis()
+
+    def _set_axes_style(self):
+        self._set_joint_axes_style()
+        self._set_marginal_axes_style()
+        self.fig.tight_layout()
+
+    def _set_joint_axes_style(self):
+        label_font = {'size': 6, 'family': 'Times New Roman'}
+        tick_font = {'family': 'Times New Roman', 'size': 6}
+
+        n_lim_mo = self._get_lims(self.data_mo['n'])
+        n_ticks_mo, n_labels_mo = self._get_ticks_labels(self.data_mo['n'])
+        
+        r_lim_mo = self._get_lims(self.data_mo['r'])
+        r_ticks_mo, r_labels_mo = self._get_ticks_labels(self.data_mo['r'])
+
+        a_lim_mo = self._get_lims(self.data_mo['alpha'])
+        a_ticks_mo, a_labels_mo = self._get_ticks_labels(self.data_mo['alpha'])
+
+        n_lim_ml = self._get_lims(self.data_ml['n'])
+        n_ticks_ml, n_labels_ml = self._get_ticks_labels(self.data_ml['n'])
+
+        r_lim_ml = self._get_lims(self.data_ml['r'])
+        r_ticks_ml, r_labels_ml = self._get_ticks_labels(self.data_ml['r'])
+
+        a_lim_ml = self._get_lims(self.data_ml['alpha'])
+        a_ticks_ml, a_labels_ml = self._get_ticks_labels(self.data_ml['alpha'])
+
+        l_lim_ml = self._get_lims(self.data_ml['lens_angle'])
+        l_ticks_ml, l_labels_ml = self._get_ticks_labels(self.data_ml['lens_angle'])
+
+        # Mieonly n/r joint
+        self._axMO_nr.set_xlim(n_lim_mo)
+        self._axMO_nr.set_ylim(r_lim_mo)
+        self._axMO_nr.yaxis.tick_right()
+        self._axMO_nr.yaxis.set_label_position("right")
+        self._axMO_nr.set_yticks(r_ticks_mo)
+        self._axMO_nr.set_yticklabels(r_labels_mo, **tick_font)
+        self._axMO_nr.set_ylabel("Radius (μm)", **label_font)
+        self._axMO_nr.set_xticks(n_ticks_mo)
+        self._axMO_nr.set_xticklabels(n_labels_mo, **tick_font)
+        self._axMO_nr.set_xlabel("Refractive index", **label_font)
+
+        # Mieonly n/alpha joint
+        self._axMO_na.set_ylim(a_lim_mo)
+        self._axMO_na.yaxis.tick_right()
+        self._axMO_na.yaxis.set_label_position("right")
+        self._axMO_na.set_yticks(a_ticks_mo)
+        self._axMO_na.set_yticklabels(a_labels_mo, **tick_font)
+        self._axMO_na.set_ylabel("Alpha", **label_font)
+        self._axMO_na.set_xlabel('')
+        plt.setp(self._axMO_na.get_xticklabels(), visible=False)
+        plt.setp(self._axMO_na.xaxis.get_majorticklines(), visible=False)
+        plt.setp(self._axMO_na.xaxis.get_minorticklines(), visible=False)
+
+        # Mieonly alpha/r joint
+        self._axMO_ar.set_xlim(a_lim_mo)
+        self._axMO_ar.set_ylim(r_lim_mo)
+        self._axMO_ar.set_xticks(a_ticks_mo)
+        self._axMO_ar.set_xticklabels(a_labels_mo, **tick_font)
+        self._axMO_ar.set_xlabel("Alpha", **label_font)
+        self._axMO_ar.set_yticks([])
+        self._axMO_ar.set_yticklabels([])
+        self._axMO_ar.set_ylabel('')
+
+        # Mielens n/r joint
+        self._axML_nr.set_xlim(n_lim_ml)
+        self._axML_nr.set_ylim(r_lim_ml)
+        self._axML_nr.yaxis.tick_right()
+        self._axML_nr.yaxis.set_label_position("right")
+        self._axML_nr.set_yticks(r_ticks_ml)
+        self._axML_nr.set_yticklabels(r_labels_ml, **tick_font)
+        self._axML_nr.set_ylabel("Radius (μm)", **label_font)
+        self._axML_nr.set_xticks(n_ticks_ml)
+        self._axML_nr.set_xticklabels(n_labels_ml, **tick_font)
+        self._axML_nr.set_xlabel("Refractive index", **label_font)
+
+        # Mielens n/alpha joint
+        self._axML_na.set_ylim(a_lim_ml)
+        self._axML_na.yaxis.tick_right()
+        self._axML_na.yaxis.set_label_position("right")
+        self._axML_na.set_yticks(a_ticks_ml)
+        self._axML_na.set_yticklabels(a_labels_ml, **tick_font)
+        self._axML_na.set_ylabel("Alpha", **label_font)
+        self._axML_na.set_xlabel('')
+        plt.setp(self._axML_na.get_xticklabels(), visible=False)
+        plt.setp(self._axML_na.xaxis.get_majorticklines(), visible=False)
+        plt.setp(self._axML_na.xaxis.get_minorticklines(), visible=False)
+
+        # Mielens alpha/r joint
+        self._axML_ar.set_xlim(a_lim_ml)
+        self._axML_ar.set_ylim(r_lim_ml)
+        self._axML_ar.set_xticks(a_ticks_ml)
+        self._axML_ar.set_xticklabels(a_labels_ml, **tick_font)
+        self._axML_ar.set_xlabel("Alpha", **label_font)
+        self._axML_ar.set_yticks([])
+        self._axML_ar.set_yticklabels([])
+        self._axML_ar.set_ylabel('')
+
+        # Mielens n/lens_angle joint
+        ax = self._axML_nl
+        ax.set_xlim(n_lim_ml)
+        ax.set_ylim(l_lim_ml)
+        ax.set_xticks(n_ticks_ml)
+        ax.set_xticklabels(n_labels_ml, **tick_font)
+        ax.set_xlabel("Refractive Index", **label_font)
+        ax.set_yticks(l_ticks_ml)
+        ax.set_yticklabels(l_labels_ml, **tick_font)
+        ax.set_ylabel('Acceptance angle (rad)', **label_font)
+
+        # Mielens r/lens_angle joint
+        ax = self._axML_rl
+        ax.set_xlim(r_lim_ml)
+        ax.set_ylim(l_lim_ml)
+        ax.set_xticks(r_ticks_ml)
+        ax.set_xticklabels(r_labels_ml, **tick_font)
+        ax.set_xlabel("Radius", **label_font)
+        ax.set_yticks([])
+        ax.set_yticklabels([])
+        ax.set_ylabel('')
+
+        # Mielens alpha/lens_angle joint
+        ax = self._axML_al
+        ax.set_xlim(a_lim_ml)
+        ax.set_ylim(l_lim_ml)
+        ax.set_xticks(a_ticks_ml)
+        ax.set_xticklabels(a_labels_ml, **tick_font)
+        ax.set_xlabel("Alpha", **label_font)
+        ax.set_yticks([])
+        ax.set_yticklabels([])
+        ax.set_ylabel('')
+
+    def _get_lims(self, data):
+        low, high = np.quantile(data, [.01, .99])
+        return low, high
+
+    def _get_ticks_labels(self, data):
+        ticks = np.quantile(data, [0.05, 0.50, 0.95])
+        labels = ["{:.3f}".format(tick) for tick in ticks]
+        return ticks, labels
+
+    def _set_marginal_axes_style(self):
+        margx_axes0 = [self._axMO_n, self._axML_n]
+        margy_axes = [self._axMO_r, self._axML_r]
+        margx_axes2 = [self._axMO_a, self._axML_a]
+        for ax in margx_axes0 + margy_axes + margx_axes2:
+            plt.setp(ax.get_yticklabels(), visible=False)
+            plt.setp(ax.get_xticklabels(), visible=False)
+            plt.setp(ax.xaxis.get_majorticklines(), visible=False)
+            plt.setp(ax.xaxis.get_minorticklines(), visible=False)
+            plt.setp(ax.yaxis.get_majorticklines(), visible=False)
+            plt.setp(ax.yaxis.get_minorticklines(), visible=False)
+        for ax in margx_axes0:
+            sns.utils.despine(ax=ax, left=True)
+        for ax in margy_axes:
+            sns.utils.despine(ax=ax, left=True, bottom=True)
+        for ax in margx_axes2:
+            sns.utils.despine(ax=ax, left=True)
+
+        ax = self._axML_l
+        ax.set_xticks([])
+        ax.set_xticklabels([])
+        ax.set_xlabel('')
+        #ax.set_yticks([])
+        #ax.set_yticklabels([])
+        #ax.set_ylabel('')
+        sns.utils.despine(ax=ax, bottom=True)
+
+    def _add_figlabels(self):
+        figlabel_font = {'family': 'Times New Roman', 'size': 9}
+
+        self._ax_labela = self.fig.add_axes([.05, .90, .05, .05])
+        plt.sca(self._ax_labela)
+        plt.text(0, 0, "a)", **figlabel_font)
+        plt.xticks([])
+        plt.yticks([])
+
+        self._ax_labelb = self.fig.add_axes([.55, .90, .05, .05])
+        plt.sca(self._ax_labelb)
+        plt.text(0, 0, "b)", **figlabel_font)
+        plt.xticks([])
+        plt.yticks([])
+
+        sns.utils.despine(ax=self._ax_labela, bottom=True, left=True)
+        sns.utils.despine(ax=self._ax_labelb, bottom=True, left=True)
+
+
 def plot_mcmc_samples(mcmc_result):
     fig = plt.figure()
     for i, var in enumerate(mcmc_result.var_names):
@@ -405,10 +702,10 @@ def plot_PTmcmc_samples(mcmc_result):
 
 
 if __name__ == '__main__':
-    result_ml = inout.load_mcmc_result_PS_mielens()
-    result_mo = inout.load_mcmc_result_PS_mieonly()
+    result_ml = inout.load_pickle('polystyrene-mielensalpha-frame=1-size=256-npx=10000-mcmc.pkl')
+    result_mo = inout.load_pickle('polystyrene-mieonly-frame=1-size=256-npx=10000-mcmc.pkl')
 
-    plotter = MCMCJointPlotFigure_v2(result_mo, result_ml, burnin=500)
+    plotter = MCMCJointPlotFigure_v3(result_mo, result_ml, burnin=512)
     labels = ["Refractive index", "Radius (μm)", "Acceptance angle (rad)"]
     fig = plotter.plot()
     plt.show()

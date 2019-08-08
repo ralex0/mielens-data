@@ -12,23 +12,21 @@ from holopy.core.process import subimage, normalize, center_find
 
 from lmfit.minimizer import MinimizerResult, Parameters
 
-RGB_CHANNEL = 'all'
-HOLOGRAM_SIZE = 250
-HERE = '/n/manoharan/alexander/mielens-data'
+RGB_CHANNEL = None
+HOLOGRAM_SIZE = 256
+HERE = os.path.dirname(__file__)
 
 
-def load_mcmc_result_PS_mieonly(fmt='pkl'):
-    #file = 'fits/sedimentation/mcmc/ps_mcmc_mo_1'
-    file = ('fits/sedimentation/mcmc/PT-Brian/' + 
-            'polystyrene-mieonly-frame=2-size=250-npx=10000-mcmc')
-    return _load_mcmc_result(file, fmt)
+def load_mcmc_result_PS_mieonly(frame=1, fmt='pkl'):
+    folder = 'fits/Polystyrene2-4um-60xWater-042919/'
+    file = ('polystyrene-mieonly-frame={}-size=256-npx=10000-mcmc'.format(frame))
+    return _load_mcmc_result(folder + file, fmt)
 
 
-def load_mcmc_result_PS_mielens(fmt='pkl'):
-    #file = 'fits/sedimentation/mcmc/ps_mcmc_ml_1'
-    file = ('fits/sedimentation/mcmc/PT-Brian/' + 
-            'polystyrene-mielens-frame=2-size=250-npx=10000-mcmc')
-    return _load_mcmc_result(file, fmt)
+def load_mcmc_result_PS_mielens(frame=1, fmt='pkl'):
+    folder = 'fits/Polystyrene2-4um-60xWater-042919/'
+    file = ('polystyrene-mielensalpha-frame={}-size=256-npx=10000-mcmc'.format(frame))
+    return _load_mcmc_result(folder + file, fmt)
 
 
 def _load_mcmc_result(file, fmt):
@@ -61,8 +59,8 @@ def save_json(obj, filename):
             json.dump(obj, f, indent=4)
 
 
-def fastload_polystyrene_sedimentation_data(size=256, *args, **kwargs):
-    folder = os.path.join(HERE, 
+def fastload_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
+    folder = os.path.join(HERE,
              'data/Polystyrene2-4um-60xWater-042919/processed-{}/'.format(size))
     paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
              for num in range(1000)]
@@ -94,7 +92,7 @@ def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000)
     for path in paths:
         this_holo = load_bgdivide_crop(
             path=path, metadata=metadata, particle_position=position,
-            bkg=bkg, dark=dark, size=size, recenter=recenter)
+            bkg=bkg, dark=dark, size=size, recenter=recenter)[0]
         holos.append(this_holo)
     return holos
 
@@ -145,8 +143,9 @@ def load_bgdivide_crop(
     else:
         data = subimage(data, particle_position, size)
     data = normalize(data)
-    return data
-
+    if recenter:
+        return data, found_position
+    return data, None
 
 def bg_correct(raw, bg, df=None):
     if df is None:
@@ -230,3 +229,67 @@ def load_example_data():
 
 def load_gold_example_data():
     return normalize(hp.load(hp.core.io.get_example_data_path('image0001.h5')))
+
+
+def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
+                                        recenter=True):
+    camera_resolution = 5.6983 / 1.5 # px / um
+    metadata = {'spacing' : 1 / camera_resolution,
+                'medium_index' : 1.33,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
+    position = [650, 587]# leaves the particle in the hologram for most frames
+    paths = ["data/Silica1um-60xWater-080619/raw0[x1.5]/im"
+             +  zfill(num, 4) + ".tif" for num in holonums]
+    refimg = hp.load_image(paths[0], **metadata)
+    bkg = load_bkg(
+        "data/Silica1um-60xWater-080619/raw0[x1.5]/",
+        bg_prefix='bg', refimg=refimg)
+    dark = load_dark(
+        "data/Silica1um-60xWater-080619/raw0[x1.5]/",
+        df_prefix='dark', refimg=refimg)
+    holos = []
+    all_positions = []
+    new_pos = None
+    for path in paths:
+        this_holo, new_pos = load_bgdivide_crop(
+            path=path, metadata=metadata, particle_position=position,
+            bkg=bkg, dark=dark, size=size, recenter=recenter)
+        holos.append(this_holo)
+        if new_pos is not None: position = new_pos; all_positions.append([tuple(new_pos)])
+    return holos
+
+def centerfind_xy_positions_silica(size=HOLOGRAM_SIZE, holonums=range(1000)):
+    camera_resolution = 5.6983 / 1.5 # px / um
+    metadata = {'spacing' : 1 / camera_resolution,
+                'medium_index' : 1.33,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
+    position = [650, 587]# leaves the particle in the hologram for most frames
+    paths = ["data/Silica1um-60xWater-080619/raw0[x1.5]/im"
+             +  zfill(num, 4) + ".tif" for num in holonums]
+    refimg = hp.load_image(paths[0], **metadata)
+    bkg = load_bkg(
+        "data/Silica1um-60xWater-080619/raw0[x1.5]/",
+        bg_prefix='bg', refimg=refimg)
+    dark = load_dark(
+        "data/Silica1um-60xWater-080619/raw0[x1.5]/",
+        df_prefix='dark', refimg=refimg)
+    all_positions = []
+    for path in paths:
+        this_holo, position = load_bgdivide_crop(
+            path=path, metadata=metadata, particle_position=position,
+            bkg=bkg, dark=dark, size=size, recenter=True)
+        all_positions.append(tuple(position))
+    return all_positions
+
+def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
+    folder = os.path.join(HERE,
+             'data/Silica1um-60xWater-080619/processed0-{}/'.format(size))
+    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
+             for num in range(1000)]
+    try:
+        data = [hp.load(path) for path in paths]
+    except FileNotFoundError:
+        data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
+    return data
