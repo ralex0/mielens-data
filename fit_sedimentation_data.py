@@ -116,12 +116,12 @@ def run_fits(particle, theory):
         if theory == 'mieonly':
             data = data[:451]
             guesses = guesses[:451]
-    elif partcle == 'silica':
+    elif particle == 'silica':
         data = inout.fastload_silica_sedimentation_data()
         guesses = inout.load_silica_sedimentation_guesses()
         if theory == 'mieonly':
-            data = data[:451]
-            guesses = guesses[:451]
+            data = data[:140]
+            guesses = guesses[:140]
     return fit_data(data, guesses, theory)
 
 def fit_data(data, guesses, theory='mielensalpha'):
@@ -133,45 +133,6 @@ def fit_data(data, guesses, theory='mielensalpha'):
     print("Time to fit {}: {}".format(theory, tick_tock()))
     return fits
 
-def compare_imgs(im1, im2, titles=['im1', 'im2']):
-    vmax = np.max((im1, im2))
-    vmin = np.min((im1, im2))
-
-    plt.figure(figsize=(10,5))
-    plt.gray()
-    ax1 = plt.subplot(1, 3, 1)
-    plt.imshow(im1, interpolation="nearest", vmin=vmin, vmax=vmax)
-    # plt.colorbar()
-    plt.title(titles[0])
-    ax2 = plt.subplot(1, 3, 2)
-    plt.imshow(im2, interpolation="nearest", vmin=vmin, vmax=vmax)
-    # plt.colorbar()
-    plt.title(titles[1])
-
-    difference = im1 - im2
-    vmax = np.abs(difference).max()
-    ax3 = plt.subplot(1, 3, 3)
-    plt.imshow(difference, vmin=-vmax, vmax=vmax, interpolation='nearest',
-               cmap='RdBu')
-    chisq = np.sum(difference**2)
-    plt.title("Difference, $\chi^2$={:0.2f}".format(chisq))
-
-    for ax in [ax1, ax2, ax3]:
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    plt.show()
-    plt.tight_layout()
-
-def holo_from_fit(fit, refimg):
-    center = (fit['x'], fit['y'], fit['z'])
-    r = fit['r']
-    n = fit['n']
-    alpha = fit['alpha']
-    sph = Sphere(n=n, r=r, center=center)
-    theory = MieLens(lens_angle=fit['lens_angle']) if 'lens_angle' in fit else 'auto'
-    return calc_holo(refimg, sph, scaling=alpha, theory=theory)
-
 if __name__ == '__main__':
     particle = str(sys.argv[1]).lower()
     theory = str(sys.argv[2]).lower()
@@ -180,11 +141,3 @@ if __name__ == '__main__':
                  for num, fit in enumerate(fits)}
     prefix = '/n/manoharan/alexander/mielens-data/fits/'
     inout.save_json(fits_dict, prefix + '{}_{}_fits.json'.format(particle, theory))
-    # fitter = Fitter(theory='mielensalpha')
-    # data = inout.fastload_silica_sedimentation_data()[0]
-    # guess = {'n': 1.43, 'r': 0.5, 'z': 20.}
-    # tick_tock()
-    # fit = fitter.fit(data, guess)
-    # print(f"fit took {tick_tock()}.")
-    # holo = holo_from_fit(fit.params.valuesdict(), refimg=data)
-    # compare_imgs(data.values.squeeze(), holo.values.squeeze())

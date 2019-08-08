@@ -233,7 +233,7 @@ def load_gold_example_data():
 
 def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
                                         recenter=True):
-    camera_resolution = 5.6983 / 1.5 # px / um
+    camera_resolution = 8.51091#5.6983 / 1.5 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
@@ -260,7 +260,7 @@ def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
     return holos
 
 def centerfind_xy_positions_silica(size=HOLOGRAM_SIZE, holonums=range(1000)):
-    camera_resolution = 5.6983 / 1.5 # px / um
+    camera_resolution = 8.51091#5.6983 * 1.5 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
@@ -284,7 +284,7 @@ def centerfind_xy_positions_silica(size=HOLOGRAM_SIZE, holonums=range(1000)):
     return all_positions
 
 def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
-    camera_resolution = 5.6983 / 1.5 # px / um
+    camera_resolution = 8.51091#5.6983 * 1.5 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
@@ -296,7 +296,7 @@ def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
     try:
         data = [hp.load_image(path, **metadata) for path in paths]
     except FileNotFoundError:
-        data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
+        data = load_silica_sedimentation_data(size=size, *args, **kwargs)
     return data
 
 def load_polystyrene_sedimentation_guesses():
