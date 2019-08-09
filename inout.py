@@ -70,6 +70,22 @@ def fastload_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs)
         data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
     return data
 
+def fastload_polystyrene_sedimentation_data_uncentered(size=HOLOGRAM_SIZE, *args, **kwargs):
+    camera_resolution = 5.6983 # px / um
+    metadata = {'spacing' : 1 / camera_resolution,
+                'medium_index' : 1.33,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
+    folder = os.path.join(HERE,
+             'data/Polystyrene2-4um-60xWater-042919/processed-{}-uncentered/'.format(size))
+    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
+             for num in range(1000)]
+    try:
+        data = [hp.load_image(path, **metadata) for path in paths]
+    except FileNotFoundError:
+        data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
+    return data
+
 
 def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
                                         recenter=True):
@@ -102,6 +118,9 @@ def load_polystyrene_sedimentation_params():
     ml_fits = load_json('fits/sedimentation/newdata/fits_ml3.json')
     return mo_fits, ml_fits
 
+def load_polystyrene_sedimentation_params_temp():
+    fits = load_json('fits/Polystyrene2-4um-60xWater-042919/mielensalpha_fits.json')
+    return fits
 
 def load_polystyrene_sedimentation_fits(date_subdir="04-02"):
     mo_fits = load_pickle('fits/sedimentation/newdata/fits_mo4.pkl')

@@ -1,15 +1,17 @@
 from collections import OrderedDict, namedtuple
 from datetime import timedelta
-from multiprocessing import Pool
+from multiprocessing import Pool, Lock
 import os
+import sys
 import time
-
 
 import numpy as np
 
 import matplotlib.pyplot as plt
 
 import holopy as hp
+from holopy.scattering import calc_holo, Sphere
+from holopy.scattering.theory import MieLens
 
 from lmfit import report_fit
 
@@ -18,9 +20,7 @@ import inout
 
 
 __TIMER_CLICK__ = time.time()
-
-FRAMERATE_PS_DATA = 80/(9000/60) # FPS after thinning to 100 frames
-
+SAVEPREFIX = ''#'/n/manoharan/alexander/mielens-data/fits/'
 
 def compare_holos(*holos, titles=None, cmap="gray"):
     ims = [holo.values.squeeze() for holo in holos]
@@ -103,49 +103,6 @@ def _calc_particle_trajectory(
 
     return trajectory
 
-
-
-def fit_ps_data():
-    data = inout.fastload_polystyrene_sedimentation_data(size=256)
-    guess_mo, guess_ml = inout.load_polystyrene_sedimentation_params()
-
-    fitter_ml = Fitter(theory='mielensalpha')
-    fitter_mo = Fitter(theory='mieonly')
-
-    with Pool(os.cpu_count()) as pool:
-        tick_tock()
-        print('Fiting mielensalpha...')
-        fits_ml_res = pool.starmap(fitter_ml.fit, 
-                                   zip(data, list(guess_ml.values())))
-        print('.')
-        fits_ml_fwd = pool.starmap(fitter_ml.fit, 
-                                   zip(data, np.roll(list(guess_ml.values()), -1)))
-        print('.')
-        fits_ml_bck = pool.starmap(fitter_ml.fit, 
-                                   zip(data, np.roll(list(guess_ml.values()), 1)))
-        print("Time to fit mielensalpha: {}".format(tick_tock()))
-
-        print('Fiting mieonly...')
-        fits_mo_res = pool.starmap(fitter_mo.fit, 
-                                   zip(data[:len(guess_mo)], list(guess_ml.values())[:len(guess_mo)]))
-        print('.')
-        fits_mo_fwd = pool.starmap(fitter_mo.fit, 
-                                   zip(data[:len(guess_mo)], 
-                                       np.roll(list(guess_ml.values())[:len(guess_mo)], -1)))
-        print('.')
-        fits_mo_bck = pool.starmap(fitter_mo.fit, 
-                                   zip(data[:len(guess_mo)],
-                                       np.roll(list(guess_ml.values())[:len(guess_mo)], 1)))
-        print("Time to fit mieonly: {}".format(tick_tock()))
-
-        fits_mo = pool.starmap(_pick_best_fit, 
-                               zip(fits_mo_res, fits_mo_bck, fits_mo_fwd))
-
-        fits_ml = pool.starmap(_pick_best_fit, 
-                               zip(fits_ml_res, fits_ml_bck, fits_ml_fwd))
-
-    return fits_mo_res, fits_ml
-
 def _pick_best_fit(*fits):
     best_fit = fits[0]
     for fit in fits[1:]:
@@ -153,12 +110,53 @@ def _pick_best_fit(*fits):
             best_fit = fit
     return best_fit
 
+def run_fits(particle, theory):
+    if particle == 'polystyrene':
+        data = inout.fastload_polystyrene_sedimentation_data()
+        guesses = inout.load_polystyrene_sedimentation_guesses()
+        if theory == 'mieonly':
+            data = data[:451]
+            guesses = guesses[:451]
+    elif particle == 'silica':
+        data = inout.fastload_silica_sedimentation_data()
+        guesses = inout.load_silica_sedimentation_guesses()
+        if theory == 'mieonly':
+            data = data[:140]
+            guesses = guesses[:140]
+    return fit_data(data, guesses, particle, theory)
+
+def fit_data(data, guesses, particle, theory='mielensalpha'):
+    fitter = Fitter(theory=theory)
+    tick_tock()
+    print('Fiting {}...'.format(theory))
+    fits = {}
+    lock = Lock()
+    with Pool(os.cpu_count(), initializer=init, initargs=(lock,)) as pool:
+        fits = pool.starmap(fitter.fit, zip(data, guesses))):
+            fits[i] = fit
+
+            print("Fit {}/{} so far.".format(len(list(fits.keys())), len(data)),
+                  end="\r")
+        print("Time to fit {}: {}".format(theory, tick_tock()))
+    return fits
+
+def add_loging(fitter, particle, theory):
+    def logged_function(data, guess):
+
+        lock.acquire()
+        inout.save_json(fits, SAVEPREFIX
+                        + '{}_{}_fits.json'.format(particle, theory))
+        lock.release()
+        return fitter.fit(data, guess)
+
+
+
+def init(lock):
+    global LOCK
+    LOCK = lock
+
 if __name__ == '__main__':
-    fits_mo, fits_ml = fit_ps_data()
-
-    folder = 'fits/sedimentation/newdata/'
-    inout.save_fits_to_json(fits_mo, folder + 'fits_mo4.json')
-    inout.save_fits_to_json(fits_ml, folder + 'fits_ml3.json')
-
-    inout.save_pickle(fits_mo, folder + 'fits_mo4.pkl')
-    inout.save_pickle(fits_ml, folder + 'fits_ml3.pkl')
+    particle = str(sys.argv[1]).lower()
+    theory = str(sys.argv[2]).lower()
+    fits = run_fits(particle, theory)
+    inout.save_json(fits, SAVEPREFIX + '{}_{}_fits.json'.format(particle, theory))

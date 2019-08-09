@@ -23,11 +23,12 @@ import inout
 class TrackingSedimentationFigure(object):
     _figsize = (5.25, 4.0) #  -- true figsize needs to be 5.25, x
 
-    def __init__(self, data, mielens_fits, mieonly_fits, frame_times=None):
+    def __init__(self, data, mielens_fits, mieonly_fits, frame_times=None, xy_pos=None):
         self.data = data
         self.mielens_fits = mielens_fits
         self.mieonly_fits = mieonly_fits
         self.frame_times = self._setup_frame_times(frame_times)
+        self.xy_pos = xy_pos
 
     def _setup_frame_times(self, frame_times):
         if frame_times is None:
@@ -97,15 +98,18 @@ class TrackingSedimentationFigure(object):
             ax.axis('off')
 
     def _plot_sedimentation(self, accent_these=None):
-        try:
-            positions = {
-                k1: np.array(
-                    [fit['center.{}'.format(k2)]
-                     for fit in self.mielens_fits.values()])
-                for k1, k2 in zip(['x', 'y', 'z'], [0, 1, 2])}
-        except KeyError:
-            positions = {key: np.array([fit[key] for fit in self.mielens_fits.values()]) for key in ['x', 'y', 'z']}
-
+        # try:
+        #     positions = {
+        #         k1: np.array(
+        #             [fit['center.{}'.format(k2)]
+        #              for fit in self.mielens_fits.values()])
+        #         for k1, k2 in zip(['x', 'y', 'z'], [0, 1, 2])}
+        # except KeyError:
+        #     positions = {key: np.array([fit[key] for fit in self.mielens_fits.values()]) for key in ['x', 'y', 'z']}
+        p_x = self.xy_pos[:,0]
+        p_y = self.xy_pos[:,1]
+        p_z = np.array([fit['z'] for fit in self.mielens_fits.values()])
+        positions = {'x': p_x, 'y': p_y, 'z': p_z}
         plotter = figures.ThreeDPlot(
             self.ax_sed, azimuth_elevation=(0.75*np.pi, 0.1*np.pi))
         plotter.plot(
@@ -222,23 +226,21 @@ def make_si_figure(si_data=None, mofit_si=None, mlfit_si=None):
 def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
     if ps_data is None:
         ps_data = inout.load_polystyrene_sedimentation_data()[0]
-    ps_times = np.load("./fits/sedimentation/PS_frame_times.npy")
-    if (mofit_ps is None) or (mlfit_ps is None):
-        mofit_ps, mlfit_ps = inout.load_polystyrene_sedimentation_params(
-            "best_of_03-27_and_04-02")
+    ps_times = np.load("data/Polystyrene2-4um-60xWater-042919/PS_frame_times.npy")
+    xy_pos = np.load('data/Polystyrene2-4um-60xWater-042919/processed-256-uncentered/xy-positions.npy')
     figure_ps = TrackingSedimentationFigure(
-        ps_data, mlfit_ps, mofit_ps, ps_times)
-    fig_ps = figure_ps.make_figure(holonums=[0, 20, 49])
-    figure_ps.plotter_sed.set_xlim(36, 53)
-    figure_ps.plotter_sed.set_ylim(34, 51)
-    figure_ps.ax_sed.set_ylim(-37.5, 7.5)
+        ps_data, mlfit_ps, mofit_ps, ps_times, xy_pos)
+    fig_ps = figure_ps.make_figure(holonums=[0, 500, 999])
+    figure_ps.plotter_sed.set_xlim(-20., 8.)
+    figure_ps.plotter_sed.set_ylim(-6., 9.)
+    figure_ps.ax_sed.set_ylim(-14., 17.)
 
     figure_ps.ax_z.legend(fontsize=6, loc='upper right')
-    figure_ps.ax_z.set_yticks([-15, 0, 15, 30])
-    figure_ps.ax_z.set_ylim(-15, 30)
+    figure_ps.ax_z.set_yticks([-14, 0, 14])
+    figure_ps.ax_z.set_ylim(-14, 17)
     for ax in [figure_ps.ax_z]:
-        ax.set_xlim(0, 300)
-        ax.set_xticks([0, 150, 300])
+        ax.set_xlim(0, 160)
+        ax.set_xticks([0, 80, 160])
 
     initial_z = mlfit_ps['0']['z']
     _ = update_z_vs_t_plot_with_expected_sedimentation(
@@ -248,16 +250,18 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
 
 
 if __name__ == '__main__':
-    si_data = inout.load_silica_sedimentation_data(size=250, recenter=False)[0]
-    ps_data = inout.load_polystyrene_sedimentation_data(size=175, recenter=False)[0]
-
-
-    si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params('draft0')
-    ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params( 'draft0')
-
-    figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
-    figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
-
-    fig_si.savefig('./silica-sedimentation.svg')
-    fig_ps.savefig('./polystyrene-sedimentation.svg')
-
+    # si_data = inout.load_silica_sedimentation_data(size=250, recenter=False)[0]
+    # ps_data = inout.load_polystyrene_sedimentation_data(size=175, recenter=False)[0]
+    #
+    #
+    # si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params('draft0')
+    # ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params( 'draft0')
+    #
+    # figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
+    # figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
+    #
+    # fig_si.savefig('./silica-sedimentation.svg')
+    # fig_ps.savefig('./polystyrene-sedimentation.svg')
+    data = inout.fastload_polystyrene_sedimentation_data_uncentered()
+    fits = inout.load_polystyrene_sedimentation_params_temp()
+    figure_ps, fig_ps = make_ps_figure(data, fits, fits)
