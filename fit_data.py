@@ -1,9 +1,14 @@
+import os
 import time
 import warnings
+import json
 
 import numpy as np
 
 import matplotlib.pyplot as plt
+from matplotlib import rc
+
+from mpl_toolkits import mplot3d
 
 import holopy as hp
 from holopy.scattering import calc_holo
@@ -11,303 +16,33 @@ from holopy.scattering.theory import MieLens
 
 import mielensfit as mlf
 
-def load_few_Si_data():
-    camera_resolution = 9.6187 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.34,
-                    'illum_wavelen' : .532,
-                    'illum_polarization' : (1, 0)}
-    position = [839, 382]
 
-    holonums = [28, 38, 48, 78]
-    zpos = np.array([15, 10, 5, -10])#np.load('data/Silica-100xOil-120418/zpos.npy')[[holonums]]
-    # paths = ["data/Silica-100xOil-120418/raw/im_" +  f"{num}".zfill(3) + ".png"
-    paths = ["data/Silica-100xOil-120418/raw/im_" +  "{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                particle_position=position, bg_prefix="bg_bottom")
-             for path in paths]
-    return holos, zpos
-
-def load_few_PS_data():
-    camera_resolution = 9.6187 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.34,
-                    'illum_wavelen' : .532,
-                    'illum_polarization' : (1, 0)}
-    position = [921, 697]
-
-    holonums = [40, 50, 80]
-    zpos = np.array([10, 5, -10])#np.load('data/Polystyrene-100xOil-120418/zpos.npy')[[holonums]]
-    paths = ["data/Polystyrene-100xOil-120418/greyscale/im" +"{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                particle_position=position, bg_prefix="bg_btm")
-             for path in paths]
-    return holos, zpos
-
-def load_few_PS_data_old():
-    camera_resolution = 5.9633 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.34,
-                    'illum_wavelen' : .532,
-                    'illum_polarization' : (1, 0)}
-    positions = ([515, 497], [520, 497], [523, 497])
-
-    holonums = [60, 80, 100]
-    zpos = np.array([15, 10, 5])#np.load('data/Polystyrene-60xWater-111918/zpos.npy')[[holonums]]
-    paths = ["data/Polystyrene-60xWater-111918/raw/im" + "{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                particle_position=position, bg_prefix="bg")
-             for path, position in zip(paths, positions)]
-    return holos, zpos
-
-def load_few_PS_data_reza():
-    resolution = 1/.194 # pixels per um
-    metadata = {'spacing' : 1 / resolution,
-                'medium_index' : 1.33,
-                'illum_wavelen' : .660,
-                'illum_polarization' : (1, 0)}
-    PS_location = [255, 255]
-
-    data1 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0050.tif", metadata=metadata,
-                                   particle_position=PS_location, bg_prefix="bg")
-    data2 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0060.tif", metadata=metadata,
-                                   particle_position=PS_location, bg_prefix="bg")
-    data3 = mlf.load_bgdivide_crop(path="data/Polystyrene-Reza/image0070.tif", metadata=metadata,
-                                   particle_position=PS_location, bg_prefix="bg")
-
-    zpos = np.array([4.618498169589564, 10.592281131261418, 16.73559163136148])
-    return [data1, data2, data3], zpos
-
-def load_example_data():
-    imagepath = hp.core.io.get_example_data_path('image01.jpg')
-    raw_holo = hp.load_image(imagepath, spacing = 0.0851, medium_index = 1.33,
-                             illum_wavelen = 0.66, illum_polarization = (1,0))
-    bgpath = hp.core.io.get_example_data_path(['bg01.jpg', 'bg02.jpg', 'bg03.jpg'])
-    bg = hp.core.io.load_average(bgpath, refimg = raw_holo)
-    holo = hp.core.process.bg_correct(raw_holo, bg)
-    holo = hp.core.process.subimage(holo, [250,250], 200)
-    holo = hp.core.process.normalize(holo)
-    zpos = 15.0
-    return holo, zpos
-
-def load_PS60xWater_data():
-    camera_resolution = 1/.194 # pixels per um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .532,
-                    'illum_polarization' : (1, 0)}
-    position = [430, 472]
-
-    holonums = range(7)
-    zpos = np.array([15, 10, 5, 0, -5, -10, -15])
-    paths = ["data/Polystyrene-60xWater-121218/raw/im_" +  "{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                particle_position=position, bg_prefix="bg")
-             for path in paths]
-    return holos, zpos
-
-
-def load_Silica60xWater_data():
-    camera_resolution = 1/.194 # pixels per um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .532,
-                    'illum_polarization' : (1, 0)}
-    position = [518, 553]
-
-    holonums = range(7)
-    zpos = np.array([15, 10, 5, 0, -5, -10, -15])
-    paths = ["data/Silica-60xWater-121218/raw/im_" +  "{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                particle_position=position, bg_prefix="bg")
-             for path in paths]
-    return holos, zpos
-
-def load_few_PS_data_Jan4():
-    camera_resolution = 5.9633 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [294, 395] #z is about  14, 5.5, -12, -20
-    #position = [103, 564] # z is about 11, 8.5, 2.5, ....
-
-    holonums = range(4)
-    zpos = np.array([14, 5.5, -12, -20])
-    paths = ["data/Polystyrene-60xWater-010419/raw0_greyscale/im" + "{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                particle_position=position, bg_prefix="bg", df_prefix="dark")
-             for path in paths]
-    return holos, zpos
-
-
-def load_few_PS_data_Jan8():
-    camera_resolution = 5.9633 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [617, 291]
-
-    holonums = range(21)
-    zpos = np.linspace(-20, 20, 21)
-    paths = ["data/Polystyrene-60xWater-010819/raw_greyscale/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                particle_position=position, bg_prefix="bkg", df_prefix="dark")
-             for path in paths]
-    return holos, zpos
+HERE = os.path.dirname(__file__)
 
 def load_few_PS_data_Jan10():
     camera_resolution = 5.9633 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
+                'medium_index' : 1.348,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
     position = [640, 306]
 
     holonums = range(51)
     zpos = np.linspace(25, -25, 51) - 2.5
-    paths = ["data/Mixed-60xWater-011019/greyscale-PS/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
+    paths = [HERE + "/data/Mixed-60xWater-011019/greyscale-PS/im_" +
+             "{}".format(str(num)).rjust(3, '0') + ".png"
              for num in holonums]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                        particle_position=position,
-                                        bg_prefix="bkg",
-                                        df_prefix="dark")
-                 for path in paths]
+        holos = mlf.load_bgdivide_crop_all_images(
+            paths, metadata, position, darkfield_prefix="dark",
+            background_prefix="bkg")
+        # holos = [mlf.load_bgdivide_crop(
+            # path=path, metadata=metadata, particle_position=position,
+            # bg_prefix="bkg", df_prefix="dark")
+            # for path in paths]
     return holos, zpos
 
-def load_few_BigPS_data_Jan10():
-    camera_resolution = 5.9633 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [901, 271]
-
-    holonums = range(51)
-    zpos = np.linspace(-25, 25, 51)
-    paths = ["data/Mixed-60xWater-011019/greyscale-PS-big/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                particle_position=position, bg_prefix="bkg", df_prefix="dark")
-             for path in paths]
-    return holos, zpos
-
-def load_few_Si_data_Jan10():
-    camera_resolution = 5.9633 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [607, 339]
-
-    holonums = range(51)
-    zpos = np.linspace(25, -25, 51) - 0.5
-    paths = ["data/Mixed-60xWater-011019/greyscale-silica/im_" + "{}".format(str(num)).rjust(3, '0') + ".png"
-             for num in holonums]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                        particle_position=position,
-                                        bg_prefix="bkg", df_prefix="dark")
-             for path in paths]
-    return holos, zpos
-
-
-def load_PS_data_Feb6():
-    camera_resolution = 5.6983 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [266, 680]
-
-    holonums = np.arange(14, 137)
-    zpos = np.linspace(13.5, -17, len(holonums))
-    paths = ["data/Polystyrene-60xWater-020619/im" + "{}".format(str(num).rjust(4, '0')) + ".tif"
-             for num in holonums]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        refimg = hp.load_image(paths[0], **metadata)
-        bkg = mlf.load_bkg(paths[0], bg_prefix='bg', refimg=refimg)
-        dark = mlf.load_dark(paths[0], df_prefix='dark', refimg=refimg)
-        holos = [mlf.load_bgdivide_crop_v2(path=path, metadata=metadata,
-                                        particle_position=position,
-                                        bkg=bkg, dark=dark)
-                 for path in paths]
-    return holos, zpos
-
-def load_PS_data_Feb6_alt():
-    camera_resolution = 5.6983 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                    'medium_index' : 1.348,
-                    'illum_wavelen' : .660,
-                    'illum_polarization' : (1, 0)}
-    position = [371, 860]
-
-    holonums = range(134)
-    zpos = np.linspace(17, -17, len(holonums))
-    paths = ["data/Polystyrene-60xWater-020619/raw0/im" + "{}".format(str(num).rjust(4, '0')) + ".tif"
-             for num in holonums]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        refimg = hp.load_image(paths[0], **metadata)
-        bkg = mlf.load_bkg(paths[0], bg_prefix='bg', refimg=refimg)
-        dark = mlf.load_dark(paths[0], df_prefix='dark', refimg=refimg)
-        holos = [mlf.load_bgdivide_crop_v2(path=path, metadata=metadata,
-                                        particle_position=position,
-                                        bkg=bkg, dark=dark)
-                 for path in paths]
-    return holos, zpos
-
-# def load_few_PS_sedemintation_data_Jan24():
-#     camera_resolution = 5.6983 # px / um
-#     metadata = {'spacing' : 1 / camera_resolution,
-#                     'medium_index' : 1.348,
-#                     'illum_wavelen' : .660,
-#                     'illum_polarization' : (1, 0)}
-#     position = [242, 266]
-
-#     holonums = [19, 20]
-#     zpos = np.linspace(25, -25, 51) - 0.5
-#     paths = ["data/Polystyrene2-4um-60xWater-012419/raw/image" +  f"{num}".zfill(4) + ".png"
-#              for num in holonums]
-#     with warnings.catch_warnings():
-#         warnings.simplefilter("ignore")
-#         holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-#                                         particle_position=position,
-#                                         bg_prefix="bkg", df_prefix="dark")
-#              for path in paths]
-#     return holos, zpos
-
-def load_PS_data_reza():
-    resolution = 1/.194 # pixels per um
-    metadata = {'spacing' : 1 / resolution,
-                'medium_index' : 1.34,
-                'illum_wavelen' : .660,
-                'illum_polarization' : (1, 0)}
-    PS_location = [258, 255]
-
-    holonums = range(80)
-    zpos = np.linspace(20, -20, 80)
-    paths = ["data/Polystyrene-Reza/image" + "{}".format(str(num).rjust(4, '0')) + ".tif"
-             for num in holonums]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        holos = [mlf.load_bgdivide_crop(path=path, metadata=metadata,
-                                        particle_position=position,
-                                        bg_prefix="bg")
-             for path in paths]
-    return holos, zpos
 
 def make_guess_parameters(zpos, n, r):
     return [{'z': z, 'n': n, 'r': r} for z in zpos]
@@ -315,24 +50,39 @@ def make_guess_parameters(zpos, n, r):
 def hologram2array(hologram):
     return hologram.values.squeeze()
 
+
 def compare_imgs(im1, im2, titles=['im1', 'im2']):
     vmax = np.max((im1, im2))
     vmin = np.min((im1, im2))
 
     plt.figure(figsize=(10,5))
     plt.gray()
-    plt.subplot(121)
+    ax1 = plt.subplot(1, 3, 1)
     plt.imshow(im1, interpolation="nearest", vmin=vmin, vmax=vmax)
-    plt.colorbar()
+    # plt.colorbar()
     plt.title(titles[0])
-    plt.subplot(122)
+    ax2 = plt.subplot(1, 3, 2)
     plt.imshow(im2, interpolation="nearest", vmin=vmin, vmax=vmax)
-    plt.colorbar()
+    # plt.colorbar()
     plt.title(titles[1])
+
+    difference = im1 - im2
+    vmax = np.abs(difference).max()
+    ax3 = plt.subplot(1, 3, 3)
+    plt.imshow(difference, vmin=-vmax, vmax=vmax, interpolation='nearest',
+               cmap='RdBu')
+    chisq = np.sum(difference**2)
+    plt.title("Difference, $\chi^2$={:0.2f}".format(chisq))
+
+    for ax in [ax1, ax2, ax3]:
+        ax.set_xticks([])
+        ax.set_yticks([])
+
     plt.show()
+    plt.tight_layout()
 
 
-def compare_holos(*holos, titles=None, cmap="Greys"):
+def compare_holos(*holos, titles=None, cmap="gray"):
     ims = [holo.values.squeeze() for holo in holos]
     vmax = np.max(ims)
     vmin = np.min(ims)
@@ -347,46 +97,21 @@ def compare_holos(*holos, titles=None, cmap="Greys"):
             plt.title(titles[index])
     plt.show()
 
-def fit_data():
-    PS_data, PS_zpos = load_PS60xWater_data()
-    Si_data, Si_zpos = load_Silica60xWater_data()
 
-    PS_guess = make_guess_parameters(PS_zpos, n=1.58, r=0.8)
-    Si_guess = make_guess_parameters(Si_zpos, n=1.46, r=0.5)
+def compare_guess_holo(data, guess):
+    fitter = mlf.Fitter(data, guess)
+    guess_scatterer = fitter.make_guessed_scatterer()
+    guess_lens_angle = fitter.guess_lens_angle()
+    compare_fit_holo(data, guess_scatterer, guess_lens_angle.guess)
 
-    PS_fit = [mlf.fit_mielens(data, guess) for data, guess in zip(PS_data, PS_guess)]
-    Si_fit = [mlf.fit_mielens(data, guess) for data, guess in zip(Si_data, Si_guess)]
 
-    PS_holo = [hologram2array(data) for data in PS_data]
-    Si_holo = [hologram2array(data) for data in Si_data]
-
-    PS_errsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, PS_fit)]
-    Si_errsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(Si_data, Si_fit)]
-
-    Si_fit_holo = [hologram2array(calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])))
-                   for data, fit in zip(Si_data, Si_fit)]
-    PS_fit_holo = [hologram2array(calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])))
-                   for data, fit in zip(PS_data, PS_fit)]
-
-def compare_guess_holo(data, guesses):
-    guess_scatterer, guess_lens_angle = mlf.get_guess_scatterer(data, guesses)
-    guess_holo = hologram2array(calc_holo(data, guess_scatterer,
-                                theory=MieLens(lens_angle=lens_angle)))
+def compare_fit_holo(data, fit_scatterer, fit_lens_angle):
+    guess_holo = hologram2array(
+        calc_holo(data, fit_scatterer,
+                  theory=MieLens(lens_angle=fit_lens_angle)))
     data_holo = hologram2array(data)
-    compare_imgs(data_holo, guess_holo, ['data', 'guess'])
+    compare_imgs(data_holo, guess_holo, ['Data', 'Model'])
 
-def compare_fit_Jan4_data():
-    PS_data, PS_zpos = load_few_PS_data_Jan4()
-    PS_guess = make_guess_parameters(PS_zpos, n=1.58, r=0.5)
-
-    mofit = [mlf.fit_mieonly(data, guess) for data, guess in zip(PS_data, PS_guess)]
-    mlfit = [mlf.fit_mielens(data, guess) for data, guess in zip(PS_data, PS_guess)]
-
-    moholo = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit)]
-    mlholo = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(PS_data, mlfit)]
-
-    moerrsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(PS_data, mofit)]
-    mlerrsq = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, mlfit)]
 
 def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
     scatterers = [fit.scatterer for fit in fits]
@@ -408,41 +133,119 @@ def make_stack_figures(data, fits, n=None, r=None, z_positions=None):
     return data_stack_xz, data_stack_yz, model_stack_xz, model_stack_yz
 
 
-if __name__ == '__main__':
-    # Load PS data
-    PS_data, PS_zpos = load_few_PS_data_Jan10()
-    PS_guess = make_guess_parameters(PS_zpos, n=1.58, r=0.5)
+def fit_with_previous_as_guess(data, first_guess):
+    # 1. Fit the first point.
+    first_fit = mlf.fit_mielens(data[0], first_guess)
+    current_guess = {k: v for k, v in first_guess.items()}
+    if 'lens_angle' not in current_guess:
+        current_guess.update({'lens_angle': mlf.Fitter._default_lens_angle})
 
-    # Load fits I've already done
-    mofit_PS = [
-        hp.load("fits/PSJan10/mofit{num}.h5")
-        for num in [
-            "{}".format(str(num).rjust(3, '0'))
-            for num in range(len(PS_data))]]
-    mlfit_PS = [
-        hp.load("fits/PSJan10/mlfit{num}.h5")
-        for num in [
-            "{}".format(str(num).rjust(3, '0'))
-            for num in range(len(PS_data))]]
-    moholo_PS = [
-        calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(PS_data, mofit_PS)]
-    mlholo_PS = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(PS_data, mlfit_PS)]
+    def update_guess(fit):
+        current_guess['n'] = fit.parameters['n']
+        current_guess['r'] = fit.parameters['r']
+        current_guess['z'] = fit.parameters['center.2']
+        current_guess['lens_angle'] = fit.parameters['lens_angle']
 
-    moerrsq_PS = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(PS_data, mofit_PS)]
-    mlerrsq_PS = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(PS_data, mlfit_PS)]
+    update_guess(first_fit)
+    all_fits = [first_fit]
+    for datum in data[1:]:
+        try:
+            this_fit = mlf.fit_mielens(datum, current_guess)
+            update_guess(this_fit)
+        except:
+            this_fit = None
+        all_fits.append(this_fit)
+    return all_fits
 
 
-    # Make figure 3 with this function
-    data_stack_xz, data_stack_yz, model_stack_xz, model_stack_yz = make_stack_figures(PS_data, mlfit_PS, n=1.41, r=0.5, z_positions=np.linspace(26.5, -23.5, 51))
+def fit_from_scratch(data, guess):
+    fits = []
+    for num, (data, guess) in enumerate(zip(data, guesses)):
+        try:
+            result = mlf.fit_mielens(data, guess)
+        except:
+            result = None
+        fits.append(result)
+    return fits
 
-    compare_imgs(data_stack_xz, model_stack_xz)
-    compare_imgs(data_stack_yz, model_stack_yz)
 
-    # This is for Fitting the Silica data
-    #mofit_Si = [mlf.fit_mieonly(data, guess) for data, guess in zip(Si_data, Si_guess)]
-    #mlfit_Si = [mlf.fit_mielens(data, guess) for data, guess in zip(Si_data, Si_guess)]
-    #moholo_Si = [calc_holo(data, fit.scatterer, scaling=fit.parameters['alpha']) for data, fit in zip(Si_data, mofit_Si)]
-    #mlholo_Si = [calc_holo(data, fit.scatterer, theory=MieLens(lens_angle=fit.parameters['lens_angle'])) for data, fit in zip(Si_data, mlfit_Si)]
+def calculate_models(data, fits):
+    fitholos = [
+        calc_holo(
+            datum, fit.scatterer,
+            theory=MieLens(lens_angle=fit.parameters['lens_angle']))
+        if fit is not None else 0 * datum + 1
+        for datum, fit in zip(data, fits)]
+    return fitholos
 
-    #moerrsq_Si = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters, theory='mieonly') for data, fit in zip(Si_data, mofit_Si)]
-    #mlerrsq_Si = [mlf.calc_err_sq(data, fit.scatterer, **fit.parameters) for data, fit in zip(Si_data, mlfit_Si)]
+
+# if __name__ == '__main__':
+#     # Load PS data
+#     data, zpos = load_few_PS_data_Jan10()
+#     guesses = make_guess_parameters(zpos, n=1.58, r=0.5)
+
+#     fits_fromscratch = fit_from_scratch(data, guesses)
+#     fits_fromprevious = fit_with_previous_as_guess(data, guesses[0])
+
+#     # fit_fromscratch[-1] looks ok. fit_previous looks _awful_
+#     # So we do this:
+#     last_guess = {
+#         'n': fits_fromscratch[-1].parameters['n'],
+#         'z': fits_fromscratch[-1].parameters['center.2'],
+#         'r': fits_fromscratch[-1].parameters['r'],
+#         }
+#     fits_fromnext = fit_with_previous_as_guess(data[::-1], last_guess)[::-1]
+
+#     fitholos_fromscratch = calculate_models(data, fits_fromscratch)
+#     fitholos_fromprevious = calculate_models(data, fits_fromprevious)
+#     fitholos_fromnext = calculate_models(data, fits_fromnext)
+
+#     residuals_fromscratch = [
+#         data - model for data, model in zip(data, fitholos_fromscratch)]
+#     chisqs_fromscratch = np.array(
+#         [(r.values**2).sum() for r in residuals_fromscratch])
+
+#     residuals_fromprevious = [
+#         data - model for data, model in zip(data, fitholos_fromprevious)]
+#     chisqs_fromprevious = np.array(
+#         [(r.values**2).sum() for r in residuals_fromprevious])
+
+#     residuals_fromnext = [
+#         data - model for data, model in zip(data, fitholos_fromnext)]
+#     chisqs_fromnext = np.array(
+#         [(r.values**2).sum() for r in residuals_fromnext])
+
+#     # Now we just pick the best one:
+#     all_chisqs = {
+#         'next': chisqs_fromnext,
+#         'previous': chisqs_fromprevious,
+#         'scratch': chisqs_fromscratch,
+#         }
+#     all_fits = {
+#         'next': fits_fromnext,
+#         'previous': fits_fromprevious,
+#         'scratch': fits_fromscratch,
+#         }
+#     fits_best = []
+#     for i in range(len(chisqs_fromnext)):
+#         these_chisqs = {k: v[i] for k, v in all_chisqs.items()}
+#         best_error = np.inf
+#         best_key = ''
+#         for key, error in these_chisqs.items():
+#             if error < best_error:
+#                 best_key = key
+#                 best_error = error
+
+#         fits_best.append(all_fits[best_key][i])
+
+#     fitholos_best = calculate_models(data, fits_best)
+#     residuals_best = [data - model for data, model in zip(data, fitholos_best)]
+#     chisqs_best = np.array([(r.values**2).sum() for r in residuals_best])
+#     # OH GOD SAVE THESE AS FAST AS POSSIBLE!!!
+#     from collections import OrderedDict
+#     import json
+#     parameters = OrderedDict()
+#     for i, f in enumerate(fits_best):
+#         parameters.update({str(i): f.parameters})
+#     json.dump(parameters, open('./good-fit-parameters.json', 'w'), indent=4)
+

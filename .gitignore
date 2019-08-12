@@ -1,2 +1,8 @@
+*.pkl
+*.pyc
+*.png
+*.svg
+*.swp
 data/
 __pycache__/
+fits/
