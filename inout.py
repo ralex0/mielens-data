@@ -112,15 +112,17 @@ def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000)
         holos.append(this_holo)
     return holos
 
-
 def load_polystyrene_sedimentation_params():
-    mo_fits = load_json('fits/sedimentation/newdata/fits_mo4.json')
-    ml_fits = load_json('fits/sedimentation/newdata/fits_ml3.json')
+    mo_fits = load_json('fits/Polystyrene2-4um-60xWater-042919/mieonly_fits.json')
+    ml_fits = load_json('fits/Polystyrene2-4um-60xWater-042919/mielensalpha_fits.json')
     return mo_fits, ml_fits
 
-def load_polystyrene_sedimentation_params_temp():
-    fits = load_json('fits/Polystyrene2-4um-60xWater-042919/mielensalpha_fits.json')
-    return fits
+
+def load_silica_sedimentation_params():
+    mo_fits = load_json('fits/Silica1um-60xWater-080619/mieonly_fits.json')
+    ml_fits = load_json('fits/Silica1um-60xWater-080619/mielensalpha_fits.json')
+    return mo_fits, ml_fits
+
 
 def load_polystyrene_sedimentation_fits(date_subdir="04-02"):
     mo_fits = load_pickle('fits/sedimentation/newdata/fits_mo4.pkl')
