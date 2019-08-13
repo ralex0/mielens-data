@@ -20,6 +20,12 @@ import figures
 import monkeyrc
 import inout
 
+PS_FIT_DIR = 'fits/Polystyrene2-4um-60xWater-042919/'
+PS_DATA_DIR = 'data/Polystyrene2-4um-60xWater-042919/'
+
+SI_FIT_DIR = 'fits/Silica1um-60xWater-080619/'
+SI_DATA_DIR = 'data/Silica1um-60xWater-080619/'
+
 class TrackingSedimentationFigure(object):
     _figsize = (5.25, 4.0) #  -- true figsize needs to be 5.25, x
 
@@ -197,14 +203,11 @@ def update_z_vs_t_plot_with_expected_sedimentation(
 
 
 def make_si_figure(si_data=None, mofit_si=None, mlfit_si=None):
-    if si_data is None:
-        si_data = inout.load_silica_sedimentation_data()[0]
-    si_times = np.load("./fits/sedimentation/Si_frame_times.npy")
-    if (mofit_si is None) or (mlfit_si is None):
-        mofit_si, mlfit_si = inout.load_silica_sedimentation_params("best_of_03-27_and_04-02")
+    si_times = np.load(SI_DATA_DIR + 'Si_frame_times.npy')
+    xy_pos = np.load(SI_DATA_DIR + 'processed0-256-uncentered/xy-positions.npy')
     figure_si = TrackingSedimentationFigure(
-        si_data, mlfit_si, mofit_si, si_times)
-    fig_si = figure_si.make_figure(holonums=[0, 45, 99])
+        si_data, mlfit_si, mofit_si, si_times, xy_pos)
+    fig_si = figure_si.make_figure(holonums=[0, 500, 999])
     # Then we have to rescale the 3d plot b/c fuck matplotlib:
     figure_si.ax_sed.set_ylim(-69.8, -4.2)
 
@@ -224,10 +227,8 @@ def make_si_figure(si_data=None, mofit_si=None, mlfit_si=None):
 
 
 def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
-    if ps_data is None:
-        ps_data = inout.load_polystyrene_sedimentation_data()[0]
-    ps_times = np.load("data/Polystyrene2-4um-60xWater-042919/PS_frame_times.npy")
-    xy_pos = np.load('data/Polystyrene2-4um-60xWater-042919/processed-256-uncentered/xy-positions.npy')
+    ps_times = np.load(PS_DATA_DIR + 'PS_frame_times.npy')
+    xy_pos = np.load(PS_DATA_DIR + 'processed-256-uncentered/xy-positions.npy')
     figure_ps = TrackingSedimentationFigure(
         ps_data, mlfit_ps, mofit_ps, ps_times, xy_pos)
     fig_ps = figure_ps.make_figure(holonums=[0, 500, 999])
@@ -250,18 +251,16 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
 
 
 if __name__ == '__main__':
-    # si_data = inout.load_silica_sedimentation_data(size=250, recenter=False)[0]
-    # ps_data = inout.load_polystyrene_sedimentation_data(size=175, recenter=False)[0]
-    #
-    #
-    # si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params('draft0')
-    # ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params( 'draft0')
-    #
-    # figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
-    # figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
-    #
+    si_data = inout.fastload_silica_sedimentation_data(size=256, recenter=False)
+    ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
+
+
+    si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params()
+    ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params()
+
+    figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
+    figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
+
+    plt.show()
     # fig_si.savefig('./silica-sedimentation.svg')
     # fig_ps.savefig('./polystyrene-sedimentation.svg')
-    data = inout.fastload_polystyrene_sedimentation_data_uncentered()
-    fits = inout.load_polystyrene_sedimentation_params_temp()
-    figure_ps, fig_ps = make_ps_figure(data, fits, fits)

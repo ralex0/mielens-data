@@ -59,34 +59,6 @@ def save_json(obj, filename):
             json.dump(obj, f, indent=4)
 
 
-def fastload_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
-    folder = os.path.join(HERE,
-             'data/Polystyrene2-4um-60xWater-042919/processed-{}/'.format(size))
-    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
-             for num in range(1000)]
-    try:
-        data = [hp.load(path) for path in paths]
-    except FileNotFoundError:
-        data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
-    return data
-
-def fastload_polystyrene_sedimentation_data_uncentered(size=HOLOGRAM_SIZE, *args, **kwargs):
-    camera_resolution = 5.6983 # px / um
-    metadata = {'spacing' : 1 / camera_resolution,
-                'medium_index' : 1.33,
-                'illum_wavelen' : .660,
-                'illum_polarization' : (1, 0)}
-    folder = os.path.join(HERE,
-             'data/Polystyrene2-4um-60xWater-042919/processed-{}-uncentered/'.format(size))
-    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
-             for num in range(1000)]
-    try:
-        data = [hp.load_image(path, **metadata) for path in paths]
-    except FileNotFoundError:
-        data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
-    return data
-
-
 def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
                                         recenter=True):
     camera_resolution = 5.6983 # px / um
@@ -111,6 +83,24 @@ def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000)
             bkg=bkg, dark=dark, size=size, recenter=recenter)[0]
         holos.append(this_holo)
     return holos
+
+
+def fastload_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
+    camera_resolution = 5.6983 # px / um
+    metadata = {'spacing' : 1 / camera_resolution,
+                'medium_index' : 1.33,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
+    folder = 'data/Polystyrene2-4um-60xWater-042919/processed-{}'.format(size)
+    if 'recenter' in kwargs:
+        if kwargs['recenter'] == False:
+            folder += '-uncentered'
+    folder = os.path.join(HERE, folder)
+    paths = [os.path.join(folder + '/im' + zfill(num) + '.tif')
+             for num in range(1000)]
+    data = [hp.load_image(path, **metadata) for path in paths]
+    return data
+
 
 def load_polystyrene_sedimentation_params():
     mo_fits = load_json('fits/Polystyrene2-4um-60xWater-042919/mieonly_fits.json')
@@ -251,12 +241,12 @@ def load_gold_example_data():
 
 def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
                                         recenter=True):
-    camera_resolution = 5.6983 / 1.5 # px / um
+    camera_resolution = 5.6983 * 1.5 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
-    position = [650, 587]# leaves the particle in the hologram for most frames
+    position = [650, 587]  # leaves the particle in the hologram for most frames
     paths = ["data/Silica1um-60xWater-080619/raw0[x1.5]/im"
              +  zfill(num, 4) + ".tif" for num in holonums]
     refimg = hp.load_image(paths[0], **metadata)
@@ -278,12 +268,12 @@ def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
     return holos
 
 def centerfind_xy_positions_silica(size=HOLOGRAM_SIZE, holonums=range(1000)):
-    camera_resolution = 5.6983 / 1.5 # px / um
+    camera_resolution = 5.6983 * 1.5 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
-    position = [650, 587]# leaves the particle in the hologram for most frames
+    position = [650, 587] # leaves the particle in the hologram for most frames
     paths = ["data/Silica1um-60xWater-080619/raw0[x1.5]/im"
              +  zfill(num, 4) + ".tif" for num in holonums]
     refimg = hp.load_image(paths[0], **metadata)
@@ -302,12 +292,17 @@ def centerfind_xy_positions_silica(size=HOLOGRAM_SIZE, holonums=range(1000)):
     return all_positions
 
 def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
-    folder = os.path.join(HERE,
-             'data/Silica1um-60xWater-080619/processed0-{}/'.format(size))
-    paths = [os.path.join(folder, 'im' + zfill(num) + '.tif')
+    camera_resolution = 5.6983 * 1.5 # px / um
+    metadata = {'spacing' : 1 / camera_resolution,
+                'medium_index' : 1.33,
+                'illum_wavelen' : .660,
+                'illum_polarization' : (1, 0)}
+    folder = 'data/Silica1um-60xWater-080619/processed0-{}'.format(size)
+    if 'recenter' in kwargs:
+        if kwargs['recenter'] == False:
+            folder += '-uncentered'
+    folder = os.path.join(HERE, folder)
+    paths = [os.path.join(folder + '/im' + zfill(num) + '.tif')
              for num in range(1000)]
-    try:
-        data = [hp.load(path) for path in paths]
-    except FileNotFoundError:
-        data = load_polystyrene_sedimentation_data(size=size, *args, **kwargs)
+    data = [hp.load_image(path, **metadata) for path in paths]
     return data
