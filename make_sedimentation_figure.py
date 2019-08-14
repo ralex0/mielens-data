@@ -74,7 +74,7 @@ class TrackingSedimentationFigure(object):
         width_plot = 0.22
         width_sedplot = 1 - (width_holo + width_plot + 4 * xpad  + 0.07)
 
-        left_holo = xpad
+        left_holo = xpad + 0.015
         left_sedplot = 2 * xpad + width_holo
         left_plot = 3 * xpad + width_holo + width_sedplot + 0.05
 
