@@ -192,8 +192,7 @@ def make_si_figure(si_data=None, mofit_si=None, mlfit_si=None):
     xy_pos = np.load(SI_DATA_DIR + 'processed0-256-uncentered/xy-positions.npy')
     figure_si = TrackingSedimentationFigure(
         si_data, mlfit_si, mofit_si, si_times, xy_pos)
-    fig_si = figure_si.make_figure(holonums=[0, 500, 999])
-    # Then we have to rescale the 3d plot b/c fuck matplotlib:
+    fig_si = figure_si.make_figure(holonums=[0, 132, 999])
     figure_si.ax_sed.set_ylim(-30., 9.)
 
     figure_si.ax_z.legend(fontsize=6, loc='upper right')
@@ -222,7 +221,7 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
     xy_pos = np.load(PS_DATA_DIR + 'processed-256-uncentered/xy-positions.npy')
     figure_ps = TrackingSedimentationFigure(
         ps_data, mlfit_ps, mofit_ps, ps_times, xy_pos)
-    fig_ps = figure_ps.make_figure(holonums=[0, 500, 999])
+    fig_ps = figure_ps.make_figure(holonums=[0, 402, 999])
     figure_ps.plotter_sed.set_xlim(-20., 8.)
     figure_ps.plotter_sed.set_ylim(-6., 9.)
     figure_ps.ax_sed.set_ylim(-14., 17.)
@@ -248,8 +247,8 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
 
 
 if __name__ == '__main__':
-    si_data = inout.fastload_silica_sedimentation_data(size=256, recenter=False)
-    ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
+    si_data = inout.load_silica_sedimentation_data(size=128, recenter=False)
+    ps_data = inout.load_polystyrene_sedimentation_data(size=128, recenter=False)
 
     si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params()
     ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params()
@@ -257,6 +256,5 @@ if __name__ == '__main__':
     figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
     figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
 
-    plt.show()
-    #fig_si.savefig('./silica-sedimentation.svg')
-    #fig_ps.savefig('./polystyrene-sedimentation.svg')
+    fig_si.savefig('./silica-sedimentation.svg')
+    fig_ps.savefig('./polystyrene-sedimentation.svg')
