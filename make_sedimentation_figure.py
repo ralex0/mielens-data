@@ -35,6 +35,10 @@ SILICA_PARTICLE = Particle(radius=0.5015611007969236, density=2.0)
 POLYSTYRENE_PARTICLE = Particle(radius=1.1624033452698568, density=1.05)
 VISCOSITY_WATER = 8.9e-4  # in mks units = Pa*s
 
+LABEL_FONT = {'size': 6, 'family': 'Times New Roman'}
+TICK_FONT = {'family': 'Times New Roman', 'size': 6}
+FIGLABEL_FONT = {'family': 'Times New Roman', 'size': 9}
+
 class TrackingSedimentationFigure(object):
     _figsize = (5.25, 4.0) #  -- true figsize needs to be 5.25, x
 
@@ -53,33 +57,35 @@ class TrackingSedimentationFigure(object):
     def make_figure(self, holonums):
         assert len(holonums) == 3
         self.fig = plt.figure(figsize=self._figsize)
-        self._make_axes(self.fig)
+        self._make_axes()
         self._plot_holograms(holonums)
         self._plot_sedimentation(accent_these=holonums)
-        self._plot_parameters()
+        self._plot_z()
         return self.fig
 
-    def _make_axes(self, fig):
+    def _make_axes(self):
+        fig = self.fig
         # 1. Define the positions for all the axes:
         xpad = 0.01
         # make ypad the same as xpad in real units:
         ypad = xpad * self._figsize[0] / self._figsize[1]
 
+        width_holo = 0.23
+        width_plot = 0.22
+        width_sedplot = 1 - (width_holo + width_plot + 4 * xpad  + 0.07)
+
         left_holo = xpad
-        width_holo = 0.22
+        left_sedplot = 2 * xpad + width_holo
+        left_plot = 3 * xpad + width_holo + width_sedplot + 0.05
+
         height_holo = (1 - 4 * ypad) / 3.
-        width_plot = 0.23
         height_plot = 1.2 * height_holo
-        width_sedplot = 1 - left_holo - width_holo - width_plot - 3 * xpad
 
         bottom_holo_top = 1 - (ypad + height_holo)
         bottom_holo_mid = 1 - 2 * (ypad + height_holo)
         bottom_holo_bot = 1 - 3 * (ypad + height_holo)
         # We set the _top_ of the plot axes to be equal to the hologram top:
         bottom_plot_mid = bottom_holo_mid + 0.5 * (height_holo - height_plot)
-
-        left_sedplot = left_holo + width_holo + xpad
-        left_plot = left_sedplot + width_sedplot + 3 * xpad
 
         # 2. Make the axes.
         # We make the 3D plot first so it is on the bottom; otherwise it
@@ -99,7 +105,7 @@ class TrackingSedimentationFigure(object):
 
         self.ax_z = fig.add_axes(
             [left_plot, bottom_plot_mid, width_plot, height_plot],
-            label="nplot")
+            label="zplot")
 
     def _plot_holograms(self, indices):
         axes = [self.ax_topholo, self.ax_midholo, self.ax_btmholo]
@@ -113,14 +119,6 @@ class TrackingSedimentationFigure(object):
             ax.axis('off')
 
     def _plot_sedimentation(self, accent_these=None):
-        # try:
-        #     positions = {
-        #         k1: np.array(
-        #             [fit['center.{}'.format(k2)]
-        #              for fit in self.mielens_fits.values()])
-        #         for k1, k2 in zip(['x', 'y', 'z'], [0, 1, 2])}
-        # except KeyError:
-        #     positions = {key: np.array([fit[key] for fit in self.mielens_fits.values()]) for key in ['x', 'y', 'z']}
         p_x = self.xy_pos[:,0]
         p_y = self.xy_pos[:,1]
         p_z = np.array([fit['z'] for fit in self.mielens_fits.values()])
@@ -142,33 +140,21 @@ class TrackingSedimentationFigure(object):
         self.ax_sed.set_aspect('equal')
         self.plotter_sed = plotter
 
-    def _plot_parameters(self):
-        mielens_index = [fit['n'] for fit in self.mielens_fits.values()]
-        mieonly_index = [fit['n'] for fit in self.mieonly_fits.values()]
-        times = {
-            'mielens': [t for t, n in zip(self.frame_times, mielens_index)],
-            'mieonly': [t for t, n in zip(self.frame_times, mieonly_index)],
-            }
-
-        self._plot_z(times)
-        # Adding an x-label to the bottom:
-        self.ax_z.set_xlabel('Elapsed time (s)', labelpad=2)
-
-    def _plot_z(self, times):
-        mieonly_times = times['mieonly']
-        mielens_times = times['mielens']
+    def _plot_z(self):
         mielens_z = [fit['z'] for fit in self.mielens_fits.values()]
         mieonly_z = [fit['z'] for fit in self.mieonly_fits.values()]
 
-        self.ax_z.set_ylabel('z-position  ($\mu m$)', labelpad=-6)
+        mielens_times = self.frame_times
+        mieonly_times = self.frame_times[:len(mieonly_z)]
+
+        self.ax_z.set_ylabel('z position (μm)', **LABEL_FONT, labelpad=-1)
         self.ax_z.scatter(
             mielens_times, mielens_z, color=monkeyrc.COLORS['blue'], s=4,
             marker='o', label="With Lens", zorder=3)
         self.ax_z.scatter(
             mieonly_times, mieonly_z, color=monkeyrc.COLORS['red'], s=4,
             marker='^', label="Without Lens", zorder=3)
-        self.ax_z.tick_params(labelsize=7)
-
+        self.ax_z.set_xlabel('Elapsed time (s)', **LABEL_FONT, labelpad=2)
 
 def zfill(n, nzeros=4):
     return str(n).rjust(nzeros, '0')
@@ -211,12 +197,18 @@ def make_si_figure(si_data=None, mofit_si=None, mlfit_si=None):
     figure_si.ax_sed.set_ylim(-30., 9.)
 
     figure_si.ax_z.legend(fontsize=6, loc='upper right')
-    figure_si.ax_z.set_yticks([-20, -10, 0, 10, 20])
+    yticks = [-20, -10, 0, 10, 20]
+    ylabels = [str(i) for i in yticks]
+    figure_si.ax_z.set_yticks(yticks)
+    figure_si.ax_z.set_yticklabels(ylabels, **TICK_FONT)
     figure_si.ax_z.set_ylim(-30., 9.)
 
     max_time = np.ceil(np.max(si_times))
     figure_si.ax_z.set_xlim(0, max_time)
-    figure_si.ax_z.set_xticks(max_time * np.array([0, .50, 1.0]))
+    xticks = max_time * np.array([0, .50, 1.0])
+    xlabels = [str(i) for i in xticks]
+    figure_si.ax_z.set_xticks(xticks)
+    figure_si.ax_z.set_xticklabels(xlabels, **TICK_FONT)
 
     initial_z = mlfit_si['0']['z']
     _ = update_z_vs_t_plot_with_expected_sedimentation(
@@ -236,11 +228,17 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
     figure_ps.ax_sed.set_ylim(-14., 17.)
 
     figure_ps.ax_z.legend(fontsize=6, loc='upper right')
-    figure_ps.ax_z.set_yticks([-14, 0, 14])
+    yticks = [-14, 0, 14]
+    ylabels = [str(i) for i in yticks]
+    figure_ps.ax_z.set_yticks(yticks)
+    figure_ps.ax_z.set_yticklabels(ylabels, **TICK_FONT)
     figure_ps.ax_z.set_ylim(-14, 17)
-    for ax in [figure_ps.ax_z]:
-        ax.set_xlim(0, 160)
-        ax.set_xticks([0, 80, 160])
+
+    xticks = [0, 80, 160]
+    xlabels = [str(i) for i in xticks]
+    figure_ps.ax_z.set_xlim(0, 160)
+    figure_ps.ax_z.set_xticks(xticks)
+    figure_ps.ax_z.set_xticklabels(xlabels, **TICK_FONT)
 
     initial_z = mlfit_ps['0']['z']
     _ = update_z_vs_t_plot_with_expected_sedimentation(
@@ -260,5 +258,5 @@ if __name__ == '__main__':
     figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
 
     plt.show()
-    # fig_si.savefig('./silica-sedimentation.svg')
-    # fig_ps.savefig('./polystyrene-sedimentation.svg')
+    #fig_si.savefig('./silica-sedimentation.svg')
+    #fig_ps.savefig('./polystyrene-sedimentation.svg')
