@@ -85,16 +85,14 @@ def load_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000)
     return holos
 
 
-def fastload_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
+def fastload_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, recenter=True):
     camera_resolution = 5.6983 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
     folder = 'data/Polystyrene2-4um-60xWater-042919/processed-{}'.format(size)
-    if 'recenter' in kwargs:
-        if kwargs['recenter'] == False:
-            folder += '-uncentered'
+    if recenter is False: folder += '-uncentered'
     folder = os.path.join(HERE, folder)
     paths = [os.path.join(folder + '/im' + zfill(num) + '.tif')
              for num in range(1000)]
@@ -291,16 +289,14 @@ def centerfind_xy_positions_silica(size=HOLOGRAM_SIZE, holonums=range(1000)):
         all_positions.append(tuple(position))
     return all_positions
 
-def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, *args, **kwargs):
+def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, recenter=True):
     camera_resolution = 5.6983 * 1.5 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
     folder = 'data/Silica1um-60xWater-080619/processed0-{}'.format(size)
-    if 'recenter' in kwargs:
-        if kwargs['recenter'] == False:
-            folder += '-uncentered'
+    if recenter is False: folder += '-uncentered'
     folder = os.path.join(HERE, folder)
     paths = [os.path.join(folder + '/im' + zfill(num) + '.tif')
              for num in range(1000)]

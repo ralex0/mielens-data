@@ -26,6 +26,15 @@ PS_DATA_DIR = 'data/Polystyrene2-4um-60xWater-042919/'
 SI_FIT_DIR = 'fits/Silica1um-60xWater-080619/'
 SI_DATA_DIR = 'data/Silica1um-60xWater-080619/'
 
+Particle = namedtuple("Particle", ["radius", "density"])
+# We take the radii as the median radii from mielens. We use the
+# median and not the mean to avoid the bad-fit outliers.
+SILICA_PARTICLE = Particle(radius=0.5015611007969236, density=2.0)
+# ..except the radii aren't correct for ml PS, so we use median(mo)
+# for the PS
+POLYSTYRENE_PARTICLE = Particle(radius=1.1624033452698568, density=1.05)
+VISCOSITY_WATER = 8.9e-4  # in mks units = Pa*s
+
 class TrackingSedimentationFigure(object):
     _figsize = (5.25, 4.0) #  -- true figsize needs to be 5.25, x
 
@@ -56,12 +65,12 @@ class TrackingSedimentationFigure(object):
         # make ypad the same as xpad in real units:
         ypad = xpad * self._figsize[0] / self._figsize[1]
 
-        left_holo = xpad + 0.015
+        left_holo = xpad
         width_holo = 0.22
         height_holo = (1 - 4 * ypad) / 3.
         width_plot = 0.23
         height_plot = 1.2 * height_holo
-        width_sedplot = (1 - 4 * xpad - width_plot - width_holo)
+        width_sedplot = 1 - left_holo - width_holo - width_plot - 3 * xpad
 
         bottom_holo_top = 1 - (ypad + height_holo)
         bottom_holo_mid = 1 - 2 * (ypad + height_holo)
@@ -69,8 +78,8 @@ class TrackingSedimentationFigure(object):
         # We set the _top_ of the plot axes to be equal to the hologram top:
         bottom_plot_mid = bottom_holo_mid + 0.5 * (height_holo - height_plot)
 
-        left_sedplot = 0.47 - 0.5 * width_sedplot
-        left_plot = 1 - 1.5 * xpad - width_plot
+        left_sedplot = left_holo + width_holo + xpad
+        left_plot = left_sedplot + width_sedplot + 3 * xpad
 
         # 2. Make the axes.
         # We make the 3D plot first so it is on the bottom; otherwise it
@@ -173,16 +182,6 @@ def clip_data_to(fits, max_frame):
     return clipped_data
 
 
-Particle = namedtuple("Particle", ["radius", "density"])
-# We take the radii as the median radii from mielens. We use the
-# median and not the mean to avoid the bad-fit outliers.
-SILICA_PARTICLE = Particle(radius=0.7826, density=2.0)
-# ..except the radii aren't correct for ml PS, so we use median(mo)
-# for the PS
-POLYSTYRENE_PARTICLE = Particle(radius=1.168, density=1.05)
-VISCOSITY_WATER = 8.9e-4  # in mks units = Pa*s
-
-
 def update_z_vs_t_plot_with_expected_sedimentation(
         axes, times, particle, initial_z_position):
     # 1. Calculate the velocity, using meter-kilogram-second units:
@@ -209,15 +208,15 @@ def make_si_figure(si_data=None, mofit_si=None, mlfit_si=None):
         si_data, mlfit_si, mofit_si, si_times, xy_pos)
     fig_si = figure_si.make_figure(holonums=[0, 500, 999])
     # Then we have to rescale the 3d plot b/c fuck matplotlib:
-    figure_si.ax_sed.set_ylim(-69.8, -4.2)
+    figure_si.ax_sed.set_ylim(-30., 9.)
 
     figure_si.ax_z.legend(fontsize=6, loc='upper right')
-    figure_si.ax_z.set_yticks([-20, 0, 20, 40])
-    figure_si.ax_z.set_ylim(-20, 40)
+    figure_si.ax_z.set_yticks([-20, -10, 0, 10, 20])
+    figure_si.ax_z.set_ylim(-30., 9.)
 
-    for ax in [figure_si.ax_z]:
-        ax.set_xlim(0, 60)
-        ax.set_xticks([0, 30, 60])
+    max_time = np.ceil(np.max(si_times))
+    figure_si.ax_z.set_xlim(0, max_time)
+    figure_si.ax_z.set_xticks(max_time * np.array([0, .50, 1.0]))
 
     initial_z = mlfit_si['0']['z']
     _ = update_z_vs_t_plot_with_expected_sedimentation(
@@ -253,7 +252,6 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
 if __name__ == '__main__':
     si_data = inout.fastload_silica_sedimentation_data(size=256, recenter=False)
     ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
-
 
     si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params()
     ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params()
