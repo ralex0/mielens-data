@@ -217,14 +217,16 @@ def make_si_figure(si_data=None, mofit_si=None, mlfit_si=None):
 
 
 def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
-    ps_times = np.load(PS_DATA_DIR + 'PS_frame_times.npy')
-    xy_pos = np.load(PS_DATA_DIR + 'processed-256-uncentered/xy-positions.npy')
+    ps_data = _thin_ps(ps_data)
+    ps_times = np.array(_thin_ps(np.load(PS_DATA_DIR + 'PS_frame_times.npy')))
+    xy_pos = np.array(_thin_ps(np.load(PS_DATA_DIR + 'processed-256-uncentered/xy-positions.npy')))
     figure_ps = TrackingSedimentationFigure(
         ps_data, mlfit_ps, mofit_ps, ps_times, xy_pos)
-    fig_ps = figure_ps.make_figure(holonums=[0, 402, 999])
-    figure_ps.plotter_sed.set_xlim(-20., 8.)
-    figure_ps.plotter_sed.set_ylim(-6., 9.)
-    figure_ps.ax_sed.set_ylim(-14., 17.)
+    fig_ps = figure_ps.make_figure(holonums=[0, 37, 99])
+    figure_ps.plotter_sed.set_xlim(-6.25, 9.25)
+    figure_ps.plotter_sed.set_ylim(-1.25, 14.25)
+    figure_ps.plotter_sed.set_zlim(-13, 20)
+    figure_ps.ax_sed.set_ylim(-18., 22)
 
     figure_ps.ax_z.legend(fontsize=6, loc='upper right')
     yticks = [-14, 0, 14]
@@ -245,16 +247,21 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
 
     return figure_ps, fig_ps
 
+def _thin_ps(data):
+    nums = np.arange(0, 1000, 10)
+    return [data[num] for num in nums]
 
 if __name__ == '__main__':
-    si_data = inout.load_silica_sedimentation_data(size=128, recenter=False)
-    ps_data = inout.load_polystyrene_sedimentation_data(size=128, recenter=False)
+    #si_data = inout.load_silica_sedimentation_data(size=128, recenter=False)
+    ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
 
-    si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params()
-    ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params()
+    #si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params()
+    #ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params()
+    ps_fits_mo = inout.load_json('PTmcmc_results_PS_mieonly.json')
+    ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha.json')
 
-    figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
+    #figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
     figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
 
-    fig_si.savefig('./silica-sedimentation.svg')
-    fig_ps.savefig('./polystyrene-sedimentation.svg')
+    #fig_si.savefig('./silica-sedimentation.svg')
+    #fig_ps.savefig('./polystyrene-sedimentation.svg')
