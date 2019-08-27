@@ -93,11 +93,11 @@ class MCMCKDEFigure:
         label_mo = ' without lens' if legend else None
         label_ml = ' with lens' if legend else None
 
-        ax.plot(x, kde_mo(x), label=label_mo, c=COLORS['red'])
-        ax.plot(x, kde_ml(x), label=label_ml, c=COLORS['blue'])
+        ax.plot(x, kde_mo(x), label=label_mo, c=COLORS['red'], lw=1)
+        ax.plot(x, kde_ml(x), label=label_ml, c=COLORS['blue'], lw=1)
         ax.spines['left'].set_visible(False)
-        ax.axvline(self.data_mo[data_index][param].mean(), lw=1, c=COLORS['red'])
-        ax.axvline(self.data_ml[data_index][param].mean(), lw=1, c=COLORS['blue'])
+        ax.axvline(self.data_mo[data_index][param].mean(), lw=.5, c=COLORS['red'])
+        ax.axvline(self.data_ml[data_index][param].mean(), lw=.5, c=COLORS['blue'])
 
         ax.set_xlim(xlim)
         ax.set_xticks(ticks)
