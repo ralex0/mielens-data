@@ -107,8 +107,8 @@ def load_polystyrene_sedimentation_params():
 
 
 def load_silica_sedimentation_params():
-    mo_fits = load_json('fits/Silica1um-60xWater-080619/mieonly_fits.json')
-    ml_fits = load_json('fits/Silica1um-60xWater-080619/mielensalpha_fits.json')
+    mo_fits = load_json('fits/Silica1um-60xWater-021519/mieonly_guesses.json')
+    ml_fits = load_json('fits/Silica1um-60xWater-021519/mielens_guesses.json')
     return mo_fits, ml_fits
 
 
@@ -237,22 +237,22 @@ def load_gold_example_data():
     return normalize(hp.load(hp.core.io.get_example_data_path('image0001.h5')))
 
 
-def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(1000),
+def load_silica_sedimentation_data(size=HOLOGRAM_SIZE, holonums=range(100),
                                         recenter=True):
-    camera_resolution = 5.6983 * 1.5 # px / um
+    camera_resolution = 5.6983# * 1.5 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
-    position = [650, 587]  # leaves the particle in the hologram for most frames
-    paths = ["data/Silica1um-60xWater-080619/raw0[x1.5]/im"
+    position = [553, 725]  # leaves the particle in the hologram for most frames
+    paths = ["data/Silica1um-60xWater-021519/raw/image"
              +  zfill(num, 4) + ".tif" for num in holonums]
     refimg = hp.load_image(paths[0], **metadata)
     bkg = load_bkg(
-        "data/Silica1um-60xWater-080619/raw0[x1.5]/",
+        "data/Silica1um-60xWater-021519/raw/",
         bg_prefix='bg', refimg=refimg)
     dark = load_dark(
-        "data/Silica1um-60xWater-080619/raw0[x1.5]/",
+        "data/Silica1um-60xWater-021519/raw/",
         df_prefix='dark', refimg=refimg)
     holos = []
     all_positions = []
@@ -298,7 +298,7 @@ def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, recenter=True):
     folder = 'data/Silica1um-60xWater-021519/processed-{}'.format(size)
     if recenter is False: folder += '-uncentered'
     folder = os.path.join(HERE, folder)
-    paths = [os.path.join(folder + '/im' + zfill(num) + '.tif')
+    paths = [os.path.join(folder + '/im' + zfill(num) + '.h5')
              for num in range(100)]
-    data = [hp.load_image(path, **metadata) for path in paths]
+    data = [hp.load(path) for path in paths]
     return data
