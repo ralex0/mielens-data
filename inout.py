@@ -13,7 +13,7 @@ from holopy.core.process import subimage, normalize, center_find
 from lmfit.minimizer import MinimizerResult, Parameters
 
 RGB_CHANNEL = None
-HOLOGRAM_SIZE = 200
+HOLOGRAM_SIZE = 256
 HERE = os.path.dirname(__file__)
 
 
@@ -290,15 +290,15 @@ def centerfind_xy_positions_silica(size=HOLOGRAM_SIZE, holonums=range(1000)):
     return all_positions
 
 def fastload_silica_sedimentation_data(size=HOLOGRAM_SIZE, recenter=True):
-    camera_resolution = 5.6983 * 1.5 # px / um
+    camera_resolution = 5.6983# * 1.5 # px / um
     metadata = {'spacing' : 1 / camera_resolution,
                 'medium_index' : 1.33,
                 'illum_wavelen' : .660,
                 'illum_polarization' : (1, 0)}
-    folder = 'data/Silica1um-60xWater-080619/processed0-{}'.format(size)
+    folder = 'data/Silica1um-60xWater-021519/processed-{}'.format(size)
     if recenter is False: folder += '-uncentered'
     folder = os.path.join(HERE, folder)
     paths = [os.path.join(folder + '/im' + zfill(num) + '.tif')
-             for num in range(1000)]
+             for num in range(100)]
     data = [hp.load_image(path, **metadata) for path in paths]
     return data
