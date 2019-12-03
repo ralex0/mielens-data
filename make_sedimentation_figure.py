@@ -156,6 +156,69 @@ class TrackingSedimentationFigure(object):
             marker='^', label="Without Lens", zorder=3)
         self.ax_z.set_xlabel('Elapsed time (s)', **LABEL_FONT, labelpad=2)
 
+
+class CharacterizationFigure(object):
+    _figsize = (5.25, 1.5) #  -- true figsize needs to be 5.25, x
+
+    def __init__(self, mielens_fits, mieonly_fits):
+        self.mielens_fits = mielens_fits
+        self.mieonly_fits = mieonly_fits
+
+    def make_figure(self):
+        self.fig = plt.figure(figsize=self._figsize)
+        self._make_axes()
+        self._plot_var(self.ax_n, 'n', 'Refractive Index')
+        self._plot_var(self.ax_r, 'r', 'Radius (μm)')
+        self._plot_var(self.ax_alpha, 'alpha', 'Alpha')
+        self._plot_var(self.ax_lens, 'lens_angle', 'Lens Angle (radians)')
+        return self.fig
+
+    def _make_axes(self):
+        fig = self.fig
+        # 1. Define the positions for all the axes:
+        xpad = 0.01
+        # make ypad the same as xpad in real units:
+        ypad = xpad * self._figsize[0] / self._figsize[1]
+
+        width_plot = (1 - xpad * 5) / 4
+        height_plot = (1 - 2 * ypad)
+        bottom_plot = ypad
+
+        left_n = xpad
+        left_r = left_n + xpad + width_plot
+        left_alpha = left_r + xpad + width_plot
+        left_lens = left_alpha + xpad + width_plot
+
+        # 2. Make the axes.
+        self.ax_n = fig.add_axes([left_n, bottom_plot, width_plot, height_plot],
+                                 label="n_plot")
+        self.ax_r = fig.add_axes([left_r, bottom_plot, width_plot, height_plot],
+                                 label="r_plot")
+        self.ax_alpha = fig.add_axes([left_alpha, bottom_plot, width_plot,
+                                      height_plot],
+                                     label="alpha_plot")
+        self.ax_lens = fig.add_axes([left_lens, bottom_plot, width_plot,
+                                     height_plot],
+                                    label="lens_plot")
+
+
+    def _plot_var(self, axes, key, label):
+        mielens_y = [fit[key] for fit in self.mielens_fits.values()]
+        mielens_x = range(len(mielens_y))
+        axes.scatter(
+            mielens_x, mielens_y, color=monkeyrc.COLORS['blue'], s=4,
+            marker='o', label="With Lens", zorder=3)
+        if key != 'lens_angle':
+            mieonly_y = [fit[key] for fit in self.mieonly_fits.values()]
+            mieonly_x = range(len(mieonly_y))
+            axes.scatter(
+                mieonly_x, mieonly_y, color=monkeyrc.COLORS['red'], s=4,
+                marker='^', label="Without Lens", zorder=3)
+
+        axes.set_ylabel(label, **LABEL_FONT, labelpad=-1)
+        axes.set_xlabel('Frame', **LABEL_FONT, labelpad=2)
+
+
 def zfill(n, nzeros=4):
     return str(n).rjust(nzeros, '0')
 
@@ -247,6 +310,11 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
 
     return figure_ps, fig_ps
 
+def make_chr_figure(mofit_ps=None, mlfit_ps=None):
+    figure_chr = CharacterizationFigure(mlfit_ps, mofit_ps)
+    fig_chr = figure_chr.make_figure()
+    return figure_chr, fig_chr
+
 def _thin_ps(data):
     nums = np.arange(0, 1000, 10)
     return [data[num] for num in nums]
@@ -261,7 +329,8 @@ if __name__ == '__main__':
     ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha.json')
 
     #figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
-    figure_ps, fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
+    sed_figure_ps, sed_fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
+    chr_figure_ps, chr_fig_ps = make_chr_figure(ps_fits_mo, ps_fits_ml)
 
     #fig_si.savefig('./silica-sedimentation.svg')
     #fig_ps.savefig('./polystyrene-sedimentation.svg')
