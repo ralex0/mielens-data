@@ -6,6 +6,7 @@ from collections import OrderedDict, namedtuple
 
 import numpy as np
 
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt; plt.close('all')
 from matplotlib import rc
 
@@ -163,44 +164,29 @@ class CharacterizationFigure(object):
     def __init__(self, mielens_fits, mieonly_fits):
         self.mielens_fits = mielens_fits
         self.mieonly_fits = mieonly_fits
+        self.fig = plt.figure(figsize=self._figsize)
 
     def make_figure(self):
-        self.fig = plt.figure(figsize=self._figsize)
         self._make_axes()
         self._plot_var(self.ax_n, 'n', 'Refractive Index')
         self._plot_var(self.ax_r, 'r', 'Radius (μm)')
         self._plot_var(self.ax_alpha, 'alpha', 'Alpha')
         self._plot_var(self.ax_lens, 'lens_angle', 'Lens Angle (radians)')
+        self.fig.tight_layout()
         return self.fig
 
     def _make_axes(self):
-        fig = self.fig
-        # 1. Define the positions for all the axes:
-        xpad = 0.01
-        # make ypad the same as xpad in real units:
-        ypad = xpad * self._figsize[0] / self._figsize[1]
+        gs = gridspec.GridSpec(1, 4)
 
-        width_plot = (1 - xpad * 5) / 4
-        height_plot = (1 - 2 * ypad)
-        bottom_plot = ypad
+        self.ax_n = plt.Subplot(self.fig, gs[:, 0])
+        self.ax_r = plt.Subplot(self.fig, gs[:, 1])
+        self.ax_alpha = plt.Subplot(self.fig, gs[:, 2])
+        self.ax_lens = plt.Subplot(self.fig, gs[:, 3])
 
-        left_n = xpad
-        left_r = left_n + xpad + width_plot
-        left_alpha = left_r + xpad + width_plot
-        left_lens = left_alpha + xpad + width_plot
-
-        # 2. Make the axes.
-        self.ax_n = fig.add_axes([left_n, bottom_plot, width_plot, height_plot],
-                                 label="n_plot")
-        self.ax_r = fig.add_axes([left_r, bottom_plot, width_plot, height_plot],
-                                 label="r_plot")
-        self.ax_alpha = fig.add_axes([left_alpha, bottom_plot, width_plot,
-                                      height_plot],
-                                     label="alpha_plot")
-        self.ax_lens = fig.add_axes([left_lens, bottom_plot, width_plot,
-                                     height_plot],
-                                    label="lens_plot")
-
+        self.fig.add_subplot(self.ax_n)
+        self.fig.add_subplot(self.ax_r)
+        self.fig.add_subplot(self.ax_alpha)
+        self.fig.add_subplot(self.ax_lens)
 
     def _plot_var(self, axes, key, label):
         mielens_y = [fit[key] for fit in self.mielens_fits.values()]
