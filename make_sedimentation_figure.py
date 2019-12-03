@@ -305,18 +305,47 @@ def _thin_ps(data):
     nums = np.arange(0, 1000, 10)
     return [data[num] for num in nums]
 
+def _params_from_samples(result, numsteps, mielens=True):
+    chain = result.chain[0,:,-numsteps:,:]
+    x = chain[:, :, 0]
+    y = chain[:, :, 1]
+    z = chain[:, :, 2]
+    n = chain[:, :, 3]
+    r = chain[:, :, 4]
+    alpha = chain[:, :, 5]
+    if mielens:
+        lens_angle = chain[:, :, 6]
+    noise_sd = chain[:, :, -1]
+    params = {'x': (x.mean(), x.std()),
+              'y': (y.mean(), y.std()),
+              'z': (z.mean(), z.std()),
+              'n': (n.mean(), n.std()),
+              'r': (r.mean(), r.std()),
+              'alpha': (alpha.mean(), alpha.std()),
+              'noise_sd': (noise_sd.mean(), noise_sd.std())}
+    if mielens:
+        params['lens_angle'] = (lens_angle.mean(), lens_angle.std())
+    return params
+
+
 if __name__ == '__main__':
-    #si_data = inout.load_silica_sedimentation_data(size=128, recenter=False)
-    ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
+    # ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
+    #
+    # ps_fits_mo = inout.load_json('PTmcmc_results_PS_mieonly.json')
+    # ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha.json')
+    #
+    # sed_figure_ps, sed_fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
+    # chr_figure_ps, chr_fig_ps = make_chr_figure(ps_fits_mo, ps_fits_ml)
 
-    #si_fits_mo, si_fits_ml = inout.load_silica_sedimentation_params()
-    #ps_fits_mo, ps_fits_ml = inout.load_polystyrene_sedimentation_params()
-    ps_fits_mo = inout.load_json('PTmcmc_results_PS_mieonly.json')
-    ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha.json')
-
-    #figure_si, fig_si = make_si_figure(si_data, si_fits_mo, si_fits_ml)
-    sed_figure_ps, sed_fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
-    chr_figure_ps, chr_fig_ps = make_chr_figure(ps_fits_mo, ps_fits_ml)
-
-    #fig_si.savefig('./silica-sedimentation.svg')
-    #fig_ps.savefig('./polystyrene-sedimentation.svg')
+    #sed_fig_ps.savefig('./polystyrene-sedimentation.svg')
+    #chr_fig_ps.savefig('./polystyrene-characterization.svg')
+    mielens_params = {}
+    for i in range(100):
+        res = inout.load_mcmc_result_PS_mielens(i)
+        params = _params_from_samples(res, 100)
+        mielens_params[f'{i}'] = params
+    mieonly_params = {}
+    for i in range(38):
+        res = inout.load_mcmc_result_PS_mieonly(i)
+        params = _params_from_samples(res, 100)
+        mieonly_params[f'{i}'] = params
