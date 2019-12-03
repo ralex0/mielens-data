@@ -13,8 +13,9 @@ from matplotlib import rc
 from mpl_toolkits import mplot3d
 
 import holopy as hp
-from holopy.scattering import calc_holo
+from holopy.scattering import calc_holo, Sphere
 from holopy.scattering.theory import MieLens
+from holopy.core.process import normalize
 
 import mielensfit as mlf
 import figures
@@ -327,25 +328,50 @@ def _params_from_samples(result, numsteps, mielens=True):
         params['lens_angle'] = (lens_angle.mean(), lens_angle.std())
     return params
 
+def _sphere_from(fit):
+    center = (fit['x'], fit['y'], fit['z'])
+    index = fit['n']
+    radius = fit['r']
+    sph = Sphere(center=center, n=index, r=radius)
+    return sph
 
 if __name__ == '__main__':
-    # ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
-    #
-    # ps_fits_mo = inout.load_json('PTmcmc_results_PS_mieonly.json')
-    # ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha.json')
-    #
+    ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=True)
+
+    ps_fits_mo = inout.load_json('PTmcmc_results_PS_mieonly_last100.json')
+    ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha_last100.json')
+
+
     # sed_figure_ps, sed_fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
     # chr_figure_ps, chr_fig_ps = make_chr_figure(ps_fits_mo, ps_fits_ml)
+    #
+    # sed_fig_ps.savefig('./polystyrene-sedimentation.svg')
+    # chr_fig_ps.savefig('./polystyrene-characterization.svg')
 
-    #sed_fig_ps.savefig('./polystyrene-sedimentation.svg')
-    #chr_fig_ps.savefig('./polystyrene-characterization.svg')
-    mielens_params = {}
-    for i in range(100):
-        res = inout.load_mcmc_result_PS_mielens(i)
-        params = _params_from_samples(res, 100)
-        mielens_params[f'{i}'] = params
-    mieonly_params = {}
-    for i in range(38):
-        res = inout.load_mcmc_result_PS_mieonly(i)
-        params = _params_from_samples(res, 100)
-        mieonly_params[f'{i}'] = params
+    # mielens_params = {}
+    # for i in range(100):
+    #     res = inout.load_mcmc_result_PS_mielens(i)
+    #     params = _params_from_samples(res, 100)
+    #     mielens_params[f'{i}'] = params
+    # mieonly_params = {}
+    # for i in range(38):
+    #     res = inout.load_mcmc_result_PS_mieonly(i)
+    #     params = _params_from_samples(res, 100)
+    #     mieonly_params[f'{i}'] = params
+
+    holos_ml = [calc_holo(data, _sphere_from(fit),
+                          theory=MieLens(lens_angle=fit['lens_angle']),
+                          scaling=fit['alpha'])
+                for data, fit in zip(ps_data, ps_fits_ml.values())]
+
+    holos_mo = [calc_holo(data, _sphere_from(fit), scaling=fit['alpha'])
+                for data, fit in zip(ps_data[:38], ps_fits_mo.values())]
+
+    chisqr_ml = [np.sum(((d.values.squeeze() - h.values.squeeze())**2)
+                 for d, h in zip(ps_data, holos_ml)]
+
+    chisqr_mo = [np.sum((d.values.squeeze() - h.values.squeeze())**2)
+                 for d, h in zip(ps_data, holos_mo)]
+
+    chisqr_ml = np.array(chisqr_ml)
+    chisqr_mo = np.array(chisqr_mo)
