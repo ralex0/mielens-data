@@ -205,6 +205,24 @@ class CharacterizationFigure(object):
         axes.set_ylabel(label, **LABEL_FONT, labelpad=-1)
         axes.set_xlabel('z position (μm)', **LABEL_FONT, labelpad=2)
 
+class CharacterizationErrorFigure(CharacterizationFigure):
+    def _plot_var(self, axes, key, label):
+        mielens_y = [fit[key][0] for fit in self.mielens_fits.values()]
+        mielens_yerr = [fit[key][1] for fit in self.mielens_fits.values()]
+        mielens_x = [fit['z'][0] for fit in self.mielens_fits.values()]
+        axes.errorbar(
+            mielens_x, mielens_y, mielens_yerr, color=monkeyrc.COLORS['blue'],
+            marker='o', label="With Lens", zorder=3, linestyle='None')
+        if key != 'lens_angle':
+            mieonly_y = [fit[key][0] for fit in self.mieonly_fits.values()]
+            mieonly_yerr = [fit[key][1] for fit in self.mieonly_fits.values()]
+            mieonly_x = [fit['z'][0] for fit in self.mieonly_fits.values()]
+            axes.errorbar(
+                mieonly_x, mieonly_y, mieonly_yerr, color=monkeyrc.COLORS['red'],
+                marker='^', label="Without Lens", zorder=3, linestyle='None')
+
+        axes.set_ylabel(label, **LABEL_FONT, labelpad=-1)
+        axes.set_xlabel('z position (μm)', **LABEL_FONT, labelpad=2)
 
 def zfill(n, nzeros=4):
     return str(n).rjust(nzeros, '0')
@@ -302,6 +320,11 @@ def make_chr_figure(mofit_ps=None, mlfit_ps=None):
     fig_chr = figure_chr.make_figure()
     return figure_chr, fig_chr
 
+def make_chrerr_figure(mofit_ps=None, mlfit_ps=None):
+    figure_chr = CharacterizationErrorFigure(mlfit_ps, mofit_ps)
+    fig_chr = figure_chr.make_figure()
+    return figure_chr, fig_chr
+
 def _thin_ps(data):
     nums = np.arange(0, 1000, 10)
     return [data[num] for num in nums]
@@ -336,14 +359,25 @@ def _sphere_from(fit):
     return sph
 
 if __name__ == '__main__':
-    ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=True)
+    ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
 
     ps_fits_mo = inout.load_json('PTmcmc_results_PS_mieonly_last100.json')
     ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha_last100.json')
 
+    ps_fits_witherr_mo = inout.load_json('PTmcmc_results_PS_mieonly_last100_werror.json')
+    ps_fits_witherr_ml = inout.load_json('PTmcmc_results_PS_mielensalpha_last100_werror.json')
 
-    # sed_figure_ps, sed_fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
-    # chr_figure_ps, chr_fig_ps = make_chr_figure(ps_fits_mo, ps_fits_ml)
+    sed_figure_ps, sed_fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
+    chr_figure_ps, chr_fig_ps = make_chr_figure(ps_fits_mo, ps_fits_ml)
+    chrerr_figure_ps, chrerr_fig_ps = make_chrerr_figure(ps_fits_witherr_mo, ps_fits_witherr_ml)
+
+
+    chisq_ml = np.load('chisq_ml.npy')
+    chisq_mo = np.load('chisq_mo.npy')
+    plt.figure()
+    plt.scatter([fit['z'] for fit in ps_fits_ml.values()], chisq_ml, label='mielens')
+    plt.scatter([fit['z'] for fit in ps_fits_mo.values()], chisq_mo, label='mieonly')
+    plt.legend()
     #
     # sed_fig_ps.savefig('./polystyrene-sedimentation.svg')
     # chr_fig_ps.savefig('./polystyrene-characterization.svg')
@@ -359,19 +393,19 @@ if __name__ == '__main__':
     #     params = _params_from_samples(res, 100)
     #     mieonly_params[f'{i}'] = params
 
-    holos_ml = [calc_holo(data, _sphere_from(fit),
-                          theory=MieLens(lens_angle=fit['lens_angle']),
-                          scaling=fit['alpha'])
-                for data, fit in zip(ps_data, ps_fits_ml.values())]
-
-    holos_mo = [calc_holo(data, _sphere_from(fit), scaling=fit['alpha'])
-                for data, fit in zip(ps_data[:38], ps_fits_mo.values())]
-
-    chisqr_ml = [np.sum(((d.values.squeeze() - h.values.squeeze())**2)
-                 for d, h in zip(ps_data, holos_ml)]
-
-    chisqr_mo = [np.sum((d.values.squeeze() - h.values.squeeze())**2)
-                 for d, h in zip(ps_data, holos_mo)]
-
-    chisqr_ml = np.array(chisqr_ml)
-    chisqr_mo = np.array(chisqr_mo)
+    # holos_ml = [calc_holo(data, _sphere_from(fit),
+    #                       theory=MieLens(lens_angle=fit['lens_angle']),
+    #                       scaling=fit['alpha'])
+    #             for data, fit in zip(ps_data, ps_fits_ml.values())]
+    #
+    # holos_mo = [calc_holo(data, _sphere_from(fit), scaling=fit['alpha'])
+    #             for data, fit in zip(ps_data[:38], ps_fits_mo.values())]
+    #
+    # chisqr_ml = [np.sum((d.values.squeeze() - h.values.squeeze())**2)
+    #              for d, h in zip(ps_data, holos_ml)]
+    #
+    # chisqr_mo = [np.sum((d.values.squeeze() - h.values.squeeze())**2)
+    #              for d, h in zip(ps_data, holos_mo)]
+    #
+    # chisqr_ml = np.array(chisqr_ml)
+    # chisqr_mo = np.array(chisqr_mo)
