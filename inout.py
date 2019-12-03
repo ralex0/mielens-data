@@ -96,7 +96,7 @@ def fastload_polystyrene_sedimentation_data(size=HOLOGRAM_SIZE, recenter=True):
     folder = os.path.join(HERE, folder)
     paths = [os.path.join(folder + '/im' + zfill(num) + '.tif')
              for num in range(1000)]
-    data = [normalize(hp.load_image(path, **metadata)) for path in paths]
+    data = [hp.load_image(path, **metadata) for path in paths]
     return data
 
 
