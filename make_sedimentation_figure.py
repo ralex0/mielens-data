@@ -190,19 +190,19 @@ class CharacterizationFigure(object):
 
     def _plot_var(self, axes, key, label):
         mielens_y = [fit[key] for fit in self.mielens_fits.values()]
-        mielens_x = range(len(mielens_y))
+        mielens_x = [fit['z'] for fit in self.mielens_fits.values()]
         axes.scatter(
             mielens_x, mielens_y, color=monkeyrc.COLORS['blue'], s=4,
             marker='o', label="With Lens", zorder=3)
         if key != 'lens_angle':
             mieonly_y = [fit[key] for fit in self.mieonly_fits.values()]
-            mieonly_x = range(len(mieonly_y))
+            mieonly_x = [fit['z'] for fit in self.mieonly_fits.values()]
             axes.scatter(
                 mieonly_x, mieonly_y, color=monkeyrc.COLORS['red'], s=4,
                 marker='^', label="Without Lens", zorder=3)
 
         axes.set_ylabel(label, **LABEL_FONT, labelpad=-1)
-        axes.set_xlabel('Frame', **LABEL_FONT, labelpad=2)
+        axes.set_xlabel('z position (μm)', **LABEL_FONT, labelpad=2)
 
 
 def zfill(n, nzeros=4):
