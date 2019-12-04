@@ -6,9 +6,11 @@ from collections import OrderedDict, namedtuple
 
 import numpy as np
 
+import matplotlib as mpl
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt; plt.close('all')
 from matplotlib import rc
+mpl.rcParams['figure.dpi'] = 600
 
 from mpl_toolkits import mplot3d
 
@@ -179,50 +181,35 @@ class CharacterizationFigure(object):
     def _make_axes(self):
         gs = gridspec.GridSpec(1, 4)
 
-        self.ax_n = plt.Subplot(self.fig, gs[:, 0])
-        self.ax_r = plt.Subplot(self.fig, gs[:, 1])
-        self.ax_alpha = plt.Subplot(self.fig, gs[:, 2])
-        self.ax_lens = plt.Subplot(self.fig, gs[:, 3])
+        self.ax_n = plt.Subplot(self.fig, gs[0, 0])
+        self.ax_r = plt.Subplot(self.fig, gs[0, 1])
+        self.ax_alpha = plt.Subplot(self.fig, gs[0, 2])
+        self.ax_lens = plt.Subplot(self.fig, gs[0, 3])
 
         self.fig.add_subplot(self.ax_n)
         self.fig.add_subplot(self.ax_r)
         self.fig.add_subplot(self.ax_alpha)
         self.fig.add_subplot(self.ax_lens)
+        self._axes = [self.ax_n, self.ax_r, self.ax_alpha, self.ax_lens]
 
-    def _plot_var(self, axes, key, label):
-        mielens_y = [fit[key] for fit in self.mielens_fits.values()]
-        mielens_x = [fit['z'] for fit in self.mielens_fits.values()]
-        axes.scatter(
-            mielens_x, mielens_y, color=monkeyrc.COLORS['blue'], s=4,
-            marker='o', label="With Lens", zorder=3)
-        if key != 'lens_angle':
-            mieonly_y = [fit[key] for fit in self.mieonly_fits.values()]
-            mieonly_x = [fit['z'] for fit in self.mieonly_fits.values()]
-            axes.scatter(
-                mieonly_x, mieonly_y, color=monkeyrc.COLORS['red'], s=4,
-                marker='^', label="Without Lens", zorder=3)
-
-        axes.set_ylabel(label, **LABEL_FONT, labelpad=-1)
-        axes.set_xlabel('z position (μm)', **LABEL_FONT, labelpad=2)
-
-class CharacterizationErrorFigure(CharacterizationFigure):
     def _plot_var(self, axes, key, label):
         mielens_y = [fit[key][0] for fit in self.mielens_fits.values()]
         mielens_yerr = [fit[key][1] for fit in self.mielens_fits.values()]
         mielens_x = [fit['z'][0] for fit in self.mielens_fits.values()]
         axes.errorbar(
             mielens_x, mielens_y, mielens_yerr, color=monkeyrc.COLORS['blue'],
-            marker='o', label="With Lens", zorder=3, linestyle='None')
+            marker='o', label="With Lens", zorder=3, ls='None', ms=0.5, elinewidth=0.5, capsize=0.25)
         if key != 'lens_angle':
             mieonly_y = [fit[key][0] for fit in self.mieonly_fits.values()]
             mieonly_yerr = [fit[key][1] for fit in self.mieonly_fits.values()]
             mieonly_x = [fit['z'][0] for fit in self.mieonly_fits.values()]
             axes.errorbar(
                 mieonly_x, mieonly_y, mieonly_yerr, color=monkeyrc.COLORS['red'],
-                marker='^', label="Without Lens", zorder=3, linestyle='None')
+                marker='^', label="Without Lens", zorder=3, ls='None', ms=0.5, elinewidth=0.5, capsize=0.25)
 
-        axes.set_ylabel(label, **LABEL_FONT, labelpad=-1)
-        axes.set_xlabel('z position (μm)', **LABEL_FONT, labelpad=2)
+        axes.set_ylabel(label, **LABEL_FONT)
+        axes.set_xlabel('z position (μm)', **LABEL_FONT)
+
 
 def zfill(n, nzeros=4):
     return str(n).rjust(nzeros, '0')
@@ -318,6 +305,37 @@ def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
 def make_chr_figure(mofit_ps=None, mlfit_ps=None):
     figure_chr = CharacterizationFigure(mlfit_ps, mofit_ps)
     fig_chr = figure_chr.make_figure()
+
+    xlim = [18, -15]
+    xticks  = [-10, 0, 10]
+    xlabels = [str(i) for i in xticks]
+
+    for ax in figure_chr._axes:
+        ax.set_xlim(xlim)
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(xlabels, **TICK_FONT)
+
+    figure_chr.ax_n.set_ylim([1.4, 1.8])
+    yticks_n = [1.5, 1.6, 1.7]
+    figure_chr.ax_n.set_yticks(yticks_n)
+    figure_chr.ax_n.set_yticklabels([str(i) for i in yticks_n], **TICK_FONT)
+    figure_chr.ax_n.legend(fontsize=4, loc=(.45, .8))
+
+    figure_chr.ax_r.set_ylim([0.8, 1.6])
+    yticks_r = [1.0, 1.2, 1.4]
+    figure_chr.ax_r.set_yticks(yticks_r)
+    figure_chr.ax_r.set_yticklabels([str(i) for i in yticks_r], **TICK_FONT)
+
+    figure_chr.ax_alpha.set_ylim([0.2, 1.2])
+    yticks_alpha = [0.25, 0.5, 0.75, 1.0]
+    figure_chr.ax_alpha.set_yticks(yticks_alpha)
+    figure_chr.ax_alpha.set_yticklabels([str(i) for i in yticks_alpha], **TICK_FONT)
+
+    figure_chr.ax_lens.set_ylim([0.2, 1.2])
+    yticks_lens = [0.25, 0.5, 0.75, 1.0]
+    figure_chr.ax_lens.set_yticks(yticks_lens)
+    figure_chr.ax_lens.set_yticklabels([str(i) for i in yticks_lens], **TICK_FONT)
+
     return figure_chr, fig_chr
 
 def make_chrerr_figure(mofit_ps=None, mlfit_ps=None):
@@ -351,6 +369,7 @@ def _params_from_samples(result, numsteps, mielens=True):
         params['lens_angle'] = (lens_angle.mean(), lens_angle.std())
     return params
 
+
 def _sphere_from(fit):
     center = (fit['x'], fit['y'], fit['z'])
     index = fit['n']
@@ -358,54 +377,20 @@ def _sphere_from(fit):
     sph = Sphere(center=center, n=index, r=radius)
     return sph
 
-if __name__ == '__main__':
-    ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
 
-    ps_fits_mo = inout.load_json('PTmcmc_results_PS_mieonly_last100.json')
-    ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha_last100.json')
+if __name__ == '__main__':
+    # ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
+
+    # ps_fits_mo = inout.load_json('PTmcmc_results_PS_mieonly_last100.json')
+    # ps_fits_ml = inout.load_json('PTmcmc_results_PS_mielensalpha_last100.json')
 
     ps_fits_witherr_mo = inout.load_json('PTmcmc_results_PS_mieonly_last100_werror.json')
     ps_fits_witherr_ml = inout.load_json('PTmcmc_results_PS_mielensalpha_last100_werror.json')
 
-    sed_figure_ps, sed_fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
-    chr_figure_ps, chr_fig_ps = make_chr_figure(ps_fits_mo, ps_fits_ml)
-    chrerr_figure_ps, chrerr_fig_ps = make_chrerr_figure(ps_fits_witherr_mo, ps_fits_witherr_ml)
+    # sed_figure_ps, sed_fig_ps = make_ps_figure(ps_data, ps_fits_mo, ps_fits_ml)
+    chr_figure_ps, chr_fig_ps = make_chr_figure(ps_fits_witherr_mo, ps_fits_witherr_ml)
 
+    # sed_fig_ps.savefig('./polystyrene-sedimentation.png', dpi=600)
+    # chr_fig_ps.savefig('./polystyrene-characterization.png', dpi=600)
 
-    chisq_ml = np.load('chisq_ml.npy')
-    chisq_mo = np.load('chisq_mo.npy')
-    plt.figure()
-    plt.scatter([fit['z'] for fit in ps_fits_ml.values()], chisq_ml, label='mielens')
-    plt.scatter([fit['z'] for fit in ps_fits_mo.values()], chisq_mo, label='mieonly')
-    plt.legend()
-    #
-    # sed_fig_ps.savefig('./polystyrene-sedimentation.svg')
-    # chr_fig_ps.savefig('./polystyrene-characterization.svg')
-
-    # mielens_params = {}
-    # for i in range(100):
-    #     res = inout.load_mcmc_result_PS_mielens(i)
-    #     params = _params_from_samples(res, 100)
-    #     mielens_params[f'{i}'] = params
-    # mieonly_params = {}
-    # for i in range(38):
-    #     res = inout.load_mcmc_result_PS_mieonly(i)
-    #     params = _params_from_samples(res, 100)
-    #     mieonly_params[f'{i}'] = params
-
-    # holos_ml = [calc_holo(data, _sphere_from(fit),
-    #                       theory=MieLens(lens_angle=fit['lens_angle']),
-    #                       scaling=fit['alpha'])
-    #             for data, fit in zip(ps_data, ps_fits_ml.values())]
-    #
-    # holos_mo = [calc_holo(data, _sphere_from(fit), scaling=fit['alpha'])
-    #             for data, fit in zip(ps_data[:38], ps_fits_mo.values())]
-    #
-    # chisqr_ml = [np.sum((d.values.squeeze() - h.values.squeeze())**2)
-    #              for d, h in zip(ps_data, holos_ml)]
-    #
-    # chisqr_mo = [np.sum((d.values.squeeze() - h.values.squeeze())**2)
-    #              for d, h in zip(ps_data, holos_mo)]
-    #
-    # chisqr_ml = np.array(chisqr_ml)
-    # chisqr_mo = np.array(chisqr_mo)
+    plt.show()
