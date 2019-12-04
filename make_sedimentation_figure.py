@@ -193,19 +193,41 @@ class CharacterizationFigure(object):
         self._axes = [self.ax_n, self.ax_r, self.ax_alpha, self.ax_lens]
 
     def _plot_var(self, axes, key, label):
-        mielens_y = [fit[key][0] for fit in self.mielens_fits.values()]
-        mielens_yerr = [fit[key][1] for fit in self.mielens_fits.values()]
-        mielens_x = [fit['z'][0] for fit in self.mielens_fits.values()]
-        axes.errorbar(
-            mielens_x, mielens_y, mielens_yerr, color=monkeyrc.COLORS['blue'],
-            marker='o', label="With Lens", zorder=3, ls='None', ms=0.5, elinewidth=0.5, capsize=0.25)
+        mielens_x = np.array([fit['z'][0] for fit in self.mielens_fits.values()])
+        sort = np.argsort(mielens_x)
+        mielens_x.sort()
+        mielens_y = np.array([fit[key][0] for fit in self.mielens_fits.values()])[sort]
+        mielens_yerr = np.array([fit[key][1] for fit in self.mielens_fits.values()])[sort]
+
+        # axes.errorbar(
+        #     mielens_x, mielens_y, mielens_yerr, color=monkeyrc.COLORS['blue'],
+        #     marker='o', label="With Lens", ls='None', ms=2, elinewidth=0.5, fillstyle='none', markeredgewidth=0.5)
+        axes.scatter(mielens_x, mielens_y, color=monkeyrc.COLORS['blue'],
+                     marker='o', label="With Lens", s=2, ls='None')
+        axes.fill_between(mielens_x,
+                          mielens_y - mielens_yerr,
+                          mielens_y + mielens_yerr,
+                          interpolate=True,
+                          color=monkeyrc.COLORS['blue'], alpha=0.5,
+                          lw=1)
         if key != 'lens_angle':
-            mieonly_y = [fit[key][0] for fit in self.mieonly_fits.values()]
-            mieonly_yerr = [fit[key][1] for fit in self.mieonly_fits.values()]
-            mieonly_x = [fit['z'][0] for fit in self.mieonly_fits.values()]
-            axes.errorbar(
-                mieonly_x, mieonly_y, mieonly_yerr, color=monkeyrc.COLORS['red'],
-                marker='^', label="Without Lens", zorder=3, ls='None', ms=0.5, elinewidth=0.5, capsize=0.25)
+            mieonly_x = np.array([fit['z'][0] for fit in self.mieonly_fits.values()])
+            sort = np.argsort(mieonly_x)
+            mieonly_x.sort()
+            mieonly_y = np.array([fit[key][0] for fit in self.mieonly_fits.values()])[sort]
+            mieonly_yerr = np.array([fit[key][1] for fit in self.mieonly_fits.values()])[sort]
+
+            # axes.errorbar(
+            #     mieonly_x, mieonly_y, mieonly_yerr, color=monkeyrc.COLORS['red'],
+            #     marker='^', label="Without Lens", ls='None', ms=2, elinewidth=0.5, fillstyle='none', markeredgewidth=0.5)
+            axes.scatter(mieonly_x, mieonly_y, color=monkeyrc.COLORS['red'],
+                         marker='^', label="Without Lens", ls='None', s=2)
+            axes.fill_between(mieonly_x,
+                              mieonly_y - mieonly_yerr,
+                              mieonly_y + mieonly_yerr,
+                              interpolate=True,
+                              color=monkeyrc.COLORS['red'], alpha=0.5,
+                              lw=1)
 
         axes.set_ylabel(label, **LABEL_FONT)
         axes.set_xlabel('z position (μm)', **LABEL_FONT)
@@ -240,35 +262,6 @@ def update_z_vs_t_plot_with_expected_sedimentation(
     trajectory = initial_z_position - times * velocity_microns_per_second
     line = axes.plot(times, trajectory, '--', color='#404040', zorder=1)
     return line
-
-
-def make_si_figure(si_data=None, mofit_si=None, mlfit_si=None):
-    si_times = np.load(SI_DATA_DIR + 'Si_frame_times.npy')
-    xy_pos = np.load(SI_DATA_DIR + 'processed0-256-uncentered/xy-positions.npy')
-    figure_si = TrackingSedimentationFigure(
-        si_data, mlfit_si, mofit_si, si_times, xy_pos)
-    fig_si = figure_si.make_figure(holonums=[0, 132, 999])
-    figure_si.ax_sed.set_ylim(-30., 9.)
-
-    figure_si.ax_z.legend(fontsize=6, loc='upper right')
-    yticks = [-20, -10, 0, 10, 20]
-    ylabels = [str(i) for i in yticks]
-    figure_si.ax_z.set_yticks(yticks)
-    figure_si.ax_z.set_yticklabels(ylabels, **TICK_FONT)
-    figure_si.ax_z.set_ylim(-30., 9.)
-
-    max_time = np.ceil(np.max(si_times))
-    figure_si.ax_z.set_xlim(0, max_time)
-    xticks = max_time * np.array([0, .50, 1.0])
-    xlabels = [str(i) for i in xticks]
-    figure_si.ax_z.set_xticks(xticks)
-    figure_si.ax_z.set_xticklabels(xlabels, **TICK_FONT)
-
-    initial_z = mlfit_si['0']['z']
-    _ = update_z_vs_t_plot_with_expected_sedimentation(
-        figure_si.ax_z, si_times, SILICA_PARTICLE, initial_z)
-
-    return figure_si, fig_si
 
 
 def make_ps_figure(ps_data=None, mofit_ps=None, mlfit_ps=None):
@@ -338,45 +331,9 @@ def make_chr_figure(mofit_ps=None, mlfit_ps=None):
 
     return figure_chr, fig_chr
 
-def make_chrerr_figure(mofit_ps=None, mlfit_ps=None):
-    figure_chr = CharacterizationErrorFigure(mlfit_ps, mofit_ps)
-    fig_chr = figure_chr.make_figure()
-    return figure_chr, fig_chr
-
 def _thin_ps(data):
     nums = np.arange(0, 1000, 10)
     return [data[num] for num in nums]
-
-def _params_from_samples(result, numsteps, mielens=True):
-    chain = result.chain[0,:,-numsteps:,:]
-    x = chain[:, :, 0]
-    y = chain[:, :, 1]
-    z = chain[:, :, 2]
-    n = chain[:, :, 3]
-    r = chain[:, :, 4]
-    alpha = chain[:, :, 5]
-    if mielens:
-        lens_angle = chain[:, :, 6]
-    noise_sd = chain[:, :, -1]
-    params = {'x': (x.mean(), x.std()),
-              'y': (y.mean(), y.std()),
-              'z': (z.mean(), z.std()),
-              'n': (n.mean(), n.std()),
-              'r': (r.mean(), r.std()),
-              'alpha': (alpha.mean(), alpha.std()),
-              'noise_sd': (noise_sd.mean(), noise_sd.std())}
-    if mielens:
-        params['lens_angle'] = (lens_angle.mean(), lens_angle.std())
-    return params
-
-
-def _sphere_from(fit):
-    center = (fit['x'], fit['y'], fit['z'])
-    index = fit['n']
-    radius = fit['r']
-    sph = Sphere(center=center, n=index, r=radius)
-    return sph
-
 
 if __name__ == '__main__':
     # ps_data = inout.fastload_polystyrene_sedimentation_data(size=256, recenter=False)
