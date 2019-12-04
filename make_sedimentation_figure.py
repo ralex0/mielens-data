@@ -199,17 +199,17 @@ class CharacterizationFigure(object):
         mielens_y = np.array([fit[key][0] for fit in self.mielens_fits.values()])[sort]
         mielens_yerr = np.array([fit[key][1] for fit in self.mielens_fits.values()])[sort]
 
-        # axes.errorbar(
-        #     mielens_x, mielens_y, mielens_yerr, color=monkeyrc.COLORS['blue'],
-        #     marker='o', label="With Lens", ls='None', ms=2, elinewidth=0.5, fillstyle='none', markeredgewidth=0.5)
-        axes.scatter(mielens_x, mielens_y, color=monkeyrc.COLORS['blue'],
-                     marker='o', label="With Lens", s=2, ls='None')
-        axes.fill_between(mielens_x,
-                          mielens_y - mielens_yerr,
-                          mielens_y + mielens_yerr,
-                          interpolate=True,
-                          color=monkeyrc.COLORS['blue'], alpha=0.5,
-                          lw=1)
+        axes.errorbar(
+            mielens_x, mielens_y, mielens_yerr, color=monkeyrc.COLORS['blue'],
+            marker='o', label="With Lens", ls='None', ms=2, elinewidth=0.5, fillstyle='none', markeredgewidth=0.5)
+        # axes.scatter(mielens_x, mielens_y, color=monkeyrc.COLORS['blue'],
+        #              marker='o', label="With Lens", s=2, ls='None')
+        # axes.fill_between(mielens_x,
+        #                   mielens_y - mielens_yerr,
+        #                   mielens_y + mielens_yerr,
+        #                   interpolate=True,
+        #                   color=monkeyrc.COLORS['blue'], alpha=0.5,
+        #                   lw=1)
         if key != 'lens_angle':
             mieonly_x = np.array([fit['z'][0] for fit in self.mieonly_fits.values()])
             sort = np.argsort(mieonly_x)
@@ -217,17 +217,17 @@ class CharacterizationFigure(object):
             mieonly_y = np.array([fit[key][0] for fit in self.mieonly_fits.values()])[sort]
             mieonly_yerr = np.array([fit[key][1] for fit in self.mieonly_fits.values()])[sort]
 
-            # axes.errorbar(
-            #     mieonly_x, mieonly_y, mieonly_yerr, color=monkeyrc.COLORS['red'],
-            #     marker='^', label="Without Lens", ls='None', ms=2, elinewidth=0.5, fillstyle='none', markeredgewidth=0.5)
-            axes.scatter(mieonly_x, mieonly_y, color=monkeyrc.COLORS['red'],
-                         marker='^', label="Without Lens", ls='None', s=2)
-            axes.fill_between(mieonly_x,
-                              mieonly_y - mieonly_yerr,
-                              mieonly_y + mieonly_yerr,
-                              interpolate=True,
-                              color=monkeyrc.COLORS['red'], alpha=0.5,
-                              lw=1)
+            axes.errorbar(
+                mieonly_x, mieonly_y, mieonly_yerr, color='#c44a4a',
+                marker='^', label="Without Lens", ls='None', ms=2, elinewidth=0.5, fillstyle='none', markeredgewidth=0.5)
+            # axes.scatter(mieonly_x, mieonly_y, color=monkeyrc.COLORS['red'],
+            #              marker='^', label="Without Lens", ls='None', s=2)
+            # axes.fill_between(mieonly_x,
+            #                   mieonly_y - mieonly_yerr,
+            #                   mieonly_y + mieonly_yerr,
+            #                   interpolate=True,
+            #                   color=monkeyrc.COLORS['red'], alpha=0.5,
+            #                   lw=1)
 
         axes.set_ylabel(label, **LABEL_FONT)
         axes.set_xlabel('z position (μm)', **LABEL_FONT)
@@ -299,8 +299,8 @@ def make_chr_figure(mofit_ps=None, mlfit_ps=None):
     figure_chr = CharacterizationFigure(mlfit_ps, mofit_ps)
     fig_chr = figure_chr.make_figure()
 
-    xlim = [18, -15]
-    xticks  = [-10, 0, 10]
+    xlim = [17, -14]
+    xticks  = [-14, 0, 17]
     xlabels = [str(i) for i in xticks]
 
     for ax in figure_chr._axes:
@@ -309,23 +309,23 @@ def make_chr_figure(mofit_ps=None, mlfit_ps=None):
         ax.set_xticklabels(xlabels, **TICK_FONT)
 
     figure_chr.ax_n.set_ylim([1.4, 1.8])
-    yticks_n = [1.5, 1.6, 1.7]
+    yticks_n = [1.4, 1.6, 1.8]
     figure_chr.ax_n.set_yticks(yticks_n)
     figure_chr.ax_n.set_yticklabels([str(i) for i in yticks_n], **TICK_FONT)
     figure_chr.ax_n.legend(fontsize=4, loc=(.45, .8))
 
-    figure_chr.ax_r.set_ylim([0.8, 1.6])
-    yticks_r = [1.0, 1.2, 1.4]
+    figure_chr.ax_r.set_ylim([1.0, 1.5])
+    yticks_r = [1.0, 1.25, 1.5]
     figure_chr.ax_r.set_yticks(yticks_r)
     figure_chr.ax_r.set_yticklabels([str(i) for i in yticks_r], **TICK_FONT)
 
-    figure_chr.ax_alpha.set_ylim([0.2, 1.2])
+    figure_chr.ax_alpha.set_ylim([0.25, 1.0])
     yticks_alpha = [0.25, 0.5, 0.75, 1.0]
     figure_chr.ax_alpha.set_yticks(yticks_alpha)
     figure_chr.ax_alpha.set_yticklabels([str(i) for i in yticks_alpha], **TICK_FONT)
 
-    figure_chr.ax_lens.set_ylim([0.2, 1.2])
-    yticks_lens = [0.25, 0.5, 0.75, 1.0]
+    figure_chr.ax_lens.set_ylim([0.3, 1.1])
+    yticks_lens = [0.3, 0.7, 1.1]
     figure_chr.ax_lens.set_yticks(yticks_lens)
     figure_chr.ax_lens.set_yticklabels([str(i) for i in yticks_lens], **TICK_FONT)
 
